@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Oswald, Inter } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -24,7 +25,17 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${oswald.variable} ${inter.variable}`}>
-      <body className="bg-[#0a0a0a] text-white antialiased">{children}</body>
+      {/* Script inline para evitar flash de tema incorrecto al cargar */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t=localStorage.getItem('cw-theme');if(t)document.documentElement.setAttribute('data-theme',t);})();`,
+          }}
+        />
+      </head>
+      <body className="bg-[#0a0a0a] text-white antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

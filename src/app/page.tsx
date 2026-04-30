@@ -3,8 +3,9 @@ import Hero from "@/components/Hero";
 import Cartelera from "@/components/Cartelera";
 import Promo from "@/components/Promo";
 import ProximosEstrenos from "@/components/ProximosEstrenos";
-import Snacks from "@/components/Snacks";
+import Horarios from "@/components/Horarios";
 import Salas from "@/components/Salas";
+import Snacks from "@/components/Snacks";
 import Contacto from "@/components/Contacto";
 import Footer from "@/components/Footer";
 
@@ -17,6 +18,7 @@ export default function Home() {
         <Cartelera />
         <Promo />
         <ProximosEstrenos />
+        <Horarios />
         <Salas />
         <Snacks />
         <Contacto />

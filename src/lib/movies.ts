@@ -1,10 +1,16 @@
-const TMDB = "https://media.themoviedb.org/t/p/w500";
+const TMDB   = "https://media.themoviedb.org/t/p/w500";
 const TMDB_W = "https://image.tmdb.org/t/p/original";
 
-export interface DaySchedule {
-  dayLabel: string;
-  dateLabel: string;
-  times: { format: string; horarios: string[] }[];
+export interface FormatTimes {
+  format: string;
+  horarios: string[];
+}
+
+export interface WeekSchedule {
+  /** Lunes a Viernes */
+  weekday: FormatTimes[];
+  /** Sábado y Domingo */
+  weekend: FormatTimes[];
 }
 
 export interface Movie {
@@ -23,7 +29,7 @@ export interface Movie {
   director: string;
   cast: string[];
   trailerSearch: string;
-  schedules: DaySchedule[];
+  weekSchedule: WeekSchedule;
 }
 
 export const movies: Movie[] = [
@@ -44,24 +50,16 @@ export const movies: Movie[] = [
     director: "Antoine Fuqua",
     cast: ["Jaafar Jackson", "Nia Long", "Colman Domingo", "Miles Teller"],
     trailerSearch: "Michael Jackson biopic 2025 trailer oficial",
-    schedules: [
-      {
-        dayLabel: "Hoy",
-        dateLabel: "Mar. 29 Abr",
-        times: [
-          { format: "2D", horarios: ["2:00 PM", "5:00 PM", "8:00 PM", "10:30 PM"] },
-          { format: "VIP", horarios: ["7:00 PM", "10:00 PM"] },
-        ],
-      },
-      {
-        dayLabel: "Mañana",
-        dateLabel: "Mié. 30 Abr",
-        times: [
-          { format: "2D", horarios: ["1:30 PM", "4:30 PM", "7:30 PM", "9:45 PM"] },
-          { format: "VIP", horarios: ["6:30 PM", "9:30 PM"] },
-        ],
-      },
-    ],
+    weekSchedule: {
+      weekday: [
+        { format: "2D",  horarios: ["2:00 PM", "5:00 PM", "8:00 PM"] },
+        { format: "VIP", horarios: ["6:30 PM", "9:30 PM"] },
+      ],
+      weekend: [
+        { format: "2D",  horarios: ["12:00 PM", "2:30 PM", "5:00 PM", "8:00 PM", "10:30 PM"] },
+        { format: "VIP", horarios: ["4:00 PM", "7:00 PM", "10:00 PM"] },
+      ],
+    },
   },
   {
     id: 2,
@@ -80,26 +78,18 @@ export const movies: Movie[] = [
     director: "David Frankel",
     cast: ["Meryl Streep", "Anne Hathaway", "Emily Blunt", "Stanley Tucci"],
     trailerSearch: "The Devil Wears Prada 2 trailer oficial 2025",
-    schedules: [
-      {
-        dayLabel: "Hoy",
-        dateLabel: "Mar. 29 Abr",
-        times: [
-          { format: "2D", horarios: ["1:30 PM", "4:00 PM", "7:00 PM", "9:30 PM"] },
-          { format: "3D", horarios: ["3:00 PM", "6:00 PM"] },
-          { format: "VIP", horarios: ["8:00 PM"] },
-        ],
-      },
-      {
-        dayLabel: "Mañana",
-        dateLabel: "Mié. 30 Abr",
-        times: [
-          { format: "2D", horarios: ["12:00 PM", "3:00 PM", "6:00 PM", "8:30 PM"] },
-          { format: "3D", horarios: ["2:00 PM", "5:30 PM"] },
-          { format: "VIP", horarios: ["7:30 PM", "10:00 PM"] },
-        ],
-      },
-    ],
+    weekSchedule: {
+      weekday: [
+        { format: "2D",  horarios: ["1:30 PM", "4:30 PM", "7:30 PM"] },
+        { format: "3D",  horarios: ["3:00 PM", "6:00 PM"] },
+        { format: "VIP", horarios: ["8:30 PM"] },
+      ],
+      weekend: [
+        { format: "2D",  horarios: ["12:00 PM", "2:30 PM", "5:00 PM", "7:30 PM", "10:00 PM"] },
+        { format: "3D",  horarios: ["1:00 PM", "3:30 PM", "6:30 PM", "9:00 PM"] },
+        { format: "VIP", horarios: ["4:00 PM", "7:00 PM", "9:30 PM"] },
+      ],
+    },
   },
   {
     id: 3,
@@ -118,24 +108,16 @@ export const movies: Movie[] = [
     director: "Lee Cronin",
     cast: ["Tom Hiddleston", "Sofia Boutella", "Annabelle Wallis", "Russell Crowe"],
     trailerSearch: "La Momia 2025 trailer oficial",
-    schedules: [
-      {
-        dayLabel: "Hoy",
-        dateLabel: "Mar. 29 Abr",
-        times: [
-          { format: "2D", horarios: ["3:30 PM", "6:30 PM", "9:00 PM", "11:30 PM"] },
-          { format: "3D", horarios: ["5:00 PM", "8:00 PM", "11:00 PM"] },
-        ],
-      },
-      {
-        dayLabel: "Mañana",
-        dateLabel: "Mié. 30 Abr",
-        times: [
-          { format: "2D", horarios: ["2:00 PM", "5:00 PM", "8:00 PM", "10:30 PM"] },
-          { format: "3D", horarios: ["4:00 PM", "7:00 PM", "10:00 PM"] },
-        ],
-      },
-    ],
+    weekSchedule: {
+      weekday: [
+        { format: "2D", horarios: ["3:30 PM", "6:30 PM", "9:30 PM"] },
+        { format: "3D", horarios: ["5:00 PM", "8:00 PM"] },
+      ],
+      weekend: [
+        { format: "2D", horarios: ["1:00 PM", "3:30 PM", "6:00 PM", "9:00 PM", "11:30 PM"] },
+        { format: "3D", horarios: ["2:30 PM", "5:30 PM", "8:30 PM", "11:00 PM"] },
+      ],
+    },
   },
   {
     id: 4,
@@ -154,22 +136,14 @@ export const movies: Movie[] = [
     director: "James Wan",
     cast: ["Josh Hartnett", "Maika Monroe", "Ben Mendelsohn", "Fionn Whitehead"],
     trailerSearch: "They Will Kill You 2025 trailer oficial",
-    schedules: [
-      {
-        dayLabel: "Hoy",
-        dateLabel: "Mar. 29 Abr",
-        times: [
-          { format: "2D", horarios: ["12:00 PM", "2:30 PM", "5:00 PM", "7:30 PM", "10:00 PM"] },
-        ],
-      },
-      {
-        dayLabel: "Mañana",
-        dateLabel: "Mié. 30 Abr",
-        times: [
-          { format: "2D", horarios: ["1:00 PM", "3:30 PM", "6:00 PM", "8:30 PM", "11:00 PM"] },
-        ],
-      },
-    ],
+    weekSchedule: {
+      weekday: [
+        { format: "2D", horarios: ["12:00 PM", "2:30 PM", "5:00 PM", "7:30 PM", "10:00 PM"] },
+      ],
+      weekend: [
+        { format: "2D", horarios: ["11:00 AM", "1:30 PM", "3:30 PM", "5:30 PM", "7:30 PM", "9:30 PM", "11:30 PM"] },
+      ],
+    },
   },
   {
     id: 5,
@@ -188,24 +162,16 @@ export const movies: Movie[] = [
     director: "Roland Emmerich",
     cast: ["Taron Egerton", "Naomi Watts", "Jamie Foxx", "Lucy Boynton"],
     trailerSearch: "Turbulence 2025 movie trailer oficial",
-    schedules: [
-      {
-        dayLabel: "Hoy",
-        dateLabel: "Mar. 29 Abr",
-        times: [
-          { format: "2D", horarios: ["2:30 PM", "5:30 PM", "8:30 PM"] },
-          { format: "VIP", horarios: ["9:00 PM"] },
-        ],
-      },
-      {
-        dayLabel: "Mañana",
-        dateLabel: "Mié. 30 Abr",
-        times: [
-          { format: "2D", horarios: ["1:30 PM", "4:30 PM", "7:30 PM", "9:30 PM"] },
-          { format: "VIP", horarios: ["8:00 PM"] },
-        ],
-      },
-    ],
+    weekSchedule: {
+      weekday: [
+        { format: "2D",  horarios: ["2:00 PM", "5:00 PM", "8:00 PM"] },
+        { format: "VIP", horarios: ["9:00 PM"] },
+      ],
+      weekend: [
+        { format: "2D",  horarios: ["12:30 PM", "3:00 PM", "5:30 PM", "8:00 PM", "10:30 PM"] },
+        { format: "VIP", horarios: ["4:30 PM", "7:30 PM", "10:00 PM"] },
+      ],
+    },
   },
   {
     id: 6,
@@ -224,22 +190,14 @@ export const movies: Movie[] = [
     director: "Carlos Moreno",
     cast: ["Sebastián Eslava", "María Cecilia Botero", "Frank Ramírez", "Carolina Gaitán"],
     trailerSearch: "Soy Múcura pelicula colombiana trailer",
-    schedules: [
-      {
-        dayLabel: "Hoy",
-        dateLabel: "Mar. 29 Abr",
-        times: [
-          { format: "2D", horarios: ["1:00 PM", "3:30 PM", "6:00 PM"] },
-        ],
-      },
-      {
-        dayLabel: "Mañana",
-        dateLabel: "Mié. 30 Abr",
-        times: [
-          { format: "2D", horarios: ["11:00 AM", "1:30 PM", "4:00 PM", "6:30 PM"] },
-        ],
-      },
-    ],
+    weekSchedule: {
+      weekday: [
+        { format: "2D", horarios: ["1:00 PM", "3:30 PM", "6:00 PM"] },
+      ],
+      weekend: [
+        { format: "2D", horarios: ["10:00 AM", "12:30 PM", "3:00 PM", "5:30 PM", "8:00 PM"] },
+      ],
+    },
   },
 ];
 
