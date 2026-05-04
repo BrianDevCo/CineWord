@@ -125,9 +125,13 @@ export default function Footer() {
             © {currentYear} CINEWORLD. Todos los derechos reservados.
           </p>
           <div className="flex gap-6">
-            {["Términos y Condiciones", "Privacidad", "PQR"].map((l) => (
-              <a key={l} href="#" className="text-gray-600 hover:text-gray-400 font-body text-xs transition-colors">
-                {l}
+            {[
+              { label: "Términos y Condiciones", href: "/terminos" },
+              { label: "Privacidad", href: "/privacidad" },
+              { label: "PQR", href: "/pqr" },
+            ].map((l) => (
+              <a key={l.label} href={l.href} className="text-gray-600 hover:text-gray-400 font-body text-xs transition-colors">
+                {l.label}
               </a>
             ))}
           </div>

@@ -104,9 +104,12 @@ export default function Snacks() {
               <span className="text-gray-400 font-body text-sm">Total</span>
               <span className="text-[#CC1244] font-heading text-xl font-bold">{fmt(totalPrice)}</span>
             </div>
-            <button className="w-full bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all">
-              AGREGAR AL BOLETO
-            </button>
+            <div className="flex items-start gap-3 bg-[#CC1244]/10 border border-[#CC1244]/30 rounded-sm px-4 py-3">
+              <span className="text-lg shrink-0 mt-0.5">🎟️</span>
+              <p className="text-gray-300 font-body text-xs leading-relaxed">
+                Muestra este resumen al llegar a taquilla y recoge tu pedido sin hacer fila.
+              </p>
+            </div>
           </div>
         )}
 

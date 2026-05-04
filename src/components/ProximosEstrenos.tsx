@@ -2,49 +2,39 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import type { Pelicula } from "@/lib/types";
+import { registrarNotificacionEstreno } from "@/lib/db";
 
-const TMDB = "https://media.themoviedb.org/t/p/w500";
+function formatFecha(iso: string) {
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const [, mes, dia] = iso.split("-");
+  return `${parseInt(dia)} de ${meses[parseInt(mes) - 1]}`;
+}
 
-const upcoming = [
-  {
-    title: "Venom: El Último Baile",
-    genre: "Acción / Superhéroes",
-    date: "Mayo 16, 2026",
-    poster: `${TMDB}/vGXptEdgZIhPg3cGlc7e8sNPC2e.jpg`,
-    accentColor: "#4488ff",
-    description: "El capítulo final de la saga más oscura del universo de los superhéroes.",
-  },
-  {
-    title: "Núremberg",
-    genre: "Drama / Historia",
-    date: "Mayo 30, 2026",
-    poster: `${TMDB}/7cWTGH2svfNHWVRjsfKIBob9pDj.jpg`,
-    accentColor: "#cc9900",
-    description: "El juicio que cambió la historia del mundo, llevado al cine con épica precisión.",
-  },
-  {
-    title: "Suerte, Diviértete, No Mueras",
-    genre: "Comedia / Aventura",
-    date: "Junio 6, 2026",
-    poster: `${TMDB}/rWcfOdY7TU6lTdazWj0ebDZnAfO.jpg`,
-    accentColor: "#44cc88",
-    description: "Una comedia de aventuras que redefine el género con un humor explosivo.",
-  },
-  {
-    title: "ChaO",
-    genre: "Drama / Thriller",
-    date: "Junio 20, 2026",
-    poster: `${TMDB}/m723xGi6lyklfsTPdtgEtYJSKcw.jpg`,
-    accentColor: "#cc4488",
-    description: "Un thriller psicológico que te mantendrá adivinando hasta el último segundo.",
-  },
-];
+interface Props {
+  peliculas: Pelicula[];
+}
 
-export default function ProximosEstrenos() {
-  const [reminded, setReminded] = useState<Set<number>>(new Set());
+export default function ProximosEstrenos({ peliculas }: Props) {
+  const [states, setStates] = useState<Record<number, "idle" | "form" | "loading" | "done" | "error">>({});
+  const [emails, setEmails] = useState<Record<number, string>>({});
 
-  const remind = (i: number) =>
-    setReminded((prev) => new Set([...prev, i]));
+  const setMovieState = (id: number, s: typeof states[number]) =>
+    setStates((prev) => ({ ...prev, [id]: s }));
+
+  const handleRemind = async (movie: Pelicula) => {
+    const email = emails[movie.id] ?? "";
+    if (!email || !email.includes("@")) return;
+    setMovieState(movie.id, "loading");
+    try {
+      await registrarNotificacionEstreno(movie.id, email);
+      setMovieState(movie.id, "done");
+    } catch {
+      setMovieState(movie.id, "error");
+    }
+  };
+
+  if (peliculas.length === 0) return null;
 
   return (
     <section id="proximos" className="py-20 lg:py-28 bg-[#0d0d0d]">
@@ -59,63 +49,108 @@ export default function ProximosEstrenos() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {upcoming.map((movie, i) => (
-            <div
-              key={i}
-              className="group bg-[#111] rounded-lg overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 flex flex-col"
-            >
-              <div className="relative aspect-[2/3] overflow-hidden">
-                <Image
-                  src={movie.poster}
-                  alt={movie.title}
-                  fill
-                  className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-black/40" />
-                <div className="absolute top-3 left-3 bg-black/60 border border-white/20 text-white font-heading text-xs px-2 py-0.5 rounded-sm tracking-widest">
-                  PRÓXIMAMENTE
-                </div>
-                <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: movie.accentColor }} />
-              </div>
+          {peliculas.map((movie) => {
+            const state = states[movie.id] ?? "idle";
+            const email = emails[movie.id] ?? "";
 
-              <div className="p-5 flex flex-col gap-3 flex-1">
-                <div>
-                  <span className="text-xs font-body text-gray-500">{movie.genre}</span>
-                  <h3 className="font-heading text-base font-bold text-white mt-1 leading-tight">
-                    {movie.title}
-                  </h3>
-                </div>
-
-                <p className="text-gray-400 text-sm font-body leading-relaxed flex-1">
-                  {movie.description}
-                </p>
-
-                <div className="flex items-center gap-2 border-t border-white/10 pt-3">
-                  <svg className="w-4 h-4 text-[#CC1244] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span className="font-heading text-sm text-white/70 tracking-wider">{movie.date}</span>
-                </div>
-
-                {reminded.has(i) ? (
-                  <div className="w-full flex items-center justify-center gap-2 border border-green-500/40 bg-green-500/10 text-green-400 font-heading text-xs tracking-widest py-2.5 rounded-sm">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    ¡TE AVISAMOS!
+            return (
+              <div
+                key={movie.id}
+                className="group bg-[#111] rounded-lg overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 flex flex-col"
+              >
+                <div className="relative aspect-[2/3] overflow-hidden">
+                  {movie.poster_url ? (
+                    <Image
+                      src={movie.poster_url}
+                      alt={movie.titulo}
+                      fill
+                      className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1a0008] to-black" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-black/40" />
+                  <div className="absolute top-3 left-3 bg-black/60 border border-white/20 text-white font-heading text-xs px-2 py-0.5 rounded-sm tracking-widest">
+                    PRÓXIMAMENTE
                   </div>
-                ) : (
-                  <button
-                    onClick={() => remind(i)}
-                    className="w-full border border-[#CC1244]/50 hover:bg-[#CC1244] text-[#CC1244] hover:text-white font-heading text-xs tracking-widest py-2.5 rounded-sm transition-all duration-200"
-                  >
-                    RECORDARME
-                  </button>
-                )}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1"
+                    style={{ backgroundColor: movie.accent_color }}
+                  />
+                </div>
+
+                <div className="p-5 flex flex-col gap-3 flex-1">
+                  <div>
+                    <span className="text-xs font-body text-gray-500">{movie.genero}</span>
+                    <h3 className="font-heading text-base font-bold text-white mt-1 leading-tight">
+                      {movie.titulo}
+                    </h3>
+                  </div>
+
+                  <p className="text-gray-400 text-sm font-body leading-relaxed flex-1">
+                    {movie.sinopsis}
+                  </p>
+
+                  {movie.fecha_estreno && (
+                    <div className="flex items-center gap-2 border-t border-white/10 pt-3">
+                      <svg className="w-4 h-4 text-[#CC1244] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="font-heading text-sm text-white/70 tracking-wider">
+                        {formatFecha(movie.fecha_estreno)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* RECORDARME */}
+                  {state === "done" ? (
+                    <div className="w-full flex items-center justify-center gap-2 border border-green-500/40 bg-green-500/10 text-green-400 font-heading text-xs tracking-widest py-2.5 rounded-sm">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      ¡TE AVISAMOS!
+                    </div>
+                  ) : state === "form" || state === "loading" || state === "error" ? (
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="email"
+                        placeholder="tu@correo.com"
+                        value={email}
+                        onChange={(e) => setEmails((prev) => ({ ...prev, [movie.id]: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/15 text-white font-body text-sm px-3 py-2 rounded-sm focus:outline-none focus:border-[#CC1244] placeholder-gray-600"
+                      />
+                      {state === "error" && (
+                        <p className="text-red-400 text-xs font-body">Error al guardar. Intenta de nuevo.</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setMovieState(movie.id, "idle")}
+                          className="flex-1 border border-white/15 text-gray-500 hover:text-white font-heading text-xs tracking-widest py-2 rounded-sm transition-all"
+                        >
+                          CANCELAR
+                        </button>
+                        <button
+                          onClick={() => handleRemind(movie)}
+                          disabled={state === "loading" || !email.includes("@")}
+                          className="flex-[2] bg-[#CC1244] disabled:opacity-40 hover:bg-[#a00e35] text-white font-heading text-xs tracking-widest py-2 rounded-sm transition-all"
+                        >
+                          {state === "loading" ? "GUARDANDO..." : "AVISAR"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setMovieState(movie.id, "form")}
+                      className="w-full border border-[#CC1244]/50 hover:bg-[#CC1244] text-[#CC1244] hover:text-white font-heading text-xs tracking-widest py-2.5 rounded-sm transition-all duration-200"
+                    >
+                      RECORDARME
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

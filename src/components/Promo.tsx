@@ -59,12 +59,6 @@ export default function Promo() {
             >
               VER CARTELERA
             </a>
-            <a
-              href="#cartelera"
-              className="border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest px-7 py-3.5 rounded-sm transition-all"
-            >
-              COMPRAR BOLETO
-            </a>
           </div>
         </div>
       </div>

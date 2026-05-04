@@ -8,16 +8,24 @@ import Salas from "@/components/Salas";
 import Snacks from "@/components/Snacks";
 import Contacto from "@/components/Contacto";
 import Footer from "@/components/Footer";
+import { getPeliculasEnCartelera, getPeliculasProximas } from "@/lib/db";
 
-export default function Home() {
+export const revalidate = 300; // refresca cada 5 minutos
+
+export default async function Home() {
+  const [enCartelera, proximas] = await Promise.all([
+    getPeliculasEnCartelera(),
+    getPeliculasProximas(),
+  ]);
+
   return (
     <>
       <Navbar />
       <main>
         <Hero />
-        <Cartelera />
+        <Cartelera peliculas={enCartelera} />
         <Promo />
-        <ProximosEstrenos />
+        <ProximosEstrenos peliculas={proximas} />
         <Horarios />
         <Salas />
         <Snacks />
