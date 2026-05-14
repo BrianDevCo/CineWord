@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       activa: body.activa ?? true,
       orden: body.orden ?? 0,
       accent_color: body.accent_color || "#CC1244",
+      edad_minima: body.edad_minima ?? 0,
     })
     .select()
     .single();

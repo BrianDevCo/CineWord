@@ -53,6 +53,13 @@ export default function RegistrarPage() {
       return;
     }
 
+    // Registrar en Score (no bloqueante — si falla el usuario queda en Supabase)
+    fetch("/api/score/cliente", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, nombreCompleto: nombre, clave: password }),
+    }).catch(() => {});
+
     setSuccess(true);
     setLoading(false);
   };

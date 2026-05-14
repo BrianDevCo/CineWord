@@ -11,6 +11,26 @@ function supabaseReady() {
   return url.length > 0 && !url.includes("TU_PROYECTO");
 }
 
+export async function getHeroPeliculas(): Promise<Pelicula[]> {
+  const fallback = [
+    ...FALLBACK_PELICULAS.filter((p) => p.en_hero),
+    ...FALLBACK_PROXIMAS.filter((p) => p.en_hero),
+  ];
+
+  if (!supabaseReady()) return fallback;
+
+  const { data, error } = await supabase
+    .from("peliculas")
+    .select("*")
+    .eq("en_hero", true)
+    .eq("activa", true)
+    .order("estado") // en_cartelera antes que proximo
+    .order("orden");
+
+  if (error || !data?.length) return fallback;
+  return data;
+}
+
 export async function getPeliculasEnCartelera(): Promise<Pelicula[]> {
   if (!supabaseReady()) return FALLBACK_PELICULAS;
 

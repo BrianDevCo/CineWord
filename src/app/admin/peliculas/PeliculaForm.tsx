@@ -39,6 +39,7 @@ export default function PeliculaForm({ pelicula }: Props) {
     activa: pelicula?.activa ?? true,
     orden: pelicula?.orden ?? 0,
     accent_color: pelicula?.accent_color ?? "#CC1244",
+    edad_minima: pelicula?.edad_minima ?? 0,
   });
 
   const [loading, setLoading] = useState(false);
@@ -114,6 +115,18 @@ export default function PeliculaForm({ pelicula }: Props) {
               {["G", "PG", "PG-13", "R", "+18"].map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className={labelClass}>Restricción de edad</label>
+            <select value={form.edad_minima} onChange={(e) => set("edad_minima", Number(e.target.value))}
+              className={inputClass}>
+              <option value={0}>Todo público</option>
+              <option value={7}>+7 años</option>
+              <option value={12}>+12 años</option>
+              <option value={15}>+15 años</option>
+              <option value={18}>+18 años</option>
             </select>
           </div>
 

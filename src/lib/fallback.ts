@@ -17,7 +17,7 @@ export const FALLBACK_PELICULAS: Pelicula[] = [
     reparto: ["Jaafar Jackson", "Nia Long", "Colman Domingo", "Miles Teller"],
     trailer_search: "Michael Jackson biopic 2025 trailer oficial",
     estado: "en_cartelera", fecha_estreno: null, activa: true, orden: 1,
-    accent_color: "#CC1244", created_at: "",
+    accent_color: "#CC1244", en_hero: true, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 2, titulo: "El Diablo Viste a la Moda 2", genero: "Comedia / Drama",
@@ -29,7 +29,7 @@ export const FALLBACK_PELICULAS: Pelicula[] = [
     reparto: ["Meryl Streep", "Anne Hathaway", "Emily Blunt", "Stanley Tucci"],
     trailer_search: "The Devil Wears Prada 2 trailer oficial 2025",
     estado: "en_cartelera", fecha_estreno: null, activa: true, orden: 2,
-    accent_color: "#CC1244", created_at: "",
+    accent_color: "#CC1244", en_hero: true, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 3, titulo: "La Momia", genero: "Terror / Aventura",
@@ -41,7 +41,7 @@ export const FALLBACK_PELICULAS: Pelicula[] = [
     reparto: ["Tom Hiddleston", "Sofia Boutella", "Annabelle Wallis", "Russell Crowe"],
     trailer_search: "La Momia 2025 trailer oficial",
     estado: "en_cartelera", fecha_estreno: null, activa: true, orden: 3,
-    accent_color: "#CC1244", created_at: "",
+    accent_color: "#CC1244", en_hero: false, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 4, titulo: "Te Van a Matar", genero: "Thriller / Suspenso",
@@ -53,7 +53,7 @@ export const FALLBACK_PELICULAS: Pelicula[] = [
     reparto: ["Josh Hartnett", "Maika Monroe", "Ben Mendelsohn", "Fionn Whitehead"],
     trailer_search: "They Will Kill You 2025 trailer oficial",
     estado: "en_cartelera", fecha_estreno: null, activa: true, orden: 4,
-    accent_color: "#CC1244", created_at: "",
+    accent_color: "#CC1244", en_hero: false, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 5, titulo: "Turbulencia", genero: "Acción / Suspenso",
@@ -65,7 +65,7 @@ export const FALLBACK_PELICULAS: Pelicula[] = [
     reparto: ["Taron Egerton", "Naomi Watts", "Jamie Foxx", "Lucy Boynton"],
     trailer_search: "Turbulence 2025 movie trailer oficial",
     estado: "en_cartelera", fecha_estreno: null, activa: true, orden: 5,
-    accent_color: "#CC1244", created_at: "",
+    accent_color: "#CC1244", en_hero: false, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 6, titulo: "Soy Múcura", genero: "Comedia / Familiar",
@@ -77,7 +77,7 @@ export const FALLBACK_PELICULAS: Pelicula[] = [
     reparto: ["Sebastián Eslava", "María Cecilia Botero", "Frank Ramírez", "Carolina Gaitán"],
     trailer_search: "Soy Múcura pelicula colombiana trailer",
     estado: "en_cartelera", fecha_estreno: null, activa: true, orden: 6,
-    accent_color: "#CC1244", created_at: "",
+    accent_color: "#CC1244", en_hero: false, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
 ];
 
@@ -90,7 +90,7 @@ export const FALLBACK_PROXIMAS: Pelicula[] = [
     sinopsis: "El capítulo final de la saga más oscura del universo de los superhéroes.",
     director: null, reparto: [],
     trailer_search: null, estado: "proximo", fecha_estreno: "2026-05-16",
-    activa: true, orden: 7, accent_color: "#4488ff", created_at: "",
+    activa: true, orden: 7, accent_color: "#4488ff", en_hero: true, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 8, titulo: "Núremberg", genero: "Drama / Historia",
@@ -100,7 +100,7 @@ export const FALLBACK_PROXIMAS: Pelicula[] = [
     sinopsis: "El juicio que cambió la historia del mundo, llevado al cine con épica precisión.",
     director: null, reparto: [],
     trailer_search: null, estado: "proximo", fecha_estreno: "2026-05-30",
-    activa: true, orden: 8, accent_color: "#cc9900", created_at: "",
+    activa: true, orden: 8, accent_color: "#cc9900", en_hero: true, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 9, titulo: "Suerte, Diviértete, No Mueras", genero: "Comedia / Aventura",
@@ -110,7 +110,7 @@ export const FALLBACK_PROXIMAS: Pelicula[] = [
     sinopsis: "Una comedia de aventuras que redefine el género con un humor explosivo.",
     director: null, reparto: [],
     trailer_search: null, estado: "proximo", fecha_estreno: "2026-06-06",
-    activa: true, orden: 9, accent_color: "#44cc88", created_at: "",
+    activa: true, orden: 9, accent_color: "#44cc88", en_hero: false, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
   {
     id: 10, titulo: "ChaO", genero: "Drama / Thriller",
@@ -120,7 +120,7 @@ export const FALLBACK_PROXIMAS: Pelicula[] = [
     sinopsis: "Un thriller psicológico que te mantendrá adivinando hasta el último segundo.",
     director: null, reparto: [],
     trailer_search: null, estado: "proximo", fecha_estreno: "2026-06-20",
-    activa: true, orden: 10, accent_color: "#cc4488", created_at: "",
+    activa: true, orden: 10, accent_color: "#cc4488", en_hero: false, edad_minima: 0, score_pelicula_id: null, created_at: "",
   },
 ];
 
@@ -219,6 +219,10 @@ export function getFallbackFunciones(peliculaId: number): Funcion[] {
               precio_regular: entry.format === "3D" ? 18000 : 15000,
               precio_vip: 25000,
               activa: true,
+              score_pelicula_id: null,
+              score_sala_id: null,
+              score_tarifa_regular: null,
+              score_tarifa_vip: null,
             });
           }
         }

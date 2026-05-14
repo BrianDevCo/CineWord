@@ -6,6 +6,7 @@ export interface Sala {
   columnas: number;
   filas_vip: string[];
   activa: boolean;
+  score_sala_id: string | null;
 }
 
 export interface Pelicula {
@@ -28,6 +29,9 @@ export interface Pelicula {
   activa: boolean;
   orden: number;
   accent_color: string;
+  en_hero: boolean;
+  edad_minima: number;
+  score_pelicula_id: string | null;
   created_at: string;
 }
 
@@ -41,6 +45,10 @@ export interface Funcion {
   precio_regular: number;
   precio_vip: number;
   activa: boolean;
+  score_pelicula_id: string | null;
+  score_sala_id: string | null;
+  score_tarifa_regular: string | null;
+  score_tarifa_vip: string | null;
   sala?: Sala;
 }
 
