@@ -98,8 +98,8 @@ export async function getFuncionesByPelicula(
     .order("fecha")
     .order("hora");
 
-  if (error) return getFallbackFunciones(peliculaId);
-  return (data ?? []) as Funcion[];
+  if (error || !data?.length) return getFallbackFunciones(peliculaId);
+  return data as Funcion[];
 }
 
 export async function getFuncionById(id: number) {
