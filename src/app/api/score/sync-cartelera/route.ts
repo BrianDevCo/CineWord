@@ -231,6 +231,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Error Score";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const cause = err instanceof Error && (err as NodeJS.ErrnoException).cause;
+    return NextResponse.json({ error: msg, cause: String(cause ?? "") }, { status: 500 });
   }
 }
