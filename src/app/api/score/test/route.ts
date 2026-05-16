@@ -31,7 +31,7 @@ async function callScore(base: string, service: string, plaintext: string) {
       const item = Array.isArray(j) ? j[0] : j;
       if (item?.request) dec = decrypt(item.request);
     } catch { /**/ }
-    return { status, raw: text.slice(0, 800), dec: dec.slice(0, 1000) };
+    return { status, raw: text.slice(0, 600), dec: dec.slice(0, 1200) };
   } catch (e) {
     return { status: 0, raw: String(e), dec: "" };
   }
@@ -42,21 +42,27 @@ export async function GET() {
   const tercero = process.env.SCORE_TERCERO     ?? "1";
   const teatro  = process.env.SCORE_TEATRO      ?? "2";
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
+  const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const manana  = new Date(Date.now() + 86400000).toISOString().slice(0, 10).replace(/-/g, "");
 
-  const [scosec, scopla1, scopla2, scopla3] = await Promise.all([
-    // SCOSEC — ya funciona, control
-    callScore(base, "scosec", JSON.stringify({ Punto: pv, teatro, tercero })),
-    // SCOPLA — solo teatro/tercero (cartelera general)
-    callScore(base, "scopla", JSON.stringify({ teatro, tercero })),
-    // SCOPLA — con PuntoVenta
-    callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, teatro, tercero })),
-    // SCOPLA — con fecha de hoy
-    callScore(base, "scopla", JSON.stringify({
-      Fecha: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
-      teatro,
-      tercero,
-    })),
-  ]);
+  const tests = {
+    // Con PuntoVenta + fecha desde/hasta
+    A: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, FechaDesde: hoy, FechaHasta: manana, teatro, tercero })),
+    // Con Cinema en vez de teatro
+    B: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, Cinema: teatro, tercero })),
+    // Solo tercero y PuntoVenta
+    C: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, tercero })),
+    // Con Sala
+    D: callScore(base, "scopla", JSON.stringify({ Sala: "2", teatro, tercero })),
+    // Con Fecha (formato yyyymmdd)
+    E: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, Fecha: hoy, teatro, tercero })),
+    // SCOSIL — layout de sala
+    F: callScore(base, "scosil", JSON.stringify({ Sala: "2", teatro, tercero })),
+  };
 
-  return NextResponse.json({ scosec, scopla1, scopla2, scopla3 });
+  const results = Object.fromEntries(
+    await Promise.all(Object.entries(tests).map(async ([k, p]) => [k, await p]))
+  );
+
+  return NextResponse.json(results);
 }
