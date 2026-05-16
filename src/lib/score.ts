@@ -129,6 +129,35 @@ function parsePlanes(raw: string): ScorePlan[] {
 function parseMapa(raw: string): AsientoMapa[] {
   const asientos: AsientoMapa[] = [];
 
+  // Formato JSON con arrays paralelos: { FilaTotal, ColumnaTotal, TipoZona, Estado? }
+  try {
+    const json = JSON.parse(raw) as {
+      FilaTotal?: string[];
+      ColumnaTotal?: number[];
+      TipoSilla?: string[];
+      TipoZona?: string[];
+      Estado?: string[];
+    };
+    if (Array.isArray(json.FilaTotal) && Array.isArray(json.ColumnaTotal)) {
+      for (let i = 0; i < json.FilaTotal.length; i++) {
+        const fila = json.FilaTotal[i]?.toUpperCase() ?? "";
+        const col  = Math.round(json.ColumnaTotal[i] ?? 0);
+        const zona = (json.TipoZona?.[i] ?? json.TipoSilla?.[i] ?? "GENERAL").toUpperCase();
+        const est  = (json.Estado?.[i] ?? "S").toUpperCase();
+        if (fila && col) {
+          asientos.push({
+            fila,
+            columna: col,
+            estado: est === "B" ? "B" : est === "R" ? "R" : "S",
+            zona,
+          });
+        }
+      }
+      if (asientos.length) return asientos;
+    }
+  } catch { /**/ }
+
+  // Formato key:value con Fila:A,Columna:1,...
   const byFila = raw.split(/(?=(?:^|,)Fila:[A-Z],)/i);
   if (byFila.length > 1) {
     for (const chunk of byFila) {
@@ -149,6 +178,7 @@ function parseMapa(raw: string): AsientoMapa[] {
     if (asientos.length) return asientos;
   }
 
+  // Formato compacto "A1:S,A2:B,..."
   for (const item of raw.split(",")) {
     const m = item.trim().match(/^([A-Z])(\d+):([SBRsbr])/i);
     if (m) {
