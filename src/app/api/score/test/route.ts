@@ -31,7 +31,7 @@ async function callScore(base: string, service: string, plaintext: string) {
       const item = Array.isArray(j) ? j[0] : j;
       if (item?.request) dec = decrypt(item.request);
     } catch { /**/ }
-    return { status, raw: text.slice(0, 600), dec: dec.slice(0, 1200) };
+    return { status, raw: text.slice(0, 800), dec: dec.slice(0, 1500) };
   } catch (e) {
     return { status: 0, raw: String(e), dec: "" };
   }
@@ -43,21 +43,23 @@ export async function GET() {
   const teatro  = process.env.SCORE_TEATRO      ?? "2";
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const manana  = new Date(Date.now() + 86400000).toISOString().slice(0, 10).replace(/-/g, "");
 
+  // IDs reales de Score: películas 46-55, salas 2/4/5/6
+  // SCOPLA necesita FechaFuncion + Pelicula + Sala + InicioFuncion
   const tests = {
-    // Con PuntoVenta + fecha desde/hasta
-    A: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, FechaDesde: hoy, FechaHasta: manana, teatro, tercero })),
-    // Con Cinema en vez de teatro
-    B: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, Cinema: teatro, tercero })),
-    // Solo tercero y PuntoVenta
-    C: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, tercero })),
-    // Con Sala
-    D: callScore(base, "scopla", JSON.stringify({ Sala: "2", teatro, tercero })),
-    // Con Fecha (formato yyyymmdd)
-    E: callScore(base, "scopla", JSON.stringify({ PuntoVenta: pv, Fecha: hoy, teatro, tercero })),
-    // SCOSIL — layout de sala
-    F: callScore(base, "scosil", JSON.stringify({ Sala: "2", teatro, tercero })),
+    // SCOPLA con todos los parámetros reales
+    scopla_full:    callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "48", Sala: "2", InicioFuncion: "1800", teatro, tercero })),
+    scopla_pv_full: callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "48", Sala: "2", InicioFuncion: "1800", PuntoVenta: pv, teatro, tercero })),
+    scopla_sala4:   callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "51", Sala: "4", InicioFuncion: "1800", teatro, tercero })),
+    // Sin InicioFuncion — a ver si lo acepta
+    scopla_no_hora: callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "48", Sala: "2", teatro, tercero })),
+    // SCOCAR — cartelera (el que dio 500 antes según el listado Score)
+    scocar:         callScore(base, "scocar", JSON.stringify({ teatro, tercero })),
+    scocar_pv:      callScore(base, "scocar", JSON.stringify({ PuntoVenta: pv, teatro, tercero })),
+    // SCOFUN — funciones (podría existir)
+    scofun:         callScore(base, "scofun", JSON.stringify({ FechaFuncion: hoy, teatro, tercero })),
+    // SCOCAL — calendario
+    scocal:         callScore(base, "scocal", JSON.stringify({ teatro, tercero })),
   };
 
   const results = Object.fromEntries(
