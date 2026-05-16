@@ -14,17 +14,17 @@ function decrypt(b64: string): string {
   return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
 }
 
-async function req(url: string, method: string, body?: string, ct?: string) {
-  const opts: RequestInit = { method, signal: AbortSignal.timeout(10000) };
-  if (body !== undefined) {
-    opts.body = body;
-    opts.headers = { "Content-Type": ct ?? "application/x-www-form-urlencoded" };
-  }
-  const res = await fetch(url, opts);
+async function post(url: string, body: string, ct = "application/x-www-form-urlencoded") {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": ct },
+    body,
+    signal: AbortSignal.timeout(12000),
+  });
   const text = await res.text();
   let dec = "";
   try { const j = JSON.parse(text) as { request?: string }; if (j.request) dec = decrypt(j.request); } catch { /**/ }
-  return { status: res.status, body: text.slice(0, 200), dec: dec.slice(0, 200) };
+  return { status: res.status, body: text.slice(0, 800), dec: dec.slice(0, 300) };
 }
 
 export async function GET() {
@@ -35,28 +35,28 @@ export async function GET() {
   const plaintext = `Punto:${pv},teatro:${teatro},tercero:${tercero}`;
   const enc = encrypt(plaintext);
 
-  // Verificar round-trip local
-  let roundTrip = "";
-  try { roundTrip = decrypt(enc); } catch (e) { roundTrip = `ERROR: ${e}`; }
-
-  const debug = { base, plaintext, enc, roundTrip, ok: roundTrip === plaintext };
-
   const svc = `${base}/ThirdParty/api/SCOact/scosec`;
-  const qs  = `?details=${encodeURIComponent(enc)}`;
+
+  // Double-AES: encrypt(base64(plaintext)) — por si Score hace decode→decrypt→decode
+  const b64plain = Buffer.from(plaintext).toString("base64");
+  const encDouble = encrypt(b64plain);
+
+  // Base64 de ceros sin + ni / — probar si el problema es el carácter +
+  const zerosB64 = Buffer.alloc(32).toString("base64");
 
   return NextResponse.json({
-    debug,
-    // GET con query string
-    t1_GET_qs:      await req(`${svc}${qs}`, "GET").catch(e => e.message),
-    // POST con query string (body vacío)
-    t2_POST_qs:     await req(`${svc}${qs}`, "POST", "").catch(e => e.message),
-    // POST form + + literal sin encodear (el server puede estar esperando + crudo)
-    t3_POST_rawPlus: await req(svc, "POST", `details=${enc.replace(/\+/g, "%2B").replace(/=/g, "%3D")}`).catch(e => e.message),
-    // POST form + solo el base64 como body (sin "details=")
-    t4_POST_justB64: await req(svc, "POST", enc).catch(e => e.message),
-    // POST JSON con campo "request" en vez de "details"
-    t5_POST_jsonReq: await req(svc, "POST", JSON.stringify({ request: enc }), "application/json").catch(e => e.message),
-    // Double base64
-    t6_POST_double:  await req(svc, "POST", new URLSearchParams({ details: btoa(enc) }).toString()).catch(e => e.message),
+    debug: { base, plaintext, enc, b64plain, encDouble, zerosB64 },
+
+    // Envío normal (URLSearchParams) — stack trace completo
+    normal: await post(svc, new URLSearchParams({ details: enc }).toString()).catch(e => e.message),
+
+    // Doble-encode: tal vez Score hace decode del resultado después de descifrar
+    doubleEnc: await post(svc, new URLSearchParams({ details: encDouble }).toString()).catch(e => e.message),
+
+    // Base64 de zeros (sin + ni /) — aislar si el problema es el +
+    zerosTest: await post(svc, new URLSearchParams({ details: zerosB64 }).toString()).catch(e => e.message),
+
+    // Sin encriptar — por si Score no encripta en este endpoint
+    noEncrypt: await post(svc, new URLSearchParams({ details: plaintext }).toString()).catch(e => e.message),
   });
 }
