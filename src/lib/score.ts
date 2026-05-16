@@ -29,7 +29,7 @@ async function call(
   const base = process.env.SCORE_BASE_URL;
   if (!base) throw new Error("SCORE_BASE_URL no configurado");
 
-  const res = await fetch(`${base}/ThirdParty/api/SCO/act/${service}`, {
+  const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ details: encrypt(plaintext) }),
