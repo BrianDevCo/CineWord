@@ -93,7 +93,7 @@ export default function BookingSection({ movie, funciones }: Props) {
   }, [mapaScore, usaScoreMapa]);
 
   const vipFilasSet = useMemo(() => {
-    if (usaScoreMapa) return new Set(mapaScore.filter(a => a.zona.toUpperCase().includes("VIP")).map(a => a.fila));
+    if (usaScoreMapa) return new Set(mapaScore.filter(a => { const z = a.zona.toUpperCase(); return z.includes("VIP") || z.includes("PREMIUM"); }).map(a => a.fila));
     return new Set(FALLBACK_VIP);
   }, [mapaScore, usaScoreMapa]);
 
@@ -105,6 +105,19 @@ export default function BookingSection({ movie, funciones }: Props) {
     }
     return Array.from({ length: FALLBACK_COLS }, (_, i) => i + 1);
   }, [mapaScore, usaScoreMapa]);
+
+  // Rango global de columnas para mostrar pasillos (columnas sin asiento = espacio vacío)
+  const allCols = useMemo(() => {
+    if (!usaScoreMapa) return null;
+    const cols = mapaScore.map(a => a.columna);
+    const min = Math.min(...cols);
+    const max = Math.max(...cols);
+    return Array.from({ length: max - min + 1 }, (_, i) => i + min);
+  }, [mapaScore, usaScoreMapa]);
+
+  const seatExists = useCallback((fila: string, col: number) =>
+    mapaScore.some(a => a.fila === fila && a.columna === col),
+  [mapaScore]);
 
   const ocupadosSet = useMemo(() => {
     if (usaScoreMapa) return new Set(mapaScore.filter(a => a.estado !== "S").map(a => `${a.fila}${a.columna}`));
@@ -620,8 +633,11 @@ export default function BookingSection({ movie, funciones }: Props) {
                     <div key={row} className="flex items-center gap-2 justify-center">
                       <span className="w-5 text-center text-gray-600 text-xs font-heading shrink-0">{row}</span>
                       <div className="flex gap-1.5">
-                        {colsEnFila(row).map(col => {
+                        {(allCols ?? colsEnFila(row)).map(col => {
                           const id = `${row}${col}`;
+                          if (allCols && !seatExists(row, col)) {
+                            return <div key={`gap-${col}`} className="w-7 h-6 shrink-0" />;
+                          }
                           return (
                             <button key={id} onClick={() => toggleSeat(id)} title={ocupadosSet.has(id) ? "Ocupado" : id}
                               className={`w-7 h-6 rounded-t-md border text-[10px] transition-all duration-150 ${seatClass(id)}`} />
