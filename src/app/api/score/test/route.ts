@@ -14,7 +14,7 @@ function decrypt(b64: string): string {
   return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
 }
 
-async function post(url: string, body: string, ct = "application/x-www-form-urlencoded") {
+async function call(url: string, body: string, ct: string) {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": ct },
@@ -24,7 +24,7 @@ async function post(url: string, body: string, ct = "application/x-www-form-urle
   const text = await res.text();
   let dec = "";
   try { const j = JSON.parse(text) as { request?: string }; if (j.request) dec = decrypt(j.request); } catch { /**/ }
-  return { status: res.status, body: text.slice(0, 800), dec: dec.slice(0, 300) };
+  return { status: res.status, body: text.slice(0, 600), dec };
 }
 
 export async function GET() {
@@ -34,29 +34,20 @@ export async function GET() {
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const plaintext = `Punto:${pv},teatro:${teatro},tercero:${tercero}`;
   const enc = encrypt(plaintext);
-
   const svc = `${base}/ThirdParty/api/SCOact/scosec`;
 
-  // Double-AES: encrypt(base64(plaintext)) — por si Score hace decode→decrypt→decode
-  const b64plain = Buffer.from(plaintext).toString("base64");
-  const encDouble = encrypt(b64plain);
+  // LA FIX: enviar el base64 como JSON string puro (sin wrapper objeto)
+  // → ASP.NET deserializa JValue → .ToString() = el base64 limpio
+  const fixResult = await call(svc, JSON.stringify(enc), "application/json");
 
-  // Base64 de ceros sin + ni / — probar si el problema es el carácter +
-  const zerosB64 = Buffer.alloc(32).toString("base64");
+  // Variante: JSON string con scocart para ver qué servicios responden
+  const svcCar = `${base}/ThirdParty/api/SCOact/scocar`;
+  const plainCar = `teatro:${teatro},tercero:${tercero}`;
+  const carResult = await call(svcCar, JSON.stringify(encrypt(plainCar)), "application/json");
 
   return NextResponse.json({
-    debug: { base, plaintext, enc, b64plain, encDouble, zerosB64 },
-
-    // Envío normal (URLSearchParams) — stack trace completo
-    normal: await post(svc, new URLSearchParams({ details: enc }).toString()).catch(e => e.message),
-
-    // Doble-encode: tal vez Score hace decode del resultado después de descifrar
-    doubleEnc: await post(svc, new URLSearchParams({ details: encDouble }).toString()).catch(e => e.message),
-
-    // Base64 de zeros (sin + ni /) — aislar si el problema es el +
-    zerosTest: await post(svc, new URLSearchParams({ details: zerosB64 }).toString()).catch(e => e.message),
-
-    // Sin encriptar — por si Score no encripta en este endpoint
-    noEncrypt: await post(svc, new URLSearchParams({ details: plaintext }).toString()).catch(e => e.message),
+    debug: { base, plaintext, enc },
+    scosec_jsonString: fixResult,
+    scocar_jsonString: carResult,
   });
 }
