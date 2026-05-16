@@ -14,20 +14,17 @@ function decrypt(b64: string): string {
   return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
 }
 
-async function post(base: string, service: string, body: string, ct: string) {
-  const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
-    method: "POST",
-    headers: { "Content-Type": ct },
-    body,
-    signal: AbortSignal.timeout(10000),
-  });
+async function req(url: string, method: string, body?: string, ct?: string) {
+  const opts: RequestInit = { method, signal: AbortSignal.timeout(10000) };
+  if (body !== undefined) {
+    opts.body = body;
+    opts.headers = { "Content-Type": ct ?? "application/x-www-form-urlencoded" };
+  }
+  const res = await fetch(url, opts);
   const text = await res.text();
-  let decrypted = "";
-  try {
-    const json = JSON.parse(text) as { request?: string };
-    if (json.request) decrypted = decrypt(json.request);
-  } catch { /* ignore */ }
-  return { status: res.status, body: text.slice(0, 300), decrypted: decrypted.slice(0, 300) };
+  let dec = "";
+  try { const j = JSON.parse(text) as { request?: string }; if (j.request) dec = decrypt(j.request); } catch { /**/ }
+  return { status: res.status, body: text.slice(0, 200), dec: dec.slice(0, 200) };
 }
 
 export async function GET() {
@@ -38,39 +35,28 @@ export async function GET() {
   const plaintext = `Punto:${pv},teatro:${teatro},tercero:${tercero}`;
   const enc = encrypt(plaintext);
 
-  // Ver qué produce la encriptación
-  const debug = { base, plaintext, enc_raw: enc, enc_length: enc.length };
+  // Verificar round-trip local
+  let roundTrip = "";
+  try { roundTrip = decrypt(enc); } catch (e) { roundTrip = `ERROR: ${e}`; }
 
-  // Intento 1: URLSearchParams (estándar)
-  const t1 = await post(base, "scosec",
-    new URLSearchParams({ details: enc }).toString(),
-    "application/x-www-form-urlencoded"
-  ).catch(e => e.message);
+  const debug = { base, plaintext, enc, roundTrip, ok: roundTrip === plaintext };
 
-  // Intento 2: encodeURIComponent manual
-  const t2 = await post(base, "scosec",
-    `details=${encodeURIComponent(enc)}`,
-    "application/x-www-form-urlencoded"
-  ).catch(e => e.message);
+  const svc = `${base}/ThirdParty/api/SCOact/scosec`;
+  const qs  = `?details=${encodeURIComponent(enc)}`;
 
-  // Intento 3: JSON body
-  const t3 = await post(base, "scosec",
-    JSON.stringify({ details: enc }),
-    "application/json"
-  ).catch(e => e.message);
-
-  // Intento 4: base64 sin padding (quitar los = finales)
-  const encNoPad = enc.replace(/=+$/, "");
-  const t4 = await post(base, "scosec",
-    new URLSearchParams({ details: encNoPad }).toString(),
-    "application/x-www-form-urlencoded"
-  ).catch(e => e.message);
-
-  // Intento 5: raw body solo el valor base64 sin clave
-  const t5 = await post(base, "scosec",
-    enc,
-    "text/plain"
-  ).catch(e => e.message);
-
-  return NextResponse.json({ debug, t1_URLSearchParams: t1, t2_encodeURI: t2, t3_JSON: t3, t4_noPadding: t4, t5_rawBody: t5 });
+  return NextResponse.json({
+    debug,
+    // GET con query string
+    t1_GET_qs:      await req(`${svc}${qs}`, "GET").catch(e => e.message),
+    // POST con query string (body vacío)
+    t2_POST_qs:     await req(`${svc}${qs}`, "POST", "").catch(e => e.message),
+    // POST form + + literal sin encodear (el server puede estar esperando + crudo)
+    t3_POST_rawPlus: await req(svc, "POST", `details=${enc.replace(/\+/g, "%2B").replace(/=/g, "%3D")}`).catch(e => e.message),
+    // POST form + solo el base64 como body (sin "details=")
+    t4_POST_justB64: await req(svc, "POST", enc).catch(e => e.message),
+    // POST JSON con campo "request" en vez de "details"
+    t5_POST_jsonReq: await req(svc, "POST", JSON.stringify({ request: enc }), "application/json").catch(e => e.message),
+    // Double base64
+    t6_POST_double:  await req(svc, "POST", new URLSearchParams({ details: btoa(enc) }).toString()).catch(e => e.message),
+  });
 }
