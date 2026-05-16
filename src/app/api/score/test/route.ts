@@ -14,7 +14,7 @@ function decrypt(b64: string): string {
   return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
 }
 
-async function callRaw(url: string, body: string, ct: string) {
+async function post(url: string, body: string, ct: string) {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": ct },
@@ -25,7 +25,7 @@ async function callRaw(url: string, body: string, ct: string) {
   const text = await res.text();
   let dec = "";
   try { const j = JSON.parse(text) as { request?: string }; if (j.request) dec = decrypt(j.request); } catch { /**/ }
-  return { status: res.status, body: text.slice(0, 400), dec };
+  return { status: res.status, body: text.slice(0, 500), dec };
 }
 
 export async function GET() {
@@ -37,27 +37,28 @@ export async function GET() {
   const enc = encrypt(plaintext);
   const svc = `${base}/ThirdParty/api/SCOact/scosec`;
 
-  // Construir los bodies y mostrarlos en debug antes de enviar
-  const bodyA = JSON.stringify(enc);                                           // "ZFHu6..."
-  const bodyB = new URLSearchParams({ details: enc }).toString();              // details=ZFHu6...
-  const bodyC = `XXXXXXXXXXX`;                                                 // hardcoded para ver qué recibe Score
-  const bodyD = enc;                                                           // base64 crudo
+  // Hipótesis: Cloudflare decodifica %2B→+ y %3D→= antes de reenviar al servidor.
+  // Fix: doble-encodear para que después de un nivel de decode quede %2B y %3D.
+  const doubleEncodedBody = `details=${enc.replace(/\+/g, "%252B").replace(/=/g, "%253D")}`;
+
+  // También probar: doble encode solo del +, dejando = como %3D normal
+  const halfDoubleBody = `details=${enc.replace(/\+/g, "%252B").replace(/=/g, "%3D")}`;
+
+  // Y probar: + como %2B normal pero = literal (sin encodear)
+  const noEqualEncode = `details=${enc.replace(/\+/g, "%2B")}`;
+
+  // Teoría alternativa: mandar solo el base64 sin form, pero como form-data boundary
+  const rawPlusBody = `details=${enc}`;  // + literal y = literal, sin ningún encode
 
   return NextResponse.json({
-    debug: {
-      base, enc,
-      bodyA_sent: bodyA,
-      bodyA_char0: bodyA[0],
-      bodyA_code0: bodyA.charCodeAt(0),
-      bodyB_sent: bodyB.slice(0, 80),
-    },
-    // A: JSON string puro — qué recibe el servidor?
-    A_jsonString: await callRaw(svc, bodyA, "application/json").catch(e => String(e)),
-    // B: form URLencoded — confirmación de error anterior
-    B_form: await callRaw(svc, bodyB, "application/x-www-form-urlencoded").catch(e => String(e)),
-    // C: hardcoded "XXXXXXXXXXX" — para ver qué carácter reporta Score
-    C_hardcoded: await callRaw(svc, bodyC, "application/json").catch(e => String(e)),
-    // D: base64 crudo sin JSON ni form
-    D_rawB64: await callRaw(svc, bodyD, "application/json").catch(e => String(e)),
+    debug: { base, plaintext, enc, doubleEncodedBody, halfDoubleBody },
+    // Doble-encode completo: + → %252B, = → %253D
+    A_doubleEncode: await post(svc, doubleEncodedBody, "application/x-www-form-urlencoded").catch(e => String(e)),
+    // Doble-encode solo del +, = como %3D
+    B_halfDouble: await post(svc, halfDoubleBody, "application/x-www-form-urlencoded").catch(e => String(e)),
+    // + como %2B pero = sin encodear (literal)
+    C_noEqualEncode: await post(svc, noEqualEncode, "application/x-www-form-urlencoded").catch(e => String(e)),
+    // Todo literal sin encodear
+    D_rawPlus: await post(svc, rawPlusBody, "application/x-www-form-urlencoded").catch(e => String(e)),
   });
 }
