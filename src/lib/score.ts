@@ -42,7 +42,20 @@ async function call(
   if (!item?.request) throw new Error(`Score ${service}: sin campo 'request'`);
 
   const raw = decrypt(item.request);
-  return { raw, kv: parseKV(raw) };
+
+  // La respuesta puede venir como JSON array/objeto o como key:value
+  let kv: Record<string, string> = {};
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown> | Record<string, unknown>[];
+    const obj = Array.isArray(parsed) ? parsed[0] : parsed;
+    if (obj && typeof obj === "object") {
+      for (const [k, v] of Object.entries(obj)) kv[k] = String(v);
+    }
+  } catch {
+    kv = parseKV(raw);
+  }
+
+  return { raw, kv };
 }
 
 const tercero    = () => process.env.SCORE_TERCERO     ?? "1";
@@ -160,7 +173,7 @@ export async function scoreGetSecuencia(): Promise<{ secuencia: string; recargo:
   );
   return {
     secuencia: kv.Secuencia ?? kv.secuencia ?? "",
-    recargo:   parseInt(kv.RecargoVentaInternet ?? "0", 10),
+    recargo:   parseInt(kv.Recargo_Venta_Internet ?? kv.RecargoVentaInternet ?? "0", 10),
   };
 }
 
