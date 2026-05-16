@@ -14,17 +14,18 @@ function decrypt(b64: string): string {
   return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
 }
 
-async function call(url: string, body: string, ct: string) {
+async function callRaw(url: string, body: string, ct: string) {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": ct },
     body,
+    cache: "no-store",
     signal: AbortSignal.timeout(12000),
   });
   const text = await res.text();
   let dec = "";
   try { const j = JSON.parse(text) as { request?: string }; if (j.request) dec = decrypt(j.request); } catch { /**/ }
-  return { status: res.status, body: text.slice(0, 600), dec };
+  return { status: res.status, body: text.slice(0, 400), dec };
 }
 
 export async function GET() {
@@ -36,18 +37,27 @@ export async function GET() {
   const enc = encrypt(plaintext);
   const svc = `${base}/ThirdParty/api/SCOact/scosec`;
 
-  // LA FIX: enviar el base64 como JSON string puro (sin wrapper objeto)
-  // → ASP.NET deserializa JValue → .ToString() = el base64 limpio
-  const fixResult = await call(svc, JSON.stringify(enc), "application/json");
-
-  // Variante: JSON string con scocart para ver qué servicios responden
-  const svcCar = `${base}/ThirdParty/api/SCOact/scocar`;
-  const plainCar = `teatro:${teatro},tercero:${tercero}`;
-  const carResult = await call(svcCar, JSON.stringify(encrypt(plainCar)), "application/json");
+  // Construir los bodies y mostrarlos en debug antes de enviar
+  const bodyA = JSON.stringify(enc);                                           // "ZFHu6..."
+  const bodyB = new URLSearchParams({ details: enc }).toString();              // details=ZFHu6...
+  const bodyC = `XXXXXXXXXXX`;                                                 // hardcoded para ver qué recibe Score
+  const bodyD = enc;                                                           // base64 crudo
 
   return NextResponse.json({
-    debug: { base, plaintext, enc },
-    scosec_jsonString: fixResult,
-    scocar_jsonString: carResult,
+    debug: {
+      base, enc,
+      bodyA_sent: bodyA,
+      bodyA_char0: bodyA[0],
+      bodyA_code0: bodyA.charCodeAt(0),
+      bodyB_sent: bodyB.slice(0, 80),
+    },
+    // A: JSON string puro — qué recibe el servidor?
+    A_jsonString: await callRaw(svc, bodyA, "application/json").catch(e => String(e)),
+    // B: form URLencoded — confirmación de error anterior
+    B_form: await callRaw(svc, bodyB, "application/x-www-form-urlencoded").catch(e => String(e)),
+    // C: hardcoded "XXXXXXXXXXX" — para ver qué carácter reporta Score
+    C_hardcoded: await callRaw(svc, bodyC, "application/json").catch(e => String(e)),
+    // D: base64 crudo sin JSON ni form
+    D_rawB64: await callRaw(svc, bodyD, "application/json").catch(e => String(e)),
   });
 }
