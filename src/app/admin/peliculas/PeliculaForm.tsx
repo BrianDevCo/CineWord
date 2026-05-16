@@ -40,6 +40,7 @@ export default function PeliculaForm({ pelicula }: Props) {
     orden: pelicula?.orden ?? 0,
     accent_color: pelicula?.accent_color ?? "#CC1244",
     edad_minima: pelicula?.edad_minima ?? 0,
+    score_pelicula_id: pelicula?.score_pelicula_id ?? "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -222,6 +223,12 @@ export default function PeliculaForm({ pelicula }: Props) {
               <input value={form.accent_color} onChange={(e) => set("accent_color", e.target.value)}
                 className={`${inputClass} flex-1`} />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className={labelClass}>Score Película ID</label>
+            <input value={form.score_pelicula_id} onChange={(e) => set("score_pelicula_id", e.target.value)}
+              placeholder="Ej: 48" className={inputClass} />
           </div>
 
           <div className="flex items-center gap-3 pt-2">

@@ -53,6 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       orden: body.orden ?? 0,
       accent_color: body.accent_color || "#CC1244",
       edad_minima: body.edad_minima ?? 0,
+      score_pelicula_id: body.score_pelicula_id || null,
     })
     .eq("id", id)
     .select()

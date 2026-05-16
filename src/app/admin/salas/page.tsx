@@ -77,6 +77,10 @@ export default function SalasAdminPage() {
                     <label className="font-heading text-xs text-gray-500 tracking-widest">Filas VIP (separadas por coma)</label>
                     <input value={editing.filas_vip.join(", ")} onChange={(e) => setEditing({ ...editing, filas_vip: e.target.value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean) })} className={inputClass} placeholder="G, H" />
                   </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-heading text-xs text-gray-500 tracking-widest">Score Sala ID</label>
+                    <input value={editing.score_sala_id ?? ""} onChange={(e) => setEditing({ ...editing, score_sala_id: e.target.value || null })} className={inputClass} placeholder="Ej: 2" />
+                  </div>
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => setEditing({ ...editing, activa: !editing.activa })}
                       className={`w-9 h-5 rounded-full transition-colors relative ${editing.activa ? "bg-[#CC1244]" : "bg-white/20"}`}>

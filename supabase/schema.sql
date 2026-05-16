@@ -10,7 +10,8 @@ create table if not exists salas (
   filas integer not null default 8,
   columnas integer not null default 10,
   filas_vip text[] default '{}',
-  activa boolean default true
+  activa boolean default true,
+  score_sala_id text
 );
 
 -- Películas
@@ -34,6 +35,7 @@ create table if not exists peliculas (
   activa boolean default true,
   orden integer default 0,
   accent_color text default '#CC1244',
+  score_pelicula_id text,
   created_at timestamptz default now()
 );
 
@@ -48,6 +50,10 @@ create table if not exists funciones (
   precio_regular integer not null default 15000,
   precio_vip integer not null default 25000,
   activa boolean default true,
+  score_pelicula_id text,
+  score_sala_id text,
+  score_tarifa_regular text,
+  score_tarifa_vip text,
   created_at timestamptz default now()
 );
 

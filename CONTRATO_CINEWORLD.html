@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contrato de Desarrollo de Software — CINEWORLD</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Georgia", serif;
+      font-size: 11.5pt;
+      line-height: 1.75;
+      color: #1a1a1a;
+      background: #fff;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 60px 70px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #1a3a6b;
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+    .header .logo-text {
+      font-family: "Georgia", serif;
+      font-size: 28pt;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: #1a3a6b;
+    }
+    .header .doc-title {
+      font-size: 13pt;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #333;
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+    .header .doc-sub {
+      font-size: 10pt;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* ── SECCIONES ── */
+    .seccion {
+      margin-bottom: 30px;
+    }
+    h2 {
+      font-size: 11.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #1a3a6b;
+      border-left: 4px solid #1a3a6b;
+      padding-left: 10px;
+      margin-bottom: 12px;
+    }
+    h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin: 14px 0 6px;
+    }
+    p {
+      margin-bottom: 10px;
+      text-align: justify;
+    }
+
+    /* ── PARTES ── */
+    .partes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 12px;
+    }
+    .parte-box {
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      border-top: 3px solid #1a3a6b;
+      padding: 16px 18px;
+      border-radius: 2px;
+    }
+    .parte-box .rol {
+      font-size: 9pt;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #1a3a6b;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .parte-box .nombre {
+      font-size: 11.5pt;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .parte-box .datos {
+      font-size: 10pt;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    /* ── LISTAS ── */
+    ul, ol {
+      padding-left: 24px;
+      margin-bottom: 10px;
+    }
+    li {
+      margin-bottom: 5px;
+    }
+
+    /* ── TABLA ESPECIFICACIONES ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 10.5pt;
+    }
+    thead tr {
+      background: #1a3a6b;
+      color: white;
+    }
+    thead th {
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody tr:nth-child(odd)  { background: #fff; }
+    tbody td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    tbody td:first-child { font-weight: bold; color: #333; width: 32%; }
+
+    /* ── VALOR Y PAGOS ── */
+    .pago-box {
+      background: #fff8f9;
+      border: 1px solid #f0c0ce;
+      border-radius: 4px;
+      padding: 18px 22px;
+      margin: 12px 0;
+    }
+    .pago-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid #f0c0ce;
+      font-size: 10.5pt;
+    }
+    .pago-row:last-child { border-bottom: none; font-weight: bold; color: #1a3a6b; font-size: 11pt; }
+    .pago-label { color: #444; }
+    .pago-valor { font-weight: bold; color: #1a1a1a; }
+
+    /* ── CLÁUSULAS ── */
+    .clausula {
+      margin-bottom: 18px;
+    }
+    .clausula-num {
+      font-weight: bold;
+      color: #1a3a6b;
+    }
+
+    /* ── FIRMAS ── */
+    .firmas {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin-top: 50px;
+    }
+    .firma-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .firma-linea {
+      border-top: 1.5px solid #1a1a1a;
+      padding-top: 8px;
+      margin-top: 56px;
+    }
+    .firma-nombre { font-weight: bold; font-size: 11pt; }
+    .firma-dato   { font-size: 10pt; color: #555; }
+    .firma-rol    { font-size: 9pt; letter-spacing: 1.5px; text-transform: uppercase; color: #1a3a6b; font-weight: bold; }
+
+    /* ── PIE ── */
+    .pie {
+      margin-top: 50px;
+      padding-top: 18px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 9pt;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    /* ── ALERTA / NOTA ── */
+    .nota {
+      background: #fffbf0;
+      border-left: 4px solid #f5a623;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 10.5pt;
+      color: #5a4000;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { padding: 40px 50px; font-size: 10.5pt; }
+      .partes-grid { break-inside: avoid; }
+      h2 { break-after: avoid; }
+      .firmas { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ENCABEZADO -->
+  <div class="header">
+    <div class="logo-text">CINEWORLD</div>
+    <div class="doc-title">Contrato de Prestación de Servicios de Desarrollo de Software</div>
+    <div class="doc-sub">Documento privado · Cali, Valle del Cauca · ___ de _____________ de 2025</div>
+  </div>
+
+  <!-- PARTES -->
+  <div class="seccion">
+    <h2>Partes del Contrato</h2>
+    <p>El presente contrato se celebra entre las siguientes partes, quienes en adelante se denominarán EL DESARROLLADOR y EL CLIENTE:</p>
+
+    <div class="partes-grid">
+      <div class="parte-box">
+        <div class="rol">El Desarrollador</div>
+        <div class="nombre">Brian López Garzón</div>
+        <div class="datos">
+          C.C. 1006011463<br />
+          Cel. 3128599206<br />
+          Cali, Valle del Cauca<br />
+          Colombia
+        </div>
+      </div>
+      <div class="parte-box">
+        <div class="rol">El Cliente</div>
+        <div class="nombre">___________________________</div>
+        <div class="datos">
+          C.C. / NIT: ________________<br />
+          Razón social: ______________<br />
+          Tel: ______________________<br />
+          Ciudad: ___________________
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJETO -->
+  <div class="seccion">
+    <h2>Cláusula Primera — Objeto del Contrato</h2>
+    <p>EL DESARROLLADOR se obliga a diseñar, desarrollar y entregar un sitio web de venta de boletos en línea para el establecimiento comercial <strong>CINEWORLD</strong>, ubicado en el Centro Comercial MR Outlet, conforme a las especificaciones técnicas detalladas en la Cláusula Segunda del presente contrato.</p>
+    <p>El producto entregado es un sistema web completo que incluye: página de presentación institucional, cartelera dinámica de películas, sistema de compra de boletos con selección de asientos, pasarela de pago integrada con MercadoPago, sistema de autenticación de usuarios, y módulo de notificaciones por correo electrónico.</p>
+  </div>
+
+  <!-- ESPECIFICACIONES TÉCNICAS -->
+  <div class="seccion">
+    <h2>Cláusula Segunda — Especificaciones Técnicas del Proyecto</h2>
+    <p>El sitio web desarrollado comprende única y exclusivamente los siguientes módulos, funcionalidades y componentes, los cuales constituyen el alcance total del presente contrato:</p>
+
+    <h3>2.1 Tecnologías Utilizadas</h3>
+    <table>
+      <thead>
+        <tr><th>Componente</th><th>Tecnología</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Framework Frontend</td><td>Next.js 16 (App Router) con React 19</td></tr>
+        <tr><td>Estilos y Diseño</td><td>Tailwind CSS v4 — diseño responsivo mobile-first</td></tr>
+        <tr><td>Base de Datos y Auth</td><td>Supabase (PostgreSQL + autenticación JWT)</td></tr>
+        <tr><td>Pasarela de Pagos</td><td>MercadoPago Checkout Bricks (pago embebido)</td></tr>
+        <tr><td>Correo Electrónico</td><td>Resend — emails transaccionales automáticos</td></tr>
+        <tr><td>Hosting Recomendado</td><td>Vercel (deploy automático desde repositorio)</td></tr>
+        <tr><td>Lenguaje</td><td>TypeScript (tipado estricto)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.2 Módulo Institucional — Página Principal</h3>
+    <table>
+      <thead>
+        <tr><th>Sección</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Navbar</td><td>Barra de navegación fija con logo, links a secciones, botón de acceso a cuenta e ícono de modo claro/oscuro</td></tr>
+        <tr><td>Hero</td><td>Banner principal con imagen de fondo, eslogan, llamada a la acción y video de fondo opcional</td></tr>
+        <tr><td>Cartelera</td><td>Grilla de películas activas con filtros por género y formato, cargadas dinámicamente desde la base de datos</td></tr>
+        <tr><td>Promociones</td><td>Sección de combos y descuentos vigentes con diseño visual destacado</td></tr>
+        <tr><td>Próximos Estrenos</td><td>Películas próximas con opción de registro de correo para recibir notificación de estreno</td></tr>
+        <tr><td>Salas</td><td>Presentación de las salas disponibles del complejo (capacidad, tecnología)</td></tr>
+        <tr><td>Snacks</td><td>Menú visual de confitería con precios</td></tr>
+        <tr><td>Contacto</td><td>Información de ubicación, horarios de atención y formulario de contacto</td></tr>
+        <tr><td>Footer</td><td>Pie de página con links, redes sociales y datos legales del negocio</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.3 Módulo de Detalle de Película</h3>
+    <ul>
+      <li>Página individual por película con URL propia (<code>/pelicula/[id]</code>)</li>
+      <li>Hero cinematográfico con imagen de fondo, póster, badge de clasificación, género, duración</li>
+      <li>Sinopsis, ficha técnica (director, reparto), enlace al tráiler oficial en YouTube</li>
+      <li>Sección de compra de boletos integrada en la misma página</li>
+      <li>Carrusel de otras películas en cartelera al pie</li>
+    </ul>
+
+    <h3>2.4 Módulo de Compra de Boletos (Flujo de 5 Pasos)</h3>
+    <ol>
+      <li><strong>Selección de fecha</strong> — Próximos 7 días con funciones disponibles</li>
+      <li><strong>Selección de formato</strong> — 2D, 3D, IMAX, según disponibilidad por función</li>
+      <li><strong>Selección de horario</strong> — Funciones filtradas por fecha y formato</li>
+      <li><strong>Selección de asientos</strong> — Mapa visual de la sala; asientos disponibles, ocupados y seleccionados diferenciados por color; temporizador de reserva de 5 minutos</li>
+      <li><strong>Pago</strong> — Resumen de compra y brick de pago embebido de MercadoPago</li>
+    </ol>
+
+    <h3>2.5 Pasarela de Pagos — MercadoPago</h3>
+    <ul>
+      <li>Integración con MercadoPago Checkout Bricks (pago embebido, el usuario no abandona el sitio)</li>
+      <li>Soporte para tarjetas crédito, débito y PSE</li>
+      <li>Manejo de estados: pago aprobado, rechazado y pendiente</li>
+      <li>Webhooks para notificaciones automáticas de MercadoPago</li>
+      <li>Páginas de resultado personalizadas para cada estado (éxito, fallo, pendiente)</li>
+    </ul>
+
+    <h3>2.6 Módulo de Autenticación de Usuarios</h3>
+    <ul>
+      <li>Registro con correo electrónico y contraseña (con confirmación por email)</li>
+      <li>Inicio de sesión con correo y contraseña</li>
+      <li>Inicio de sesión con Google (OAuth 2.0)</li>
+      <li>Recuperación de contraseña por correo electrónico</li>
+      <li>Establecimiento de nueva contraseña</li>
+      <li>Cierre de sesión</li>
+      <li>Flujo de invitado: navegación libre sin login; login requerido únicamente al momento de pagar</li>
+    </ul>
+
+    <h3>2.7 Módulo de Cuenta de Usuario</h3>
+    <ul>
+      <li>Página <code>/cuenta</code> protegida por autenticación</li>
+      <li>Historial de reservas con detalle: película, fecha, horario, sala, asientos, valor y estado del pago</li>
+    </ul>
+
+    <h3>2.8 Notificación por Correo Electrónico</h3>
+    <ul>
+      <li>Email automático al comprador tras pago aprobado</li>
+      <li>Contenido: nombre del comprador, película, fecha, horario, sala, asientos asignados</li>
+      <li>Código QR único del boleto generado y embebido en el correo</li>
+      <li>Diseño del email con identidad visual de CINEWORLD</li>
+    </ul>
+
+    <h3>2.9 Base de Datos — Esquema Supabase</h3>
+    <table>
+      <thead>
+        <tr><th>Tabla</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>peliculas</td><td>Catálogo de películas en cartelera y próximas</td></tr>
+        <tr><td>salas</td><td>Salas del cine con capacidad y configuración de filas/columnas</td></tr>
+        <tr><td>funciones</td><td>Programación de funciones por película, sala, fecha y formato</td></tr>
+        <tr><td>reservas</td><td>Registro de compras realizadas por usuarios</td></tr>
+        <tr><td>asientos_ocupados</td><td>Control en tiempo real de disponibilidad de asientos por función</td></tr>
+        <tr><td>notificaciones_estreno</td><td>Correos registrados para notificación de estrenos</td></tr>
+      </tbody>
+    </table>
+    <p>El esquema incluye políticas de seguridad a nivel de fila (Row Level Security — RLS) para proteger los datos de cada usuario.</p>
+
+    <h3>2.10 SEO y Aspectos Técnicos</h3>
+    <ul>
+      <li>Metadatos optimizados por página: título, descripción, Open Graph (WhatsApp, Facebook), Twitter Card</li>
+      <li>Imagen de previsualización para redes sociales (1200×630 px) generada automáticamente</li>
+      <li>Mapa del sitio dinámico (<code>sitemap.xml</code>) con todas las películas activas</li>
+      <li>Archivo <code>robots.txt</code> configurado para indexación correcta</li>
+      <li>Favicon e ícono personalizado con identidad CINEWORLD</li>
+      <li>Página de error 404 personalizada</li>
+      <li>Datos de respaldo estáticos: el sitio funciona visualmente aunque Supabase no esté configurado</li>
+      <li>Revalidación de caché cada 5 minutos en páginas de cartelera y detalle</li>
+    </ul>
+
+    <h3>2.11 Panel de Administración Web</h3>
+    <ul>
+      <li>Acceso privado para el administrador del cine (usuario y contraseña propios)</li>
+      <li>Gestión de películas: crear, editar y desactivar películas en cartelera y próximos estrenos</li>
+      <li>Gestión de funciones: programar horarios por película, sala y formato</li>
+      <li>Gestión de precios por sala y formato</li>
+      <li>Visualización de reservas realizadas: listado con filtros por fecha, película y estado de pago</li>
+      <li>Gestión de salas: capacidad, configuración de filas y columnas</li>
+    </ul>
+
+    <h3>2.12 Integración con Sistema POS Score</h3>
+    <ul>
+      <li>Conexión entre el sitio web y el sistema Score utilizado por CINEWORLD para la venta presencial</li>
+      <li>Sincronización de disponibilidad de asientos en tiempo real entre ambas plataformas</li>
+      <li>Sincronización de reservas: las compras realizadas en el sitio web se reflejan en Score y viceversa</li>
+      <li><strong>Nota:</strong> Esta integración está condicionada a que el proveedor de Score facilite acceso a su API o mecanismo de integración. EL DESARROLLADOR realizará la integración técnica una vez EL CLIENTE gestione y obtenga dicho acceso con el proveedor Score.</li>
+    </ul>
+
+    <h3>2.13 Gestión y Actualización de Contenido</h3>
+    <ul>
+      <li>Carga inicial de películas, funciones, salas y precios en la base de datos para el lanzamiento del sitio</li>
+      <li>Capacitación al administrador del cine para el uso del panel de administración</li>
+      <li>Documentación básica de uso del panel administrativo</li>
+    </ul>
+
+    <h3>2.14 Lo que NO incluye este contrato</h3>
+    <div class="nota">
+      Las siguientes funcionalidades <strong>no hacen parte del alcance</strong> del presente contrato y deberán ser objeto de un acuerdo independiente si el cliente las requiere:
+      <ul style="margin-top:8px;">
+        <li>Aplicación móvil nativa (iOS / Android)</li>
+        <li>Soporte técnico continuo posterior a la entrega (ver Cláusula Séptima)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- VALOR -->
+  <div class="seccion">
+    <h2>Cláusula Tercera — Valor y Forma de Pago</h2>
+    <p>El valor total acordado por el desarrollo descrito en la Cláusula Segunda es el siguiente:</p>
+
+    <div class="pago-box">
+      <div class="pago-row">
+        <span class="pago-label">Anticipo (50%) — A la firma del contrato</span>
+        <span class="pago-valor">$ ________________ COP</span>
+      </div>
+      <div class="pago-row">
+        <span class="pago-label">Saldo (50%) — A la entrega final del proyecto</span>
+        <span class="pago-valor">$ ________________ COP</span>
+      </div>
+      <div class="pago-row">
+        <span class="pago-label">VALOR TOTAL DEL CONTRATO</span>
+        <span class="pago-valor">$ ________________ COP</span>
+      </div>
+    </div>
+
+    <p><strong>Método de pago:</strong> Transferencia bancaria, Nequi, Daviplata o efectivo, según acuerdo entre las partes.</p>
+    <p><strong>Nota:</strong> Los valores anteriores no incluyen los costos operativos de terceros (Supabase, Vercel, Resend, dominio, MercadoPago), los cuales son responsabilidad exclusiva de EL CLIENTE una vez desplegado el sistema en producción.</p>
+  </div>
+
+  <!-- PLAZO -->
+  <div class="seccion">
+    <h2>Cláusula Cuarta — Plazo de Entrega</h2>
+    <p>EL DESARROLLADOR entregará el proyecto terminado en un plazo de <strong>_____ (_____) días calendario</strong> contados a partir de la fecha de recepción del anticipo establecido en la Cláusula Tercera, y siempre que EL CLIENTE haya suministrado oportunamente toda la información requerida (logo, imágenes, textos, contenidos y accesos).</p>
+    <p>El plazo podrá prorrogarse de mutuo acuerdo cuando la demora sea causada por: (i) retraso en el suministro de información por parte de EL CLIENTE, (ii) solicitudes de cambio que amplíen el alcance original, o (iii) causas de fuerza mayor o caso fortuito.</p>
+  </div>
+
+  <!-- OBLIGACIONES DESARROLLADOR -->
+  <div class="seccion">
+    <h2>Cláusula Quinta — Obligaciones del Desarrollador</h2>
+    <ul>
+      <li>Desarrollar el sitio web conforme a las especificaciones de la Cláusula Segunda.</li>
+      <li>Entregar el código fuente completo al finalizar el proyecto.</li>
+      <li>Realizar pruebas funcionales antes de la entrega final.</li>
+      <li>Brindar asesoría durante el proceso de configuración de los servicios de terceros (Supabase, Vercel, MercadoPago, Resend).</li>
+      <li>Mantener confidencialidad sobre la información del cliente y del negocio.</li>
+      <li>Garantizar que el sistema es apto para producción al momento de la entrega.</li>
+    </ul>
+  </div>
+
+  <!-- OBLIGACIONES CLIENTE -->
+  <div class="seccion">
+    <h2>Cláusula Sexta — Obligaciones del Cliente</h2>
+    <ul>
+      <li>Cancelar el anticipo pactado para dar inicio al desarrollo.</li>
+      <li>Suministrar oportunamente los contenidos necesarios: logo en alta resolución, imágenes de películas, textos institucionales, información de contacto y precios.</li>
+      <li>Crear y gestionar las cuentas en los servicios de terceros (Supabase, Vercel, Resend, MercadoPago) con su propia información.</li>
+      <li>Asumir los costos operativos mensuales de dichos servicios.</li>
+      <li>Aprobar o solicitar ajustes dentro de los 5 días hábiles siguientes a cada entrega parcial.</li>
+      <li>Cancelar el saldo restante antes de recibir la entrega final.</li>
+      <li>Gestionar la compra del dominio web del negocio.</li>
+    </ul>
+  </div>
+
+  <!-- GARANTIA -->
+  <div class="seccion">
+    <h2>Cláusula Séptima — Garantía y Soporte Post-Entrega</h2>
+    <p>EL DESARROLLADOR otorga una garantía de <strong>treinta (30) días calendario</strong> contados desde la entrega final del proyecto. Durante este período se corregirán, sin costo adicional, los errores o fallas que correspondan al alcance contratado en la Cláusula Segunda.</p>
+    <p>No están cubiertos por la garantía: errores causados por modificaciones realizadas por EL CLIENTE o terceros, fallas originadas en los servicios de terceros (Supabase, Vercel, MercadoPago, Resend), ni solicitudes de nuevas funcionalidades.</p>
+    <p>El soporte técnico continuo, las actualizaciones de contenido y la incorporación de nuevas funcionalidades posteriores al período de garantía serán cotizadas y facturadas de manera independiente.</p>
+  </div>
+
+  <!-- PROPIEDAD INTELECTUAL -->
+  <div class="seccion">
+    <h2>Cláusula Octava — Propiedad Intelectual</h2>
+    <p>Una vez realizado el pago total del contrato, EL CLIENTE adquiere la titularidad del código fuente desarrollado específicamente para este proyecto, así como el derecho de uso, modificación y explotación comercial del mismo.</p>
+    <p>EL DESARROLLADOR conserva el derecho de mencionar este proyecto en su portafolio profesional, sin revelar información confidencial del negocio.</p>
+    <p>Las tecnologías de terceros utilizadas (Next.js, Supabase, MercadoPago, Resend, Tailwind CSS) están sujetas a sus propias licencias de uso, las cuales son responsabilidad de EL CLIENTE conocer y aceptar.</p>
+  </div>
+
+  <!-- CONFIDENCIALIDAD -->
+  <div class="seccion">
+    <h2>Cláusula Novena — Confidencialidad</h2>
+    <p>Ambas partes se comprometen a mantener estricta confidencialidad sobre la información técnica, comercial y financiera que sea compartida en el marco de este contrato. Esta obligación permanecerá vigente por un período de dos (2) años contados desde la terminación del contrato.</p>
+    <p>Se exceptúa de la confidencialidad la información que sea de dominio público, que deba revelarse por mandato legal o judicial, o que sea requerida por entidades gubernamentales competentes.</p>
+  </div>
+
+  <!-- LIMITACION RESPONSABILIDAD -->
+  <div class="seccion">
+    <h2>Cláusula Décima — Limitación de Responsabilidad</h2>
+    <p>EL DESARROLLADOR no será responsable por:</p>
+    <ul>
+      <li>Interrupciones, caídas o fallas de los servicios de terceros (Supabase, Vercel, MercadoPago, Resend, Google).</li>
+      <li>Pérdida de datos ocasionada por manejo inadecuado de la base de datos por parte de EL CLIENTE.</li>
+      <li>Accesos no autorizados derivados de contraseñas débiles o credenciales compartidas por EL CLIENTE.</li>
+      <li>Incumplimientos regulatorios derivados del contenido publicado por EL CLIENTE.</li>
+      <li>Comisiones, retenciones o cargos cobrados por MercadoPago u otras entidades financieras.</li>
+      <li>Perjuicios indirectos, lucro cesante o daño emergente que superen el valor total del presente contrato.</li>
+    </ul>
+  </div>
+
+  <!-- MODIFICACIONES -->
+  <div class="seccion">
+    <h2>Cláusula Décimo Primera — Cambios y Solicitudes Adicionales</h2>
+    <p>Se entiende por cambio cualquier modificación, adición o eliminación de funcionalidades respecto al alcance definido en la Cláusula Segunda. Los cambios solicitados durante el desarrollo serán evaluados y, si implican trabajo adicional, serán cotizados y aprobados por escrito antes de ejecutarse.</p>
+    <p>Hasta dos (2) rondas de ajustes estéticos menores (colores, textos, imágenes) están incluidas sin costo adicional durante el período de desarrollo.</p>
+  </div>
+
+  <!-- TERMINACION -->
+  <div class="seccion">
+    <h2>Cláusula Décimo Segunda — Terminación del Contrato</h2>
+    <p>El presente contrato terminará por:</p>
+    <ul>
+      <li><strong>Cumplimiento:</strong> Entrega del producto terminado y pago total por parte de EL CLIENTE.</li>
+      <li><strong>Mutuo acuerdo:</strong> Decisión escrita de ambas partes en cualquier momento.</li>
+      <li><strong>Incumplimiento de pago:</strong> Si EL CLIENTE no realiza el pago del saldo dentro de los diez (10) días hábiles siguientes al aviso de entrega, EL DESARROLLADOR podrá suspender la entrega del código fuente hasta tanto se regularice el pago. El anticipo no será reembolsable en este caso.</li>
+      <li><strong>Desistimiento del cliente:</strong> Si EL CLIENTE desiste del proyecto una vez iniciado el desarrollo, perderá el anticipo pagado como compensación al trabajo ejecutado.</li>
+    </ul>
+  </div>
+
+  <!-- RESOLUCION CONFLICTOS -->
+  <div class="seccion">
+    <h2>Cláusula Décimo Tercera — Resolución de Conflictos y Jurisdicción</h2>
+    <p>En caso de controversia derivada del presente contrato, las partes se comprometen a agotar en primera instancia una etapa de arreglo directo de buena fe durante quince (15) días hábiles.</p>
+    <p>De no lograrse acuerdo, las partes se someterán a la jurisdicción de los jueces y tribunales competentes de la ciudad de <strong>Cali, Valle del Cauca, República de Colombia</strong>, renunciando expresamente a cualquier otro fuero que pudiera corresponderles.</p>
+    <p>El presente contrato se rige en su totalidad por las leyes de la República de Colombia, en particular por la Ley 527 de 1999 (comercio electrónico), la Ley 1581 de 2012 (protección de datos personales) y las disposiciones aplicables del Código de Comercio.</p>
+  </div>
+
+  <!-- ACEPTACION -->
+  <div class="seccion">
+    <h2>Cláusula Décimo Cuarta — Aceptación</h2>
+    <p>Las partes declaran haber leído íntegramente el presente contrato, entender su contenido y alcance, y manifestar su libre y voluntaria aceptación mediante la firma que se impone a continuación. El contrato se firma en dos (2) ejemplares del mismo tenor y valor, uno para cada parte.</p>
+  </div>
+
+  <!-- FIRMAS -->
+  <div class="firmas">
+    <div class="firma-box">
+      <div class="firma-linea">
+        <div class="firma-nombre">Brian López Garzón</div>
+        <div class="firma-dato">C.C. 1.006.011.463</div>
+        <div class="firma-dato">Cel. 3128599206 · Cali, Valle del Cauca</div>
+        <div class="firma-rol">El Desarrollador</div>
+      </div>
+    </div>
+    <div class="firma-box">
+      <div class="firma-linea">
+        <div class="firma-nombre">___________________________</div>
+        <div class="firma-dato">C.C. / NIT: ________________</div>
+        <div class="firma-dato">Tel: ______________________</div>
+        <div class="firma-rol">El Cliente</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIE -->
+  <div class="pie">
+    <p>Contrato elaborado en Cali, Valle del Cauca, Colombia · Fecha: ___ de _____________ de 2025</p>
+    <p style="margin-top:6px;">Este documento es un acuerdo privado entre las partes. Su validez no requiere autenticación notarial, aunque cualquiera de las partes puede solicitarla.</p>
+  </div>
+
+</body>
+</html>
