@@ -107,13 +107,16 @@ export default function BookingSection({ movie, funciones }: Props) {
   }, [mapaScore, usaScoreMapa]);
 
   // Rango global de columnas para mostrar pasillos (columnas sin asiento = espacio vacío)
+  const mirrorCols = selectedFuncion?.sala?.mirror_columns ?? false;
+
   const allCols = useMemo(() => {
     if (!usaScoreMapa) return null;
     const cols = mapaScore.map(a => a.columna);
     const min = Math.min(...cols);
     const max = Math.max(...cols);
-    return Array.from({ length: max - min + 1 }, (_, i) => i + min);
-  }, [mapaScore, usaScoreMapa]);
+    const range = Array.from({ length: max - min + 1 }, (_, i) => i + min);
+    return mirrorCols ? [...range].reverse() : range;
+  }, [mapaScore, usaScoreMapa, mirrorCols]);
 
   const seatExists = useCallback((fila: string, col: number) =>
     mapaScore.some(a => a.fila === fila && a.columna === col),
@@ -623,19 +626,22 @@ export default function BookingSection({ movie, funciones }: Props) {
               </div>
             ) : (
               <>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-2/3 h-2 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full" />
-                  <span className="text-gray-600 text-xs font-heading tracking-widest">PANTALLA</span>
-                </div>
-
                 <div className="flex flex-col gap-2 overflow-x-auto">
-                  {filas.map(row => (
+                  {[...filas].reverse().map(row => (
                     <div key={row} className="flex items-center gap-2 justify-center">
                       <span className="w-5 text-center text-gray-600 text-xs font-heading shrink-0">{row}</span>
-                      <div className="flex gap-1.5">
+                      <div className="flex gap-1.5 items-center">
                         {(allCols ?? colsEnFila(row)).map(col => {
                           const id = `${row}${col}`;
                           if (allCols && !seatExists(row, col)) {
+                            // Col 3 es siempre el pasillo (escaleras) independiente del espejo
+                            if (col === 3) {
+                              return (
+                                <div key="aisle" className="w-6 h-6 flex items-center justify-center shrink-0">
+                                  <span className="text-[7px] text-gray-700 font-heading" style={{ writingMode: "vertical-rl" }}>ESC</span>
+                                </div>
+                              );
+                            }
                             return <div key={`gap-${col}`} className="w-7 h-6 shrink-0" />;
                           }
                           return (
@@ -647,6 +653,11 @@ export default function BookingSection({ movie, funciones }: Props) {
                       <span className="w-5 text-center text-gray-600 text-xs font-heading shrink-0">{row}</span>
                     </div>
                   ))}
+                </div>
+
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-2/3 h-2 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full" />
+                  <span className="text-gray-600 text-xs font-heading tracking-widest">PANTALLA</span>
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-5 text-xs font-body text-gray-500">

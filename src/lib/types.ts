@@ -7,6 +7,7 @@ export interface Sala {
   filas_vip: string[];
   activa: boolean;
   score_sala_id: string | null;
+  mirror_columns: boolean;
 }
 
 export interface Pelicula {
