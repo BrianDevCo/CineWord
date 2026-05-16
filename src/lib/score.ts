@@ -31,16 +31,17 @@ async function call(
 
   const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ details: encrypt(plaintext) }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(encrypt(plaintext)),
   });
 
   if (!res.ok) throw new Error(`Score ${service} → HTTP ${res.status}`);
 
-  const json = (await res.json()) as { request?: string };
-  if (!json.request) throw new Error(`Score ${service}: sin campo 'request'`);
+  const rawJson = await res.json() as { request?: string }[] | { request?: string };
+  const item = Array.isArray(rawJson) ? rawJson[0] : rawJson;
+  if (!item?.request) throw new Error(`Score ${service}: sin campo 'request'`);
 
-  const raw = decrypt(json.request);
+  const raw = decrypt(item.request);
   return { raw, kv: parseKV(raw) };
 }
 
@@ -100,7 +101,6 @@ export interface ScoreClienteParams {
 
 function parsePlanes(raw: string): ScorePlan[] {
   const planes: ScorePlan[] = [];
-  // Cada plan empieza con "codigo:" — dividimos ahí
   const chunks = raw.split(/(?=codigo:)/gi).filter(Boolean);
   for (const chunk of chunks) {
     const kv = parseKV(chunk);
@@ -116,8 +116,6 @@ function parsePlanes(raw: string): ScorePlan[] {
 function parseMapa(raw: string): AsientoMapa[] {
   const asientos: AsientoMapa[] = [];
 
-  // Intento 1: formato Score con claves repetidas "Fila:A,Columna:1,Estado:S,Zona:GENERAL,Fila:A,..."
-  // Dividimos por cada aparición de "Fila:[A-Z]" (inicio de un asiento)
   const byFila = raw.split(/(?=(?:^|,)Fila:[A-Z],)/i);
   if (byFila.length > 1) {
     for (const chunk of byFila) {
@@ -138,7 +136,6 @@ function parseMapa(raw: string): AsientoMapa[] {
     if (asientos.length) return asientos;
   }
 
-  // Intento 2: formato compacto "A1:S,A2:B,A3:S,..."
   for (const item of raw.split(",")) {
     const m = item.trim().match(/^([A-Z])(\d+):([SBRsbr])/i);
     if (m) {
@@ -159,7 +156,7 @@ function parseMapa(raw: string): AsientoMapa[] {
 export async function scoreGetSecuencia(): Promise<{ secuencia: string; recargo: number }> {
   const { kv } = await call(
     "scosec",
-    `Punto:${puntoVenta()},teatro:${teatro()},tercero:${tercero()}`,
+    JSON.stringify({ Punto: puntoVenta(), teatro: teatro(), tercero: tercero() }),
   );
   return {
     secuencia: kv.Secuencia ?? kv.secuencia ?? "",
@@ -173,14 +170,10 @@ export async function scoreGetMapa(params: {
   fechaFuncion: string; // "yyyymmdd"
   funcion: string;      // hora "22"
 }): Promise<{ raw: string; asientos: AsientoMapa[] }> {
-  const plaintext = [
-    `Sala:${params.sala}`,
-    `FechaFuncion:${params.fechaFuncion}`,
-    `Funcion:${params.funcion}`,
-    `teatro:${teatro()}`,
-    `tercero:${tercero()}`,
-  ].join(",");
-  const { raw } = await call("scomap", plaintext);
+  const { raw } = await call(
+    "scomap",
+    JSON.stringify({ Sala: params.sala, FechaFuncion: params.fechaFuncion, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
+  );
   return { raw, asientos: parseMapa(raw) };
 }
 
@@ -190,14 +183,10 @@ export async function scoreGetAsientos(params: {
   sala: string;
   funcion: string; // hora "22"
 }) {
-  const plaintext = [
-    `FechaFuncion:${params.fechaFuncion}`,
-    `Sala:${params.sala}`,
-    `Funcion:${params.funcion}`,
-    `teatro:${teatro()}`,
-    `tercero:${tercero()}`,
-  ].join(",");
-  return call("scoest", plaintext);
+  return call(
+    "scoest",
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
+  );
 }
 
 /**
@@ -206,40 +195,37 @@ export async function scoreGetAsientos(params: {
  * SCOINT (Accion V) — registra venta final
  */
 export async function scoreReservar(params: ScoreReservaParams) {
-  const ubStr = params.ubicaciones
+  const ubicaciones = params.ubicaciones
     .map(u => `Fila${u.fila},Columna${u.columna},Tarifa${u.tarifa}`)
     .join(",");
 
-  const plaintext = [
-    `FechaFuncion:${params.fechaFuncion}`,
-    `Sala:${params.sala}`,
-    `HoraFuncion:${params.horaFuncion}`,
-    `Pelicula:${params.pelicula}`,
-    `PuntoVenta:${puntoVenta()}`,
-    `Secuencia:${params.secuencia}`,
-    `Telefono:${params.telefono}`,
-    `Nombre:${params.nombre}`,
-    `Apellido:${params.apellido}`,
-    `Ubicaciones:${ubStr}`,
-    `Accion:${params.accion}`,
-    `teatro:${teatro()}`,
-    `tercero:${tercero()}`,
-  ].join(",");
-
-  // G usa scogru, R y V usan scoint
   const endpoint = params.accion === "G" ? "scogru" : "scoint";
-  return call(endpoint, plaintext);
+  return call(
+    endpoint,
+    JSON.stringify({
+      FechaFuncion: params.fechaFuncion,
+      Sala:         params.sala,
+      HoraFuncion:  params.horaFuncion,
+      Pelicula:     params.pelicula,
+      PuntoVenta:   puntoVenta(),
+      Secuencia:    params.secuencia,
+      Telefono:     params.telefono,
+      Nombre:       params.nombre,
+      Apellido:     params.apellido,
+      Ubicaciones:  ubicaciones,
+      Accion:       params.accion,
+      teatro:       teatro(),
+      tercero:      tercero(),
+    }),
+  );
 }
 
 /** SCOLIR — libera un hold/preventa por secuencia */
 export async function scoreLiberarReserva(secuencia: string) {
-  const plaintext = [
-    `PuntoVenta:${puntoVenta()}`,
-    `Secuencia:${secuencia}`,
-    `teatro:${teatro()}`,
-    `tercero:${tercero()}`,
-  ].join(",");
-  return call("scolir", plaintext);
+  return call(
+    "scolir",
+    JSON.stringify({ PuntoVenta: puntoVenta(), Secuencia: secuencia, teatro: teatro(), tercero: tercero() }),
+  );
 }
 
 /** SCOPLA — tarifas para una función específica (terceros) */
@@ -249,50 +235,47 @@ export async function scoreGetPlanes(params: {
   sala: string;
   inicioFuncion: string; // "HHMM"
 }): Promise<{ raw: string; planes: ScorePlan[] }> {
-  const plaintext = [
-    `FechaFuncion:${params.fechaFuncion}`,
-    `Pelicula:${params.pelicula}`,
-    `Sala:${params.sala}`,
-    `InicioFuncion:${params.inicioFuncion}`,
-    `teatro:${teatro()}`,
-    `tercero:${tercero()}`,
-  ].join(",");
-  const { raw } = await call("scopla", plaintext);
+  const { raw } = await call(
+    "scopla",
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Pelicula: params.pelicula, Sala: params.sala, InicioFuncion: params.inicioFuncion, teatro: teatro(), tercero: tercero() }),
+  );
   return { raw, planes: parsePlanes(raw) };
 }
 
 /** SCOCYA — registrar (C) o actualizar (U) cliente */
 export async function scoreRegistrarCliente(p: ScoreClienteParams) {
-  const plaintext = [
-    `Login:${p.email}`,
-    `Nombre:${p.nombre}`,
-    `Apellido:${p.apellido}`,
-    `Correo:${p.email}`,
-    `Cinema:${teatro()}`,
-    `Clave:${p.clave}`,
-    `Celular:${p.celular ?? ""}`,
-    `Documento:${p.documento ?? "0"}`,
-    `FechaNacimiento:${p.fechaNacimiento ?? "19900101"}`,
-    `Sexo:${p.sexo ?? "M"}`,
-    `Reservas:N`,
-    `Noticias:N`,
-    `Cartelera:N`,
-    `OtrasSalas:N`,
-    `Contacto:Correo Electrónico`,
-    `Accion:${p.accion}`,
-    `tercero:${tercero()}`,
-  ].join(",");
-  return call("scocya", plaintext);
+  return call(
+    "scocya",
+    JSON.stringify({
+      Login:           p.email,
+      Nombre:          p.nombre,
+      Apellido:        p.apellido,
+      Correo:          p.email,
+      Cinema:          teatro(),
+      Clave:           p.clave,
+      Celular:         p.celular ?? "",
+      Documento:       p.documento ?? "0",
+      FechaNacimiento: p.fechaNacimiento ?? "19900101",
+      Sexo:            p.sexo ?? "M",
+      Reservas:        "N",
+      Noticias:        "N",
+      Cartelera:       "N",
+      OtrasSalas:      "N",
+      Contacto:        "Correo Electrónico",
+      Accion:          p.accion,
+      tercero:         tercero(),
+    }),
+  );
 }
 
 /** SCOLOG — login / consultar cliente por email */
 export async function scoreLoginCliente(email: string, clave: string) {
-  return call("scolog", `Login:${email},Clave:${clave},tercero:${tercero()}`);
+  return call("scolog", JSON.stringify({ Login: email, Clave: clave, tercero: tercero() }));
 }
 
 /** SCOCED — consultar cliente por número de documento */
 export async function scoreConsultarPorDocumento(documento: string) {
-  return call("scoced", `Documento:${documento},tercero:${tercero()}`);
+  return call("scoced", JSON.stringify({ Documento: documento, tercero: tercero() }));
 }
 
 /** variable41.xml — cartelera (GET, sin encriptar) */
