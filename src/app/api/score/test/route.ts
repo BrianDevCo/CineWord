@@ -44,22 +44,20 @@ export async function GET() {
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  // IDs reales de Score: películas 46-55, salas 2/4/5/6
-  // SCOPLA necesita FechaFuncion + Pelicula + Sala + InicioFuncion
+  // SCOMAP: buscar qué funciones existen hoy en cada sala
+  // SCOMAP usa Funcion=hora (solo la hora, "20" para 20:xx)
   const tests = {
-    // SCOPLA con todos los parámetros reales
-    scopla_full:    callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "48", Sala: "2", InicioFuncion: "1800", teatro, tercero })),
-    scopla_pv_full: callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "48", Sala: "2", InicioFuncion: "1800", PuntoVenta: pv, teatro, tercero })),
-    scopla_sala4:   callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "51", Sala: "4", InicioFuncion: "1800", teatro, tercero })),
-    // Sin InicioFuncion — a ver si lo acepta
-    scopla_no_hora: callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "48", Sala: "2", teatro, tercero })),
-    // SCOCAR — cartelera (el que dio 500 antes según el listado Score)
-    scocar:         callScore(base, "scocar", JSON.stringify({ teatro, tercero })),
-    scocar_pv:      callScore(base, "scocar", JSON.stringify({ PuntoVenta: pv, teatro, tercero })),
-    // SCOFUN — funciones (podría existir)
-    scofun:         callScore(base, "scofun", JSON.stringify({ FechaFuncion: hoy, teatro, tercero })),
-    // SCOCAL — calendario
-    scocal:         callScore(base, "scocal", JSON.stringify({ teatro, tercero })),
+    // Buscar funciones reales hoy en sala 2 a distintas horas
+    scomap_s2_15: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "15", teatro, tercero })),
+    scomap_s2_16: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "16", teatro, tercero })),
+    scomap_s2_17: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "17", teatro, tercero })),
+    scomap_s2_18: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "18", teatro, tercero })),
+    scomap_s2_19: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "19", teatro, tercero })),
+    scomap_s2_20: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "20", teatro, tercero })),
+    scomap_s2_21: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "21", teatro, tercero })),
+    // SCOCAR con más params
+    scocar_date:  callScore(base, "scocar", JSON.stringify({ FechaFuncion: hoy, teatro, tercero })),
+    scocar_pv:    callScore(base, "scocar", JSON.stringify({ PuntoVenta: pv, FechaFuncion: hoy, teatro, tercero })),
   };
 
   const results = Object.fromEntries(
