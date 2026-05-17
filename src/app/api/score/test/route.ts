@@ -44,20 +44,23 @@ export async function GET() {
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  // SCOMAP: buscar qué funciones existen hoy en cada sala
-  // SCOMAP usa Funcion=hora (solo la hora, "20" para 20:xx)
   const tests = {
-    // Buscar funciones reales hoy en sala 2 a distintas horas
-    scomap_s2_15: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "15", teatro, tercero })),
-    scomap_s2_16: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "16", teatro, tercero })),
-    scomap_s2_17: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "17", teatro, tercero })),
-    scomap_s2_18: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "18", teatro, tercero })),
-    scomap_s2_19: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "19", teatro, tercero })),
-    scomap_s2_20: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "20", teatro, tercero })),
-    scomap_s2_21: callScore(base, "scomap", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "21", teatro, tercero })),
-    // SCOCAR con más params
-    scocar_date:  callScore(base, "scocar", JSON.stringify({ FechaFuncion: hoy, teatro, tercero })),
-    scocar_pv:    callScore(base, "scocar", JSON.stringify({ PuntoVenta: pv, FechaFuncion: hoy, teatro, tercero })),
+    // Solo tercero
+    scocar_a: callScore(base, "scocar", JSON.stringify({ tercero })),
+    // teatro con mayúscula
+    scocar_b: callScore(base, "scocar", JSON.stringify({ Teatro: teatro, tercero })),
+    // Cine en lugar de teatro
+    scocar_c: callScore(base, "scocar", JSON.stringify({ Cine: teatro, tercero })),
+    // Fecha con nombre distinto
+    scocar_d: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, teatro, tercero })),
+    scocar_e: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, tercero })),
+    scocar_f: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, Cine: teatro, tercero })),
+    // PuntoVenta como único param (como scosec que solo necesita Punto)
+    scocar_g: callScore(base, "scocar", JSON.stringify({ PuntoVenta: pv, tercero })),
+    scocar_h: callScore(base, "scocar", JSON.stringify({ Punto: pv, tercero })),
+    // Sin tercero
+    scocar_i: callScore(base, "scocar", JSON.stringify({ teatro })),
+    scocar_j: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, teatro })),
   };
 
   const results = Object.fromEntries(
