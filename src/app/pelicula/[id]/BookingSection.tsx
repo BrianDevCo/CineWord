@@ -35,7 +35,7 @@ function fechaDisplay(f: string) {
 }
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
-interface AsientoMapa { fila: string; columna: number; estado: "S" | "B" | "R"; zona: string; }
+interface AsientoMapa { fila: string; columna: number; columnaLabel: number; estado: "S" | "B" | "R"; zona: string; }
 interface ScorePlan   { codigo: string; descripcion: string; valor: number; zona: string; }
 interface CalendarDay { label: string; fecha: string; dayOfWeek: number; }
 
@@ -121,6 +121,15 @@ export default function BookingSection({ movie, funciones }: Props) {
   const seatExists = useCallback((fila: string, col: number) =>
     mapaScore.some(a => a.fila === fila && a.columna === col),
   [mapaScore]);
+
+  // Convierte ID interno (A4) → etiqueta visible (A3) usando ColumnaRelativa de Score
+  const getSeatLabel = useCallback((id: string): string => {
+    if (!usaScoreMapa) return id;
+    const fila = id[0];
+    const col  = parseInt(id.slice(1));
+    const a    = mapaScore.find(s => s.fila === fila && s.columna === col);
+    return a ? `${fila}${a.columnaLabel}` : id;
+  }, [mapaScore, usaScoreMapa]);
 
   const ocupadosSet = useMemo(() => {
     if (usaScoreMapa) return new Set(mapaScore.filter(a => a.estado !== "S").map(a => `${a.fila}${a.columna}`));
@@ -401,7 +410,7 @@ export default function BookingSection({ movie, funciones }: Props) {
               fecha:    dayInfo ? `${dayInfo.label} · ${fechaDisplay(dayInfo.fecha)}` : selectedFecha ?? "",
               hora:     selectedFuncion ? horaDisplay(selectedFuncion.hora) : "",
               formato:  selectedFuncion?.formato ?? "",
-              asientos: [...selectedSeats].sort().join(", "),
+              asientos: [...selectedSeats].sort().map(getSeatLabel).join(", "),
               total:    `$${total.toLocaleString("es-CO")}`,
             }));
           } catch { /* sessionStorage no disponible */ }
@@ -462,7 +471,7 @@ export default function BookingSection({ movie, funciones }: Props) {
             { label: "Película", value: movie.titulo },
             { label: "Fecha",    value: dayData ? `${dayData.label} · ${fechaDisplay(dayData.fecha)}` : "" },
             { label: "Función",  value: selectedFuncion ? `${horaDisplay(selectedFuncion.hora)} — ${selectedFuncion.formato}` : "" },
-            { label: "Asientos", value: [...selectedSeats].sort().join(", ") },
+            { label: "Asientos", value: [...selectedSeats].sort().map(getSeatLabel).join(", ") },
           ].map(row => (
             <div key={row.label} className="flex justify-between text-sm font-body">
               <span className="text-gray-400">{row.label}</span>
@@ -645,7 +654,7 @@ export default function BookingSection({ movie, funciones }: Props) {
                             return <div key={`gap-${col}`} className="w-7 h-6 shrink-0" />;
                           }
                           return (
-                            <button key={id} onClick={() => toggleSeat(id)} title={ocupadosSet.has(id) ? "Ocupado" : id}
+                            <button key={id} onClick={() => toggleSeat(id)} title={ocupadosSet.has(id) ? "Ocupado" : getSeatLabel(id)}
                               className={`w-7 h-6 rounded-t-md border text-[10px] transition-all duration-150 ${seatClass(id)}`} />
                           );
                         })}
@@ -757,7 +766,7 @@ export default function BookingSection({ movie, funciones }: Props) {
                   { label: "Película", value: movie.titulo },
                   { label: "Fecha",    value: dayData ? `${dayData.label} · ${fechaDisplay(dayData.fecha)}` : "" },
                   { label: "Función",  value: selectedFuncion ? `${horaDisplay(selectedFuncion.hora)} — ${selectedFuncion.formato}` : "" },
-                  { label: "Asientos", value: [...selectedSeats].sort().join(", ") },
+                  { label: "Asientos", value: [...selectedSeats].sort().map(getSeatLabel).join(", ") },
                 ].map(row => (
                   <div key={row.label} className="flex justify-between text-sm font-body">
                     <span className="text-gray-400">{row.label}</span>

@@ -92,10 +92,11 @@ export interface ScorePlan {
 }
 
 export interface AsientoMapa {
-  fila: string;    // "A"
-  columna: number; // 1
+  fila: string;         // "A"
+  columna: number;      // posición interna Score (ColumnaTotal) — usada para SCOGRU/SCOINT
+  columnaLabel: number; // número visible para el usuario (ColumnaRelativa)
   estado: "S" | "B" | "R"; // libre, ocupado, reservado
-  zona: string;    // "GENERAL", "VIP", etc.
+  zona: string;         // "GENERAL", "VIP", etc.
 }
 
 export interface ScoreClienteParams {
@@ -140,15 +141,17 @@ function parseMapa(raw: string): AsientoMapa[] {
     };
     if (Array.isArray(json.FilaTotal) && Array.isArray(json.ColumnaTotal)) {
       for (let i = 0; i < json.FilaTotal.length; i++) {
-        const fila  = json.FilaTotal[i]?.toUpperCase() ?? "";
-        const col   = Math.round(json.ColumnaTotal[i] ?? 0);
-        const silla = (json.TipoSilla?.[i] ?? "").toLowerCase();
-        const zona  = (json.TipoZona?.[i] ?? json.TipoSilla?.[i] ?? "GENERAL").toUpperCase();
-        const est   = (json.Estado?.[i] ?? "S").toUpperCase();
+        const fila       = json.FilaTotal[i]?.toUpperCase() ?? "";
+        const col        = Math.round(json.ColumnaTotal[i] ?? 0);
+        const colLabel   = Math.round(json.ColumnaRelativa?.[i] ?? col);
+        const silla      = (json.TipoSilla?.[i] ?? "").toLowerCase();
+        const zona       = (json.TipoZona?.[i] ?? json.TipoSilla?.[i] ?? "GENERAL").toUpperCase();
+        const est        = (json.Estado?.[i] ?? "S").toUpperCase();
         if (fila && col && silla !== "pasillo") {
           asientos.push({
             fila,
-            columna: col,
+            columna:      col,
+            columnaLabel: colLabel,
             estado: est === "B" ? "B" : est === "R" ? "R" : "S",
             zona,
           });
