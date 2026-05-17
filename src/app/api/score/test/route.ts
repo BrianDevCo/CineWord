@@ -44,23 +44,26 @@ export async function GET() {
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
+  // scocar_e { Fecha: "20260516", tercero } llegó a SQL — probar formatos de fecha
+  const fechaISO  = new Date().toISOString().slice(0, 10);           // "2026-05-16"
+  const fechaES   = hoy.slice(6, 8) + "/" + hoy.slice(4, 6) + "/" + hoy.slice(0, 4); // "16/05/2026"
+  const fechaUS   = hoy.slice(4, 6) + "/" + hoy.slice(6, 8) + "/" + hoy.slice(0, 4); // "05/16/2026"
+
   const tests = {
-    // Solo tercero
-    scocar_a: callScore(base, "scocar", JSON.stringify({ tercero })),
-    // teatro con mayúscula
-    scocar_b: callScore(base, "scocar", JSON.stringify({ Teatro: teatro, tercero })),
-    // Cine en lugar de teatro
-    scocar_c: callScore(base, "scocar", JSON.stringify({ Cine: teatro, tercero })),
-    // Fecha con nombre distinto
-    scocar_d: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, teatro, tercero })),
-    scocar_e: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, tercero })),
-    scocar_f: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, Cine: teatro, tercero })),
-    // PuntoVenta como único param (como scosec que solo necesita Punto)
-    scocar_g: callScore(base, "scocar", JSON.stringify({ PuntoVenta: pv, tercero })),
-    scocar_h: callScore(base, "scocar", JSON.stringify({ Punto: pv, tercero })),
-    // Sin tercero
-    scocar_i: callScore(base, "scocar", JSON.stringify({ teatro })),
-    scocar_j: callScore(base, "scocar", JSON.stringify({ Fecha: hoy, teatro })),
+    // Formato ganador del ciclo anterior: { Fecha: "20260516", tercero } → llegó a SQL
+    scocar_yyyymmdd:  callScore(base, "scocar", JSON.stringify({ Fecha: hoy,      tercero })),
+    // Formatos alternativos de fecha
+    scocar_iso:       callScore(base, "scocar", JSON.stringify({ Fecha: fechaISO,  tercero })),
+    scocar_es:        callScore(base, "scocar", JSON.stringify({ Fecha: fechaES,   tercero })),
+    scocar_us:        callScore(base, "scocar", JSON.stringify({ Fecha: fechaUS,   tercero })),
+    // Con teatro además
+    scocar_t_yyyymmdd:callScore(base, "scocar", JSON.stringify({ Fecha: hoy,      tercero, teatro })),
+    scocar_t_iso:     callScore(base, "scocar", JSON.stringify({ Fecha: fechaISO,  tercero, teatro })),
+    scocar_t_es:      callScore(base, "scocar", JSON.stringify({ Fecha: fechaES,   tercero, teatro })),
+    // Nombre campo FechaFuncion en vez de Fecha
+    scocar_ff:        callScore(base, "scocar", JSON.stringify({ FechaFuncion: hoy, tercero })),
+    scocar_ff_iso:    callScore(base, "scocar", JSON.stringify({ FechaFuncion: fechaISO, tercero })),
+    scocar_ff_es:     callScore(base, "scocar", JSON.stringify({ FechaFuncion: fechaES,  tercero })),
   };
 
   const results = Object.fromEntries(
