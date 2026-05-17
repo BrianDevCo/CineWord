@@ -135,6 +135,7 @@ function parseMapa(raw: string): AsientoMapa[] {
     const json = JSON.parse(raw) as {
       FilaTotal?: string[];
       ColumnaTotal?: number[];
+      ColumnaRelativa?: number[];
       TipoSilla?: string[];
       TipoZona?: string[];
       Estado?: string[];
