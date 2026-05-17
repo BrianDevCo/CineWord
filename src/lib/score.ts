@@ -140,11 +140,12 @@ function parseMapa(raw: string): AsientoMapa[] {
     };
     if (Array.isArray(json.FilaTotal) && Array.isArray(json.ColumnaTotal)) {
       for (let i = 0; i < json.FilaTotal.length; i++) {
-        const fila = json.FilaTotal[i]?.toUpperCase() ?? "";
-        const col  = Math.round(json.ColumnaTotal[i] ?? 0);
-        const zona = (json.TipoZona?.[i] ?? json.TipoSilla?.[i] ?? "GENERAL").toUpperCase();
-        const est  = (json.Estado?.[i] ?? "S").toUpperCase();
-        if (fila && col) {
+        const fila  = json.FilaTotal[i]?.toUpperCase() ?? "";
+        const col   = Math.round(json.ColumnaTotal[i] ?? 0);
+        const silla = (json.TipoSilla?.[i] ?? "").toLowerCase();
+        const zona  = (json.TipoZona?.[i] ?? json.TipoSilla?.[i] ?? "GENERAL").toUpperCase();
+        const est   = (json.Estado?.[i] ?? "S").toUpperCase();
+        if (fila && col && silla !== "pasillo") {
           asientos.push({
             fila,
             columna: col,
