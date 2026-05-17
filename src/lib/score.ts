@@ -174,7 +174,8 @@ function parseMapa(raw: string): AsientoMapa[] {
       if (fila && col) {
         asientos.push({
           fila,
-          columna: col,
+          columna:      col,
+          columnaLabel: col,
           estado: est === "B" ? "B" : est === "R" ? "R" : "S",
           zona,
         });
@@ -188,10 +189,11 @@ function parseMapa(raw: string): AsientoMapa[] {
     const m = item.trim().match(/^([A-Z])(\d+):([SBRsbr])/i);
     if (m) {
       asientos.push({
-        fila:    m[1].toUpperCase(),
-        columna: parseInt(m[2]),
-        estado:  m[3].toUpperCase() as "S" | "B" | "R",
-        zona:    "GENERAL",
+        fila:         m[1].toUpperCase(),
+        columna:      parseInt(m[2]),
+        columnaLabel: parseInt(m[2]),
+        estado:       m[3].toUpperCase() as "S" | "B" | "R",
+        zona:         "GENERAL",
       });
     }
   }
