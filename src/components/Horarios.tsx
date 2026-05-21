@@ -1,32 +1,11 @@
 export default function Horarios() {
   const schedule = [
     {
-      days: "Lunes — Viernes",
-      hours: "10:00 AM – 10:00 PM",
+      days: "Todos los días",
+      hours: "1:00 PM – 10:00 PM",
       note: "Martes y Miércoles 50% de descuento",
       highlight: true,
       icon: "🎬",
-    },
-    {
-      days: "Sábado",
-      hours: "9:00 AM – 11:00 PM",
-      note: "Función de medianoche disponible",
-      highlight: false,
-      icon: "🌙",
-    },
-    {
-      days: "Domingo",
-      hours: "10:00 AM – 9:00 PM",
-      note: "Última función a las 8:00 PM",
-      highlight: false,
-      icon: "☀️",
-    },
-    {
-      days: "Festivos",
-      hours: "10:00 AM – 10:00 PM",
-      note: "Mismo horario que sábado",
-      highlight: false,
-      icon: "🎉",
     },
   ];
 
