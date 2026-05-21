@@ -1,19 +1,9 @@
 export default function Horarios() {
-  const schedule = [
-    {
-      days: "Todos los días",
-      hours: "1:00 PM – 10:00 PM",
-      note: "Martes y Miércoles 50% de descuento",
-      highlight: true,
-      icon: "🎬",
-    },
-  ];
-
   const info = [
     { icon: "🎟️", label: "Taquilla abre", value: "30 min antes de la primera función" },
-    { icon: "🍿", label: "Confitería", value: "Abre junto con taquilla" },
-    { icon: "🅿️", label: "Parqueadero", value: "Disponible hasta media hora después del cierre" },
-    { icon: "📞", label: "Reservas", value: "24 horas por la app o web" },
+    { icon: "🍿", label: "Confitería",     value: "Abre junto con taquilla" },
+    { icon: "🅿️", label: "Parqueadero",   value: "Disponible hasta media hora después del cierre" },
+    { icon: "📞", label: "Reservas",       value: "24 horas por la app o web" },
   ];
 
   return (
@@ -21,7 +11,7 @@ export default function Horarios() {
       <div className="max-w-5xl mx-auto px-4">
 
         {/* Header */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-12">
           <span className="inline-block font-heading text-[#CC1244] text-xs tracking-widest uppercase border border-[#CC1244]/30 px-4 py-1.5 rounded-sm mb-4">
             Horarios de Atención
           </span>
@@ -33,30 +23,20 @@ export default function Horarios() {
           </p>
         </div>
 
-        {/* Schedule cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          {schedule.map((s) => (
-            <div
-              key={s.days}
-              className={`relative flex flex-col gap-3 rounded-xl p-6 border transition-all ${
-                s.highlight
-                  ? "bg-[#CC1244]/5 border-[#CC1244]/30"
-                  : "bg-[#111] border-white/8"
-              }`}
-            >
-              {s.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1244] text-white font-heading text-[10px] tracking-widest px-3 py-0.5 rounded-sm whitespace-nowrap">
-                  PROMO ESPECIAL
-                </span>
-              )}
-              <span className="text-3xl">{s.icon}</span>
-              <div>
-                <p className="font-heading text-white text-sm tracking-wider">{s.days}</p>
-                <p className="font-heading text-[#CC1244] text-xl font-bold mt-1">{s.hours}</p>
-              </div>
-              <p className="font-body text-gray-500 text-xs leading-relaxed">{s.note}</p>
-            </div>
-          ))}
+        {/* Horario principal */}
+        <div className="relative bg-[#CC1244]/5 border border-[#CC1244]/30 rounded-2xl p-10 mb-8 flex flex-col sm:flex-row items-center justify-center gap-8 text-center sm:text-left">
+          <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1244] text-white font-heading text-[10px] tracking-widest px-4 py-1 rounded-sm whitespace-nowrap">
+            PROMO MAR Y MIÉ — 50% DESCUENTO
+          </span>
+
+          <div className="text-6xl">🎬</div>
+
+          <div className="flex flex-col gap-1">
+            <p className="font-heading text-gray-400 text-sm tracking-widest uppercase">Todos los días</p>
+            <p className="font-heading text-white text-5xl sm:text-6xl font-bold tracking-wider">
+              1<span className="text-[#CC1244]">:</span>00 <span className="text-gray-500 text-3xl">—</span> 10<span className="text-[#CC1244]">:</span>00 PM
+            </p>
+          </div>
         </div>
 
         {/* Info row */}
