@@ -11,6 +11,9 @@ import type { User } from "@supabase/supabase-js";
 
 const MercadoPagoBrick = dynamic(() => import("@/components/MercadoPagoBrick"), { ssr: false });
 
+// Cambiar a true cuando Score esté conectado y la venta en línea esté habilitada
+const VENTA_ONLINE = false;
+
 // ── Constantes de fallback (cuando Score no está configurado) ──────────────────
 const FALLBACK_ROWS = ["A","B","C","D","E","F","G","H"];
 const FALLBACK_COLS = 10;
@@ -212,18 +215,8 @@ export default function BookingSection({ movie, funciones }: Props) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Si el usuario se loguea mientras está en el paso 4, cargar el mapa automáticamente
-  useEffect(() => {
-    if (user && user !== "loading" && step === 4 && selectedFuncion && mapaScore.length === 0 && mapaFallback.size === 0 && !loadingMapa) {
-      const correo = (user as User).email ?? "";
-      cargarMapa(selectedFuncion, correo);
-      cargarPlanes(selectedFuncion);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   // ── Fetch mapa (SCOMAP → fallback Supabase) ───────────────────────────────────
-  async function cargarMapa(funcion: Funcion, correo: string) {
+  async function cargarMapa(funcion: Funcion) {
     setLoadingMapa(true);
     setMapaScore([]);
     setMapaFallback(new Set());
@@ -235,27 +228,7 @@ export default function BookingSection({ movie, funciones }: Props) {
           body: JSON.stringify({ sala: funcion.score_sala_id, fechaFuncion: funcion.fecha, funcion: funcion.hora }),
         });
         const data = await res.json();
-        if (res.ok && data.asientos?.length) {
-          let asientos = data.asientos as AsientoMapa[];
-          // Superponer ocupación real de SCOEST si el usuario tiene correo
-          if (correo) {
-            try {
-              const estRes = await fetch("/api/score/asientos", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sala: funcion.score_sala_id, fechaFuncion: funcion.fecha, funcion: funcion.hora, correo }),
-              });
-              const estData = await estRes.json();
-              if (estRes.ok && estData.asientos?.length) {
-                const ocupMap = new Map<string, "S" | "B" | "R">();
-                for (const a of estData.asientos as AsientoMapa[]) ocupMap.set(`${a.fila}${a.columna}`, a.estado);
-                asientos = asientos.map(a => ({ ...a, estado: ocupMap.get(`${a.fila}${a.columna}`) ?? a.estado }));
-              }
-            } catch { /* si SCOEST falla, usamos SCOMAP sin estado */ }
-          }
-          setMapaScore(asientos);
-          return;
-        }
+        if (res.ok && data.asientos?.length) { setMapaScore(data.asientos); return; }
       }
       // Fallback: asientos ocupados de Supabase
       const ocupados = await getAsientosOcupados(funcion.id);
@@ -306,10 +279,8 @@ export default function BookingSection({ movie, funciones }: Props) {
 
   const pickFuncion = async (f: Funcion) => {
     setSelectedFuncion(f); setSelectedSeats(new Set()); setTimedOut(false); setScorePlanes([]);
+    if (VENTA_ONLINE) await Promise.all([cargarMapa(f), cargarPlanes(f)]);
     setStep(4);
-    if (!user || user === "loading") return; // gate de login en paso 4
-    const correo = (user as User).email ?? "";
-    await Promise.all([cargarMapa(f, correo), cargarPlanes(f)]);
   };
 
   const continueToPayment = () => {
@@ -529,12 +500,13 @@ export default function BookingSection({ movie, funciones }: Props) {
       <div className="flex items-center gap-0 mb-10 overflow-x-auto pb-2">
         {["Fecha","Formato","Horario","Asientos","Pago"].map((label, i) => {
           const n = (i + 1) as 1|2|3|4|5;
-          const active = step === n; const done = step > n;
+          const locked = !VENTA_ONLINE && n > 3;
+          const active = step === n && !locked; const done = step > n && !locked;
           return (
             <div key={label} className="flex items-center">
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-all whitespace-nowrap ${active ? "bg-[#CC1244] text-white" : done ? "text-[#CC1244]" : "text-gray-600"}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-heading border ${active ? "border-white text-white" : done ? "border-[#CC1244] bg-[#CC1244] text-white" : "border-gray-600"}`}>
-                  {done ? "✓" : n}
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-all whitespace-nowrap ${active ? "bg-[#CC1244] text-white" : done ? "text-[#CC1244]" : locked ? "text-gray-700 opacity-50" : "text-gray-600"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-heading border ${active ? "border-white text-white" : done ? "border-[#CC1244] bg-[#CC1244] text-white" : locked ? "border-gray-700" : "border-gray-600"}`}>
+                  {done ? "✓" : locked ? "🔒" : n}
                 </span>
                 <span className="font-heading text-xs tracking-widest">{label.toUpperCase()}</span>
               </div>
@@ -660,30 +632,33 @@ export default function BookingSection({ movie, funciones }: Props) {
             </div>
           )}
 
-          {step === 4 && (!user || user === "loading") && (
-            <div className="flex flex-col items-center gap-6 py-10 border border-white/10 rounded-2xl bg-[#111] text-center">
-              <div className="w-14 h-14 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#CC1244]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+          {step === 4 && !VENTA_ONLINE && (
+            <div className="flex flex-col items-center gap-6 py-12 text-center border border-white/10 rounded-2xl bg-[#111]">
+              <div className="w-16 h-16 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center text-3xl">
+                🎟️
               </div>
               <div>
-                <p className="font-heading text-white text-lg tracking-wider mb-1">INICIA SESIÓN PARA VER LAS SILLAS</p>
-                <p className="text-gray-500 font-body text-sm">Necesitamos tu correo para consultar la disponibilidad en tiempo real.</p>
+                <p className="font-heading text-white text-xl tracking-wider mb-2">COMPRA EN LÍNEA PRÓXIMAMENTE</p>
+                <p className="text-gray-500 font-body text-sm max-w-sm mx-auto leading-relaxed">
+                  Estamos trabajando para habilitar la compra de boletos en línea.<br />
+                  Por ahora, adquiere tus boletos directamente en <span className="text-white">taquilla</span>.
+                </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-                <Link href={`/cuenta/login?redirect=${encodeURIComponent(pathname)}`}
-                  className="flex-1 bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">INGRESAR</Link>
-                <Link href={`/cuenta/registrar?redirect=${encodeURIComponent(pathname)}`}
-                  className="flex-1 border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">REGISTRARSE</Link>
+              <div className="flex flex-col items-center gap-1 text-gray-600 text-xs font-body">
+                <span>📍 Finca Veracruz, Auto. Cali - Candelaria #Lt 5</span>
+                <span>Manuela Beltrán, Candelaria, Valle del Cauca</span>
+                <span className="mt-1">Taquilla abre 30 min antes de la primera función</span>
               </div>
-              <button onClick={() => setStep(3)} className="text-gray-600 hover:text-white font-heading text-xs tracking-widest transition-colors">
-                ← VOLVER AL HORARIO
+              <button
+                onClick={() => { setStep(3); setSelectedFuncion(null); }}
+                className="border border-white/20 hover:border-white/40 text-gray-400 hover:text-white font-heading text-xs tracking-widest px-6 py-2.5 rounded-sm transition-all"
+              >
+                ← VOLVER A HORARIOS
               </button>
             </div>
           )}
 
-          {step === 4 && user && user !== "loading" && (
+          {step === 4 && VENTA_ONLINE && (
             loadingMapa || loadingPlanes ? (
               <div className="flex items-center justify-center py-12 text-gray-600 font-heading text-sm tracking-widest">
                 CARGANDO DISPONIBILIDAD...
@@ -738,21 +713,20 @@ export default function BookingSection({ movie, funciones }: Props) {
                   ))}
                 </div>
 
-                {/* Banner próximamente */}
-                <div className="flex flex-col items-center gap-4 bg-[#111] border border-[#CC1244]/20 rounded-xl p-8 text-center">
-                  <div className="w-14 h-14 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center text-2xl">
-                    🚧
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#111] border border-white/10 rounded-xl p-5">
+                  <div className="font-body text-sm text-gray-400">
+                    {selectedSeats.size === 0 ? "Selecciona tus asientos en el mapa" : (
+                      <span>
+                        <span className="text-white font-bold">{selectedSeats.size}</span>{" "}
+                        asiento{selectedSeats.size > 1 ? "s" : ""} —{" "}
+                        <span className="text-[#CC1244] font-bold text-lg">{fmt(total)}</span>
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <p className="font-heading text-white text-lg tracking-wider">COMPRA EN LÍNEA — PRÓXIMAMENTE</p>
-                    <p className="text-gray-500 font-body text-sm mt-2 max-w-sm mx-auto">
-                      Estamos trabajando para habilitar la compra de boletos en línea. Por ahora, adquiere tus entradas directamente en taquilla.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-5 py-3 mt-1">
-                    <span className="text-lg">🎟️</span>
-                    <p className="font-heading text-gray-300 text-xs tracking-widest">TAQUILLA ABIERTA TODOS LOS DÍAS — 1:00 PM A 10:00 PM</p>
-                  </div>
+                  <button disabled={selectedSeats.size === 0} onClick={continueToPayment}
+                    className="w-full sm:w-auto bg-[#CC1244] hover:bg-[#a00e35] disabled:opacity-30 disabled:cursor-not-allowed text-white font-heading text-sm tracking-widest px-8 py-3 rounded-sm transition-all">
+                    CONTINUAR AL PAGO
+                  </button>
                 </div>
               </>
             )
@@ -760,6 +734,163 @@ export default function BookingSection({ movie, funciones }: Props) {
         </div>
       )}
 
+      {/* ── PASO 5: PAGO ── */}
+      {step === 5 && (
+        <div className="flex flex-col gap-6 mb-10">
+          <h3 className="font-heading text-lg text-white tracking-wider flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-[#CC1244] text-white text-xs flex items-center justify-center font-bold">5</span>
+            DATOS Y PAGO
+          </h3>
+
+          {/* Gate de login */}
+          {!user && (
+            <div className="flex flex-col items-center gap-6 py-10 border border-white/10 rounded-2xl bg-[#111] text-center">
+              <div className="w-14 h-14 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center">
+                <svg className="w-6 h-6 text-[#CC1244]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-heading text-white text-lg tracking-wider mb-1">NECESITAS UNA CUENTA</p>
+                <p className="text-gray-500 font-body text-sm">Inicia sesión o regístrate gratis para completar tu compra.<br />Tus asientos quedan reservados.</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+                <Link href={`/cuenta/login?redirect=${encodeURIComponent(pathname)}`}
+                  className="flex-1 bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">INGRESAR</Link>
+                <Link href={`/cuenta/registrar?redirect=${encodeURIComponent(pathname)}`}
+                  className="flex-1 border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">REGISTRARSE</Link>
+              </div>
+              <button onClick={() => setStep(4)} className="text-gray-600 hover:text-white font-heading text-xs tracking-widest transition-colors">
+                ← VOLVER A MIS ASIENTOS
+              </button>
+            </div>
+          )}
+
+          {user && user !== "loading" && (<>
+            {/* Timer */}
+            {timerSeconds !== null && (
+              <div className={`rounded-xl border px-5 py-4 flex flex-col gap-3 transition-all ${isCritical ? "border-red-500/40 bg-red-500/5" : isWarning ? "border-amber-500/30 bg-amber-500/5" : "border-white/10 bg-white/[0.02]"}`}>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className={`text-2xl ${isCritical ? "animate-bounce" : ""}`}>{isCritical ? "⚠️" : "⏱️"}</span>
+                    <div>
+                      <p className={`font-heading text-xs tracking-widest uppercase mb-0.5 ${isCritical ? "text-red-400" : isWarning ? "text-amber-400" : "text-gray-400"}`}>
+                        {isCritical ? "¡Tiempo casi agotado!" : isWarning ? "Apresúrate" : "Asientos reservados para ti"}
+                      </p>
+                      <p className="text-gray-500 font-body text-xs">Completa el pago antes de que expire la reserva</p>
+                    </div>
+                  </div>
+                  <span className={`font-heading font-bold text-3xl tabular-nums shrink-0 ${timerColor}`}>{fmtTime(timerSeconds)}</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-1000 ${barColor} ${isCritical ? "animate-pulse" : ""}`} style={{ width: `${barPct}%` }} />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Resumen */}
+              <div className="bg-[#111] border border-white/10 rounded-xl p-6 flex flex-col gap-3">
+                <p className="font-heading text-xs text-gray-500 tracking-widest mb-1">RESUMEN DE COMPRA</p>
+                {[
+                  { label: "Película", value: movie.titulo },
+                  { label: "Fecha",    value: dayData ? `${dayData.label} · ${fechaDisplay(dayData.fecha)}` : "" },
+                  { label: "Función",  value: selectedFuncion ? `${horaDisplay(selectedFuncion.hora)} — ${selectedFuncion.formato}` : "" },
+                  { label: "Asientos", value: [...selectedSeats].sort().map(getSeatLabel).join(", ") },
+                ].map(row => (
+                  <div key={row.label} className="flex justify-between text-sm font-body">
+                    <span className="text-gray-400">{row.label}</span>
+                    <span className="text-white font-medium text-right max-w-[60%]">{row.value}</span>
+                  </div>
+                ))}
+                <div className="border-t border-white/10 pt-3 flex justify-between items-center">
+                  <span className="text-gray-400 font-body text-sm">Total a pagar</span>
+                  <span className="text-[#CC1244] font-heading text-2xl font-bold">{fmt(total)}</span>
+                </div>
+              </div>
+
+              {/* Datos + pago */}
+              <div className="flex flex-col gap-4">
+                <p className="font-heading text-xs text-gray-500 tracking-widest">TUS DATOS</p>
+                <div className="flex flex-col gap-3">
+                  {[
+                    { type: "text",  placeholder: "Nombre completo *", key: "nombre",   value: paymentInfo.nombre },
+                    { type: "email", placeholder: "Correo electrónico *", key: "email", value: paymentInfo.email },
+                    { type: "tel",   placeholder: "Teléfono (opcional)", key: "telefono", value: paymentInfo.telefono },
+                  ].map(f => (
+                    <input key={f.key} type={f.type} placeholder={f.placeholder} value={f.value}
+                      onChange={e => setPaymentInfo(p => ({ ...p, [f.key]: e.target.value }))}
+                      className="bg-white/5 border border-white/15 text-white font-body text-sm px-4 py-3 rounded-sm focus:outline-none focus:border-[#CC1244] placeholder-gray-600" />
+                  ))}
+                </div>
+
+                {!preferenceId ? (
+                  <div className="flex gap-3 mt-2">
+                    <button onClick={goBackToSeats}
+                      className="flex-1 border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all">
+                      VOLVER
+                    </button>
+                    <button disabled={!paymentInfo.nombre || !paymentInfo.email || creatingPreference}
+                      onClick={() => movie.edad_minima > 0 ? setShowAgeModal(true) : handleCrearPreferencia()}
+                      className="flex-[2] bg-[#CC1244] hover:bg-[#a00e35] disabled:opacity-40 disabled:cursor-not-allowed text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all flex items-center justify-center gap-2">
+                      {creatingPreference ? (
+                        <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />CARGANDO...</>
+                      ) : (`IR AL PAGO — ${fmt(total)}`)}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <p className="font-heading text-xs text-gray-500 tracking-widest">MÉTODO DE PAGO</p>
+                    <MercadoPagoBrick preferenceId={preferenceId} total={total}
+                      onSuccess={handlePaymentSuccess}
+                      onError={() => alert("Error en el pago. Intenta de nuevo.")} />
+                    <button onClick={() => setPreferenceId(null)}
+                      className="text-gray-600 hover:text-white font-heading text-xs tracking-widest transition-colors text-center">
+                      ← VOLVER A MIS DATOS
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>)}
+        </div>
+      )}
+
+      {/* Modal restricción de edad */}
+      {showAgeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-sm w-full flex flex-col gap-5 shadow-2xl">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="w-16 h-16 rounded-full bg-[#CC1244]/15 border border-[#CC1244]/30 flex items-center justify-center">
+                <span className="font-heading text-[#CC1244] text-2xl font-bold">+{movie.edad_minima}</span>
+              </div>
+              <h3 className="font-heading text-white text-lg font-bold tracking-wide">
+                Restricción de edad
+              </h3>
+              <p className="font-body text-gray-400 text-sm leading-relaxed">
+                Esta película tiene restricción para menores de{" "}
+                <span className="text-white font-semibold">{movie.edad_minima} años</span>.
+                Al continuar, confirmas que eres consciente de que{" "}
+                <span className="text-[#CC1244] font-semibold">cualquier persona menor de {movie.edad_minima} años no podrá ingresar a la sala</span>, independientemente de si tiene boleta.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { setShowAgeModal(false); handleCrearPreferencia(); }}
+                className="w-full bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all"
+              >
+                ENTIENDO — CONTINUAR AL PAGO
+              </button>
+              <button
+                onClick={() => setShowAgeModal(false)}
+                className="w-full border border-white/15 hover:border-white/30 text-gray-400 hover:text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all"
+              >
+                CANCELAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

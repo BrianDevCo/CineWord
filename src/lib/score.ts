@@ -227,16 +227,31 @@ export async function scoreGetMapa(params: {
   return { raw, asientos: parseMapa(raw) };
 }
 
-/** SCOEST — disponibilidad de asientos por función */
+/** SCOEST — disponibilidad de asientos por función (raw) */
 export async function scoreGetAsientos(params: {
   fechaFuncion: string;
   sala: string;
   funcion: string; // hora "22"
+  correo: string;
 }) {
   return call(
     "scoest",
-    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, Correo: params.correo, teatro: teatro(), tercero: tercero() }),
   );
+}
+
+/** SCOEST — disponibilidad de asientos por función (parseada como mapa) */
+export async function scoreGetAsientosConMapa(params: {
+  fechaFuncion: string;
+  sala: string;
+  funcion: string;
+  correo: string;
+}): Promise<{ raw: string; asientos: AsientoMapa[] }> {
+  const { raw } = await call(
+    "scoest",
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, Correo: params.correo, teatro: teatro(), tercero: tercero() }),
+  );
+  return { raw, asientos: parseMapa(raw) };
 }
 
 /**
