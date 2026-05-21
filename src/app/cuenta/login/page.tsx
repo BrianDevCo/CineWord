@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search)
     : null;
@@ -35,8 +33,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(redirect);
-    router.refresh();
+    window.location.href = redirect;
   };
 
   const handleGoogle = async () => {
