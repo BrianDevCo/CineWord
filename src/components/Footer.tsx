@@ -29,10 +29,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-3">
               {[
-                { icon: "📸", href: "https://instagram.com/cineworldmr", label: "Instagram" },
-                { icon: "💬", href: "https://wa.me/57300000000", label: "WhatsApp" },
-                { icon: "📘", href: "#", label: "Facebook" },
-                { icon: "🎵", href: "#", label: "TikTok" },
+                { icon: "📸", href: "https://www.instagram.com/cineworldmr/", label: "Instagram" },
               ].map((s) => (
                 <a
                   key={s.label}
