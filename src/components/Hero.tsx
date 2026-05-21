@@ -108,32 +108,32 @@ export default function Hero({ peliculas }: Props) {
       />
 
       {/* Contenido central */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 text-center flex flex-col items-center gap-8 pt-24">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 text-center flex flex-col items-center gap-5 sm:gap-8 pt-20 sm:pt-24">
         {/* Badge promo */}
-        <div className="inline-flex items-center gap-2 bg-[#CC1244]/20 border border-[#CC1244]/50 rounded-full px-4 py-1.5 backdrop-blur-sm">
-          <span className="w-2 h-2 rounded-full bg-[#CC1244] animate-pulse" />
-          <span className="font-heading text-[#CC1244] text-sm tracking-widest uppercase">
-            Martes y Miércoles — Entradas a Mitad de Precio
+        <div className="inline-flex items-center gap-2 bg-[#CC1244]/20 border border-[#CC1244]/50 rounded-full px-3 sm:px-4 py-1.5 backdrop-blur-sm">
+          <span className="w-2 h-2 rounded-full bg-[#CC1244] animate-pulse shrink-0" />
+          <span className="font-heading text-[#CC1244] text-xs sm:text-sm tracking-widest uppercase">
+            <span className="hidden sm:inline">Martes y Miércoles — </span>Entradas a Mitad de Precio
           </span>
         </div>
 
         {/* Título */}
-        <div className="flex flex-col items-center gap-3">
-          <h1 className="font-heading font-bold text-6xl sm:text-8xl lg:text-9xl tracking-wider leading-none text-white drop-shadow-2xl">
+        <div className="flex flex-col items-center gap-2 sm:gap-3">
+          <h1 className="font-heading font-bold text-5xl sm:text-7xl lg:text-9xl tracking-wider leading-none text-white drop-shadow-2xl">
             CINE<span className="text-[#CC1244]">WORLD</span>
           </h1>
-          <p className="font-heading font-light text-xl sm:text-2xl lg:text-3xl tracking-widest text-gray-300 uppercase drop-shadow-lg">
+          <p className="font-heading font-light text-sm sm:text-2xl lg:text-3xl tracking-widest text-gray-300 uppercase drop-shadow-lg">
             Vive la Magia del Cine
           </p>
         </div>
 
         {/* Película destacada */}
         <div
-          className="w-full max-w-2xl bg-black/50 backdrop-blur-md border border-white/10 rounded-lg p-6 flex flex-col sm:flex-row items-center gap-6 text-left transition-opacity duration-500"
+          className="w-full max-w-2xl bg-black/50 backdrop-blur-md border border-white/10 rounded-lg p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 text-left transition-opacity duration-500"
           style={{ opacity: transitioning ? 0 : 1 }}
         >
           {p.poster_url && (
-            <div className="shrink-0 w-24 h-36 sm:w-28 sm:h-40 rounded-md overflow-hidden relative shadow-xl">
+            <div className="shrink-0 w-16 h-24 sm:w-28 sm:h-40 rounded-md overflow-hidden relative shadow-xl">
               <Image
                 src={p.poster_url}
                 alt={p.titulo}
@@ -143,22 +143,22 @@ export default function Hero({ peliculas }: Props) {
               />
             </div>
           )}
-          <div className="flex flex-col gap-3 flex-1">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className={`${p.badge_color} text-white font-heading text-xs px-2 py-0.5 rounded-sm tracking-widest`}>
                 {p.badge}
               </span>
               <span className="text-gray-400 text-xs font-body">{p.genero}</span>
             </div>
-            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-white leading-tight">
+            <h2 className="font-heading text-xl sm:text-3xl font-bold text-white leading-tight">
               {p.titulo}
             </h2>
             {p.sinopsis && (
-              <p className="text-gray-300 text-sm font-body leading-relaxed line-clamp-2">
+              <p className="text-gray-300 text-xs sm:text-sm font-body leading-relaxed line-clamp-2">
                 {p.sinopsis}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-gray-400 font-body flex-wrap">
+            <div className="flex items-center gap-3 text-xs text-gray-400 font-body flex-wrap">
               {p.duracion && <span>⏱ {p.duracion}</span>}
               <span>
                 📅 {p.estado === "en_cartelera"
@@ -198,7 +198,7 @@ export default function Hero({ peliculas }: Props) {
         </div>
 
         {/* CTAs generales */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
           <a
             href="#cartelera"
             className="bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest px-8 py-4 rounded-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#CC1244]/30"
@@ -234,8 +234,8 @@ export default function Hero({ peliculas }: Props) {
           </div>
         )}
 
-        {/* Scroll indicator */}
-        <div className="mt-2 flex flex-col items-center gap-2 opacity-40">
+        {/* Scroll indicator — only desktop */}
+        <div className="mt-2 hidden sm:flex flex-col items-center gap-2 opacity-40">
           <span className="font-body text-xs text-gray-400 tracking-widest">SCROLL</span>
           <div className="w-px h-10 bg-gradient-to-b from-gray-400 to-transparent" />
         </div>
@@ -267,16 +267,16 @@ export default function Hero({ peliculas }: Props) {
 
       {/* Barra de stats inferior */}
       <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md border-t border-white/10 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-center gap-8 sm:gap-16 flex-wrap">
+        <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 grid grid-cols-4 sm:flex sm:items-center sm:justify-center sm:gap-16">
           {[
-            { value: "5", label: "Películas en cartelera" },
-            { value: "4", label: "Salas disponibles" },
-            { value: "4", label: "Próximos estrenos" },
-            { value: "50%", label: "Desc. Mar y Mié" },
+            { value: "5", label: "En cartelera" },
+            { value: "4", label: "Salas" },
+            { value: "4", label: "Próximos" },
+            { value: "50%", label: "Mar y Mié" },
           ].map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center gap-0.5">
-              <span className="font-heading text-2xl font-bold text-[#CC1244]">{stat.value}</span>
-              <span className="font-body text-xs text-gray-500 tracking-wider">{stat.label}</span>
+            <div key={stat.label} className="flex flex-col items-center gap-0.5 sm:gap-0.5">
+              <span className="font-heading text-xl sm:text-2xl font-bold text-[#CC1244]">{stat.value}</span>
+              <span className="font-body text-[10px] sm:text-xs text-gray-500 tracking-wider text-center">{stat.label}</span>
             </div>
           ))}
         </div>

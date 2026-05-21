@@ -49,7 +49,7 @@ export default async function PeliculaPage({
     <main className="bg-[#0a0a0a] min-h-screen">
 
       {/* ── HERO ── */}
-      <section className="relative min-h-[70vh] flex items-end overflow-hidden">
+      <section className="relative min-h-[55vh] sm:min-h-[70vh] flex items-end overflow-hidden">
         {hasBackdrop ? (
           <>
             <Image
@@ -69,7 +69,7 @@ export default async function PeliculaPage({
 
         <Link
           href="/#cartelera"
-          className="absolute top-24 left-6 lg:left-10 flex items-center gap-2 text-white/60 hover:text-white font-heading text-sm tracking-widest transition-colors z-10"
+          className="absolute top-20 sm:top-24 left-4 sm:left-6 lg:left-10 flex items-center gap-2 text-white/60 hover:text-white font-heading text-xs sm:text-sm tracking-widest transition-colors z-10"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -77,7 +77,7 @@ export default async function PeliculaPage({
           CARTELERA
         </Link>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-32 w-full flex flex-col sm:flex-row items-end gap-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12 pt-24 sm:pt-32 w-full flex flex-col sm:flex-row items-end gap-5 sm:gap-8">
           {movie.poster_url && (
             <div
               className="shrink-0 w-40 rounded-xl overflow-hidden relative shadow-2xl border border-white/10 hidden sm:block"
@@ -87,19 +87,19 @@ export default async function PeliculaPage({
             </div>
           )}
 
-          <div className="flex flex-col gap-4 flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className={`${movie.badge_color} text-white font-heading text-xs px-3 py-1 rounded-sm tracking-widest`}>
                 {movie.badge}
               </span>
               <span className="text-gray-400 text-sm font-body">{movie.genero}</span>
               <span className="text-gray-600">•</span>
               <span className="text-gray-400 text-sm font-body">{movie.duracion}</span>
-              <span className="text-gray-600">•</span>
-              <span className="text-gray-400 text-sm font-body">{movie.clasificacion}</span>
+              <span className="text-gray-600 hidden sm:inline">•</span>
+              <span className="text-gray-400 text-sm font-body hidden sm:inline">{movie.clasificacion}</span>
             </div>
 
-            <h1 className="font-heading font-bold text-5xl lg:text-7xl text-white tracking-wider leading-tight drop-shadow-2xl">
+            <h1 className="font-heading font-bold text-3xl sm:text-5xl lg:text-7xl text-white tracking-wider leading-tight drop-shadow-2xl">
               {movie.titulo}
             </h1>
 

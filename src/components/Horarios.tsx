@@ -24,7 +24,7 @@ export default function Horarios() {
         </div>
 
         {/* Horario principal */}
-        <div className="relative bg-[#CC1244]/5 border border-[#CC1244]/30 rounded-2xl p-10 mb-8 flex flex-col sm:flex-row items-center justify-center gap-8 text-center sm:text-left">
+        <div className="relative bg-[#CC1244]/5 border border-[#CC1244]/30 rounded-2xl p-6 sm:p-10 mb-8 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-center sm:text-left">
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1244] text-white font-heading text-[10px] tracking-widest px-4 py-1 rounded-sm whitespace-nowrap">
             PROMO MAR Y MIÉ — 50% DESCUENTO
           </span>
@@ -33,8 +33,8 @@ export default function Horarios() {
 
           <div className="flex flex-col gap-1">
             <p className="font-heading text-gray-400 text-sm tracking-widest uppercase">Todos los días</p>
-            <p className="font-heading text-white text-5xl sm:text-6xl font-bold tracking-wider">
-              1<span className="text-[#CC1244]">:</span>00 <span className="text-gray-500 text-3xl">—</span> 10<span className="text-[#CC1244]">:</span>00 PM
+            <p className="font-heading text-white text-4xl sm:text-5xl lg:text-6xl font-bold tracking-wider">
+              1<span className="text-[#CC1244]">:</span>00 <span className="text-gray-500 text-2xl sm:text-3xl">—</span> 10<span className="text-[#CC1244]">:</span>00 PM
             </p>
           </div>
         </div>

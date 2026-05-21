@@ -50,8 +50,8 @@ export default function Footer() {
               {[
                 { label: "Cartelera", href: "#cartelera" },
                 { label: "Próximos Estrenos", href: "#proximos" },
-                { label: "Nuestras Salas", href: "#salas" },
                 { label: "Combos", href: "#snacks" },
+                { label: "Horarios", href: "#horarios" },
                 { label: "Contacto", href: "#contacto" },
               ].map((l) => (
                 <li key={l.label}>

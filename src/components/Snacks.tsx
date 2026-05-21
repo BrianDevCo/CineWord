@@ -98,12 +98,12 @@ export default function Snacks() {
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-2 flex-wrap justify-center mb-10">
+        <div className="flex gap-2 overflow-x-auto pb-2 justify-start sm:justify-center mb-10 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {categorias.map((c) => (
             <button
               key={c.key}
               onClick={() => setCat(c.key)}
-              className={`flex items-center gap-1.5 font-heading text-xs tracking-widest px-4 py-2 rounded-sm border transition-all ${
+              className={`flex items-center gap-1.5 font-heading text-xs tracking-widest px-4 py-2 rounded-sm border transition-all shrink-0 ${
                 cat === c.key
                   ? "bg-[#CC1244] border-[#CC1244] text-white"
                   : "bg-white/5 border-white/10 text-gray-400 hover:border-white/30 hover:text-white"

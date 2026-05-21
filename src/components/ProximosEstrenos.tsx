@@ -48,7 +48,7 @@ export default function ProximosEstrenos({ peliculas }: Props) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {peliculas.map((movie) => {
             const state = states[movie.id] ?? "idle";
             const email = emails[movie.id] ?? "";
@@ -80,15 +80,15 @@ export default function ProximosEstrenos({ peliculas }: Props) {
                   />
                 </div>
 
-                <div className="p-5 flex flex-col gap-3 flex-1">
+                <div className="p-3 sm:p-5 flex flex-col gap-2 sm:gap-3 flex-1">
                   <div>
-                    <span className="text-xs font-body text-gray-500">{movie.genero}</span>
-                    <h3 className="font-heading text-base font-bold text-white mt-1 leading-tight">
+                    <span className="text-[10px] sm:text-xs font-body text-gray-500">{movie.genero}</span>
+                    <h3 className="font-heading text-sm sm:text-base font-bold text-white mt-0.5 leading-tight line-clamp-2">
                       {movie.titulo}
                     </h3>
                   </div>
 
-                  <p className="text-gray-400 text-sm font-body leading-relaxed flex-1">
+                  <p className="text-gray-400 text-xs sm:text-sm font-body leading-relaxed flex-1 line-clamp-3 sm:line-clamp-none">
                     {movie.sinopsis}
                   </p>
 

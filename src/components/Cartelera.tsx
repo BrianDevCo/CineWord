@@ -46,12 +46,12 @@ export default function Cartelera({ peliculas }: Props) {
               CARTELERA
             </h2>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
             {FILTERS.map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`font-heading text-xs tracking-widest px-4 py-2 rounded-sm border transition-all duration-200 ${
+                className={`font-heading text-xs tracking-widest px-4 py-2 rounded-sm border transition-all duration-200 shrink-0 ${
                   activeFilter === f
                     ? "bg-[#CC1244] border-[#CC1244] text-white"
                     : "border-white/15 text-gray-500 hover:border-white/30 hover:text-white"
@@ -66,7 +66,7 @@ export default function Cartelera({ peliculas }: Props) {
         {/* FEATURED */}
         {showFeatured && (
           <Link href={`/pelicula/${featured.id}`}>
-            <div className="relative rounded-2xl overflow-hidden mb-10 h-[400px] lg:h-[480px] group cursor-pointer">
+            <div className="relative rounded-2xl overflow-hidden mb-10 h-[220px] sm:h-[360px] lg:h-[480px] group cursor-pointer">
               {featured.backdrop_url ? (
                 <Image
                   src={featured.backdrop_url}
@@ -82,8 +82,8 @@ export default function Cartelera({ peliculas }: Props) {
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-              <div className="absolute inset-0 flex items-end p-8 lg:p-12">
-                <div className="flex gap-6 items-end max-w-3xl">
+              <div className="absolute inset-0 flex items-end p-5 sm:p-8 lg:p-12">
+                <div className="flex gap-4 sm:gap-6 items-end max-w-3xl">
                   {featured.poster_url && (
                     <div className="shrink-0 w-28 h-40 lg:w-36 lg:h-52 rounded-lg overflow-hidden relative shadow-2xl border border-white/10 hidden sm:block">
                       <Image src={featured.poster_url} alt={featured.titulo} fill className="object-cover" sizes="144px" />
@@ -93,7 +93,7 @@ export default function Cartelera({ peliculas }: Props) {
                     <span className={`${featured.badge_color} text-white font-heading text-xs px-3 py-1 rounded-sm tracking-widest w-fit`}>
                       {featured.badge}
                     </span>
-                    <h3 className="font-heading text-4xl lg:text-5xl font-bold text-white tracking-wider leading-tight">
+                    <h3 className="font-heading text-2xl sm:text-3xl lg:text-5xl font-bold text-white tracking-wider leading-tight">
                       {featured.titulo}
                     </h3>
                     <p className="text-gray-400 font-body text-sm hidden sm:block">

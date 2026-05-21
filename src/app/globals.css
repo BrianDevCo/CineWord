@@ -62,3 +62,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 ::-webkit-scrollbar-track { background: #111; }
 ::-webkit-scrollbar-thumb { background: #cc1244; border-radius: 3px; }
 
+/* Horizontal scroll sin barra visible */
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+

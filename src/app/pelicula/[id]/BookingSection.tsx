@@ -497,20 +497,20 @@ export default function BookingSection({ movie, funciones }: Props) {
     <div className="flex flex-col gap-0">
 
       {/* ── STEP INDICATOR ── */}
-      <div className="flex items-center gap-0 mb-10 overflow-x-auto pb-2">
+      <div className="flex items-center gap-0 mb-8 sm:mb-10">
         {["Fecha","Formato","Horario","Asientos","Pago"].map((label, i) => {
           const n = (i + 1) as 1|2|3|4|5;
           const locked = !VENTA_ONLINE && n > 3;
           const active = step === n && !locked; const done = step > n && !locked;
           return (
-            <div key={label} className="flex items-center">
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-sm transition-all whitespace-nowrap ${active ? "bg-[#CC1244] text-white" : done ? "text-[#CC1244]" : locked ? "text-gray-700 opacity-50" : "text-gray-600"}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-heading border ${active ? "border-white text-white" : done ? "border-[#CC1244] bg-[#CC1244] text-white" : locked ? "border-gray-700" : "border-gray-600"}`}>
+            <div key={label} className="flex items-center flex-1 sm:flex-none">
+              <div className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-4 py-2 rounded-sm transition-all w-full sm:w-auto ${active ? "bg-[#CC1244] text-white" : done ? "text-[#CC1244]" : locked ? "text-gray-700 opacity-50" : "text-gray-600"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-heading border shrink-0 ${active ? "border-white text-white" : done ? "border-[#CC1244] bg-[#CC1244] text-white" : locked ? "border-gray-700" : "border-gray-600"}`}>
                   {done ? "✓" : locked ? "🔒" : n}
                 </span>
-                <span className="font-heading text-xs tracking-widest">{label.toUpperCase()}</span>
+                <span className="font-heading text-[9px] sm:text-xs tracking-widest hidden xs:inline sm:inline">{label.toUpperCase()}</span>
               </div>
-              {i < 4 && <div className={`w-8 h-px shrink-0 ${done ? "bg-[#CC1244]" : "bg-white/10"}`} />}
+              {i < 4 && <div className={`w-3 sm:w-8 h-px shrink-0 ${done ? "bg-[#CC1244]" : "bg-white/10"}`} />}
             </div>
           );
         })}
@@ -535,7 +535,7 @@ export default function BookingSection({ movie, funciones }: Props) {
               const isTueWed = day.dayOfWeek === 2 || day.dayOfWeek === 3;
               return (
                 <button key={day.fecha} onClick={() => pickFecha(day.fecha)}
-                  className={`group flex flex-col items-center gap-1.5 rounded-xl px-6 py-5 border transition-all hover:border-[#CC1244]/50 hover:bg-[#1a1a1a] ${isWknd ? "bg-[#111] border-yellow-500/20" : "bg-[#111] border-white/10"}`}>
+                  className={`group flex flex-col items-center gap-1 sm:gap-1.5 rounded-xl px-4 sm:px-6 py-3 sm:py-5 border transition-all hover:border-[#CC1244]/50 hover:bg-[#1a1a1a] ${isWknd ? "bg-[#111] border-yellow-500/20" : "bg-[#111] border-white/10"}`}>
                   <span className={`font-heading text-[10px] tracking-widest uppercase ${isWknd ? "text-yellow-500/70" : "text-gray-600"}`}>{fechaDisplay(day.fecha)}</span>
                   <span className="font-heading text-2xl font-bold text-white group-hover:text-[#CC1244] transition-colors">{day.label}</span>
                   {isWknd  && <span className="text-[9px] font-heading tracking-widest text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-sm">MÁS FUNCIONES</span>}
@@ -570,7 +570,7 @@ export default function BookingSection({ movie, funciones }: Props) {
             <div className="flex gap-3 flex-wrap">
               {formatosDisponibles.map(f => (
                 <button key={f} onClick={() => pickFormato(f)}
-                  className={`font-heading text-sm tracking-widest px-8 py-4 rounded-xl border transition-all ${f === "VIP"
+                  className={`font-heading text-sm tracking-widest px-6 sm:px-8 py-3 sm:py-4 rounded-xl border transition-all ${f === "VIP"
                     ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20"
                     : "border-white/15 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"}`}>
                   {f}
