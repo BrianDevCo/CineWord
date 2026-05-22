@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
         hostname: "image.tmdb.org",
         pathname: "/t/p/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "prodcdnmobisoft.oxxodomicilios.com",
+      },
     ],
   },
 };

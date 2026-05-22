@@ -1,68 +1,112 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 type Categoria = "todos" | "combos" | "crispetas" | "comidas" | "bebidas" | "dulces";
 
+const IMG = (id: string) =>
+  `https://images.unsplash.com/${id}?w=600&q=80&fit=crop&auto=format`;
+
+const OXXO = (file: string) =>
+  `https://prodcdnmobisoft.oxxodomicilios.com/${file}`;
+
+const IMGS = {
+  crispetaPeq:   IMG("photo-1682970468815-0db201b7804d"), // bol pequeño de palomitas
+  crispetaMed:   IMG("photo-1548867688-231911e4ba3c"),    // palomitas medianas sirviéndose
+  crispetaGde:   IMG("photo-1770597105062-648a2fbfa052"), // balde grande de cine
+  crispetaDulce: IMG("photo-1709019651839-56148a2b2615"), // palomitas de colores dulces
+  perro:         IMG("photo-1590759877531-559907fd23d6"),
+  gaseosa:       IMG("photo-1562996506-7a4f75955d5a"),
+  nachos:        IMG("photo-1564758565388-0d5da0cbb08c"),
+  papas:         IMG("photo-1759465201025-0f4a876efa47"), // bolsa de papas fritas
+  gomas:         IMG("photo-1703319953569-72084ac406b6"),
+  granizados:    IMG("photo-1605116188480-2932cf9ace8b"),
+  aguasab:       IMG("photo-1761864293808-dfb96001c534"),
+  queso:         IMG("photo-1529566186297-155c18f9a434"),
+  amadu:         IMG("photo-1464195085758-89f3e55e821e"), // placeholder
+  // marcas reales desde OXXO Colombia
+  chocolate:     OXXO("01HQJM6CS60DXG4ZGYN5JZHJBP.png"),  // Chocolatina Jumbo
+  galleta:       OXXO("01GT6XF9RT8MZBYQH42VP5XZMN.webp"), // Galleta Wafer Jet (Noel)
+  tea:           OXXO("01K5W02ZH6HQHTMANGZ83H0XGP.png"),  // Mr. Tea Limón
+  gatorade:      OXXO("01J1WBTCAV6P9MPTS5R51FFEKQ.jpg"),  // Gatorade Blue Ice
+  agua:          OXXO("01K5SPC6NATJP42SDNCAR0QZVS.jpg"),  // Agua Cristal
+  jugo:          OXXO("01JE6QAS8RAJMM8VPMK8S790MB.png"),  // Jugo Hit Mora
+};
+
+type ComboTile = { image: string; label: string; qty?: number };
+
+// Exactamente qué trae cada combo — una imagen por cada item incluido
+const COMBO_CONTENTS: Record<number, ComboTile[]> = {
+  1: [ // Crispeta mediana + 1 perro + 1 gaseosa + 1 dulce
+    { image: IMGS.crispetaMed,   label: "Crispeta mediana" },
+    { image: IMGS.perro,         label: "Perro" },
+    { image: IMGS.gaseosa,       label: "Gaseosa" },
+    { image: IMGS.gomas,         label: "Dulce" },
+  ],
+  2: [ // Crispeta grande + 2 gaseosas
+    { image: IMGS.crispetaGde,   label: "Crispeta grande" },
+    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 2 },
+  ],
+  3: [ // Crispeta grande + 2 perros + 2 gaseosas + 1 dulce
+    { image: IMGS.crispetaGde,   label: "Crispeta grande" },
+    { image: IMGS.perro,         label: "Perro", qty: 2 },
+    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 2 },
+    { image: IMGS.gomas,         label: "Dulce" },
+  ],
+  4: [ // 2 crispetas medianas + 3 perros + 3 gaseosas + papas
+    { image: IMGS.crispetaMed,   label: "Crispeta mediana", qty: 2 },
+    { image: IMGS.perro,         label: "Perro", qty: 3 },
+    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 3 },
+    { image: IMGS.papas,         label: "Papas" },
+  ],
+  5: [ // Cajita + chocolatina + 1 bebida
+    { image: IMGS.papas,         label: "Cajita" },
+    { image: IMGS.chocolate,     label: "Chocolatina" },
+    { image: IMGS.gaseosa,       label: "Bebida" },
+  ],
+  6: [ // Crispeta mediana + 2 gaseosas
+    { image: IMGS.crispetaMed,   label: "Crispeta mediana" },
+    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 2 },
+  ],
+  7: [ // Nachos con queso + perro + bebida
+    { image: IMGS.nachos,        label: "Nachos" },
+    { image: IMGS.perro,         label: "Perro" },
+    { image: IMGS.gaseosa,       label: "Bebida" },
+  ],
+};
+
 const combos = [
-  {
-    id: 1, name: "Mi Combo", emoji: "🎉", tag: null,
-    desc: "Crispeta mediana, 1 perro, 1 gaseosa y 1 dulce",
-    precios: { salado: 33000, mixto: 36500, dulce: 39000 },
-  },
-  {
-    id: 2, name: "Combo World", emoji: "🌎", tag: "POPULAR",
-    desc: "Crispeta grande y 2 gaseosas",
-    precios: { salado: 35000, mixto: 38500, dulce: 41000 },
-  },
-  {
-    id: 3, name: "Mundo para Dos", emoji: "👫", tag: "DÚO",
-    desc: "Crispeta grande, 2 perros, 2 gaseosas y 1 dulce",
-    precios: { salado: 60000, mixto: 63500, dulce: 66000 },
-  },
-  {
-    id: 4, name: "Mega Familiar", emoji: "🏆", tag: "FAMILIA",
-    desc: "2 crispetas medianas, 3 perros, 3 gaseosas y papas",
-    precios: { salado: 90000, mixto: 93500, dulce: 96000 },
-  },
-  {
-    id: 5, name: "Combo Kids", emoji: "🧒", tag: null,
-    desc: "Cajita feliz, chocolatina y 1 bebida",
-    precios: { salado: 18000, mixto: 21500, dulce: 24000 },
-  },
-  {
-    id: 6, name: "Combo Express", emoji: "⚡", tag: null,
-    desc: "Crispeta mediana y 2 gaseosas",
-    precios: { salado: 28000, mixto: 31500, dulce: 34000 },
-  },
-  {
-    id: 7, name: "Combo Nachos", emoji: "🧀", tag: null,
-    desc: "Nachos con queso, perro y bebida",
-    precios: { salado: 30000 },
-  },
+  { id: 1, name: "Mi Combo",       tag: null,     desc: "Crispeta mediana, 1 perro, 1 gaseosa y 1 dulce",            precios: { salado: 33000, mixto: 36500, dulce: 39000 } },
+  { id: 2, name: "Combo World",    tag: "POPULAR", desc: "Crispeta grande y 2 gaseosas",                             precios: { salado: 35000, mixto: 38500, dulce: 41000 } },
+  { id: 3, name: "Mundo para Dos", tag: "DÚO",    desc: "Crispeta grande, 2 perros, 2 gaseosas y 1 dulce",           precios: { salado: 60000, mixto: 63500, dulce: 66000 } },
+  { id: 4, name: "Mega Familiar",  tag: "FAMILIA", desc: "2 crispetas medianas, 3 perros, 3 gaseosas y papas",       precios: { salado: 90000, mixto: 93500, dulce: 96000 } },
+  { id: 5, name: "Combo Kids",     tag: null,     desc: "Cajita feliz, chocolatina y 1 bebida",                      precios: { salado: 18000, mixto: 21500, dulce: 24000 } },
+  { id: 6, name: "Combo Express",  tag: null,     desc: "Crispeta mediana y 2 gaseosas",                             precios: { salado: 28000, mixto: 31500, dulce: 34000 } },
+  { id: 7, name: "Combo Nachos",   tag: null,     desc: "Nachos con queso, perro y bebida",                          precios: { salado: 30000 } },
 ];
 
 const items = [
-  { id: 101, name: "Crispeta Pequeña",   price: 9000,  emoji: "🍿", cat: "crispetas" },
-  { id: 102, name: "Crispeta Mediana",   price: 18000, emoji: "🍿", cat: "crispetas" },
-  { id: 103, name: "Crispeta Grande",    price: 24000, emoji: "🍿", cat: "crispetas" },
-  { id: 104, name: "Crispeta Mixta",     price: 3500,  emoji: "🍿", cat: "crispetas" },
-  { id: 105, name: "Crispeta Dulce",     price: 6000,  emoji: "🍿", cat: "crispetas" },
-  { id: 106, name: "Perro",             price: 12000, emoji: "🌭", cat: "comidas"   },
-  { id: 107, name: "Granizados",         price: 12000, emoji: "🧊", cat: "comidas"   },
-  { id: 108, name: "Nachos",            price: 19000, emoji: "🧀", cat: "comidas"   },
-  { id: 109, name: "Paquetes",          price: 14500, emoji: "🥨", cat: "comidas"   },
-  { id: 110, name: "Gaseosa",           price: 7000,  emoji: "🥤", cat: "bebidas"   },
-  { id: 111, name: "Gatorade",          price: 8500,  emoji: "⚡", cat: "bebidas"   },
-  { id: 112, name: "Téa",              price: 7000,  emoji: "🫖", cat: "bebidas"   },
-  { id: 113, name: "Jugo Hit",          price: 6000,  emoji: "🍊", cat: "bebidas"   },
-  { id: 114, name: "Agua Saborizada",   price: 7000,  emoji: "💧", cat: "bebidas"   },
-  { id: 115, name: "Agua",             price: 5000,  emoji: "💧", cat: "bebidas"   },
-  { id: 116, name: "Galleta Wafer",     price: 3500,  emoji: "🍪", cat: "dulces"    },
-  { id: 117, name: "Galleta Amadu",     price: 6000,  emoji: "🍪", cat: "dulces"    },
-  { id: 118, name: "Chocolatina Jumbo", price: 8500,  emoji: "🍫", cat: "dulces"    },
-  { id: 119, name: "Gomas",            price: 4000,  emoji: "🍬", cat: "dulces"    },
-  { id: 120, name: "Queso Cheddar",    price: 7000,  emoji: "🧀", cat: "dulces"    },
+  { id: 101, name: "Crispeta Pequeña",   price: 9000,  cat: "crispetas", image: IMGS.crispetaPeq },
+  { id: 102, name: "Crispeta Mediana",   price: 18000, cat: "crispetas", image: IMGS.crispetaMed },
+  { id: 103, name: "Crispeta Grande",    price: 24000, cat: "crispetas", image: IMGS.crispetaGde },
+  { id: 104, name: "Crispeta Mixta",     price: 3500,  cat: "crispetas", image: IMGS.crispetaMed },
+  { id: 105, name: "Crispeta Dulce",     price: 6000,  cat: "crispetas", image: IMGS.crispetaDulce },
+  { id: 106, name: "Perro",             price: 12000, cat: "comidas",   image: IMGS.perro },
+  { id: 107, name: "Granizados",         price: 12000, cat: "comidas",   image: IMGS.granizados },
+  { id: 108, name: "Nachos",            price: 19000, cat: "comidas",   image: IMGS.nachos },
+  { id: 109, name: "Paquetes",          price: 14500, cat: "comidas",   image: IMGS.papas },
+  { id: 110, name: "Gaseosa",           price: 7000,  cat: "bebidas",   image: IMGS.gaseosa },
+  { id: 111, name: "Gatorade",          price: 8500,  cat: "bebidas",   image: IMGS.gatorade },
+  { id: 112, name: "Mr. Tea",           price: 7000,  cat: "bebidas",   image: IMGS.tea },
+  { id: 113, name: "Jugo Hit",          price: 6000,  cat: "bebidas",   image: IMGS.jugo },
+  { id: 114, name: "Agua Saborizada",   price: 7000,  cat: "bebidas",   image: IMGS.aguasab },
+  { id: 115, name: "Agua",             price: 5000,  cat: "bebidas",   image: IMGS.agua },
+  { id: 116, name: "Galleta Wafer Jet", price: 3500,  cat: "dulces",    image: IMGS.galleta },
+  { id: 117, name: "Galleta Amadu",     price: 6000,  cat: "dulces",    image: IMGS.amadu },
+  { id: 118, name: "Chocolatina Jumbo", price: 8500,  cat: "dulces",    image: IMGS.chocolate },
+  { id: 119, name: "Gomas",            price: 4000,  cat: "dulces",    image: IMGS.gomas },
+  { id: 120, name: "Queso Cheddar",    price: 7000,  cat: "dulces",    image: IMGS.queso },
 ];
 
 const categorias: { key: Categoria; label: string; emoji: string }[] = [
@@ -76,13 +120,49 @@ const categorias: { key: Categoria; label: string; emoji: string }[] = [
 
 function fmt(n: number) { return `$${n.toLocaleString("es-CO")}`; }
 
+function ComboCollage({ tiles }: { tiles: ComboTile[] }) {
+  const is4 = tiles.length === 4;
+  const is3 = tiles.length === 3;
+  const gridCols = is4 ? "grid-cols-2" : is3 ? "grid-cols-3" : "grid-cols-2";
+  const cellH   = is4 ? "h-[78px]" : "h-[108px]";
+
+  return (
+    <div className={`grid ${gridCols} gap-px bg-black overflow-hidden rounded-t-xl`}>
+      {tiles.map((tile, i) => (
+        <div key={i} className={`relative ${cellH} overflow-hidden bg-[#111]`}>
+          <Image
+            src={tile.image}
+            alt={tile.label}
+            fill
+            className="object-cover"
+            sizes="200px"
+          />
+          {/* Badge de cantidad */}
+          {tile.qty && tile.qty > 1 && (
+            <span className="absolute top-1.5 right-1.5 z-10 bg-[#CC1244] text-white font-heading text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+              ×{tile.qty}
+            </span>
+          )}
+          {/* Label del item */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pt-4 pb-1 px-1.5">
+            <span className="font-heading text-white text-[8px] tracking-widest uppercase leading-none">
+              {tile.label}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Snacks() {
   const [cat, setCat] = useState<Categoria>("todos");
 
   const showCombos = cat === "todos" || cat === "combos";
-  const filteredItems = cat === "todos" || cat === "combos"
-    ? (cat === "combos" ? [] : items)
-    : items.filter((i) => i.cat === cat);
+  const filteredItems =
+    cat === "todos" || cat === "combos"
+      ? cat === "combos" ? [] : items
+      : items.filter((i) => i.cat === cat);
 
   return (
     <section id="snacks" className="py-20 lg:py-28 bg-[#0a0a0a]">
@@ -124,41 +204,43 @@ export default function Snacks() {
               {combos.map((combo) => {
                 const hasSabores = combo.precios.mixto !== undefined;
                 return (
-                  <div key={combo.id} className="relative bg-[#111] rounded-xl p-5 border border-white/5 hover:border-[#CC1244]/30 transition-all duration-300 flex flex-col gap-4">
+                  <div
+                    key={combo.id}
+                    className="relative bg-[#111] rounded-xl border border-white/5 hover:border-[#CC1244]/30 transition-all duration-300 flex flex-col overflow-hidden"
+                  >
                     {combo.tag && (
-                      <span className="absolute top-3 right-3 bg-[#CC1244] text-white font-heading text-[9px] px-2 py-0.5 rounded-sm tracking-widest">
+                      <span className="absolute top-2 right-2 z-20 bg-[#CC1244] text-white font-heading text-[9px] px-2 py-0.5 rounded-sm tracking-widest">
                         {combo.tag}
                       </span>
                     )}
 
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl shrink-0">
-                        {combo.emoji}
-                      </div>
+                    {/* Collage con los items exactos del combo */}
+                    <ComboCollage tiles={COMBO_CONTENTS[combo.id]} />
+
+                    <div className="p-4 flex flex-col gap-3 flex-1">
                       <div>
                         <h3 className="font-heading text-sm font-bold text-white">{combo.name}</h3>
-                        <p className="text-gray-500 text-xs font-body leading-snug mt-0.5">{combo.desc}</p>
+                        <p className="text-gray-500 text-xs font-body leading-snug mt-1">{combo.desc}</p>
                       </div>
-                    </div>
 
-                    {/* Precios por sabor */}
-                    <div className={`grid gap-2 mt-auto pt-3 border-t border-white/10 ${hasSabores ? "grid-cols-3" : "grid-cols-1"}`}>
-                      <div className="flex flex-col items-center bg-white/5 rounded-lg py-2 px-1">
-                        <span className="font-heading text-[9px] text-gray-500 tracking-widest">SALADO</span>
-                        <span className="font-heading text-white font-bold text-sm mt-0.5">{fmt(combo.precios.salado)}</span>
+                      <div className={`grid gap-2 mt-auto pt-3 border-t border-white/10 ${hasSabores ? "grid-cols-3" : "grid-cols-1"}`}>
+                        <div className="flex flex-col items-center bg-white/5 rounded-lg py-2 px-1">
+                          <span className="font-heading text-[9px] text-gray-500 tracking-widest">SALADO</span>
+                          <span className="font-heading text-white font-bold text-sm mt-0.5">{fmt(combo.precios.salado)}</span>
+                        </div>
+                        {hasSabores && (
+                          <>
+                            <div className="flex flex-col items-center bg-white/5 rounded-lg py-2 px-1">
+                              <span className="font-heading text-[9px] text-gray-500 tracking-widest">MIXTO</span>
+                              <span className="font-heading text-white font-bold text-sm mt-0.5">{fmt(combo.precios.mixto!)}</span>
+                            </div>
+                            <div className="flex flex-col items-center bg-[#CC1244]/10 border border-[#CC1244]/20 rounded-lg py-2 px-1">
+                              <span className="font-heading text-[9px] text-[#CC1244] tracking-widest">DULCE</span>
+                              <span className="font-heading text-white font-bold text-sm mt-0.5">{fmt(combo.precios.dulce!)}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      {hasSabores && (
-                        <>
-                          <div className="flex flex-col items-center bg-white/5 rounded-lg py-2 px-1">
-                            <span className="font-heading text-[9px] text-gray-500 tracking-widest">MIXTO</span>
-                            <span className="font-heading text-white font-bold text-sm mt-0.5">{fmt(combo.precios.mixto!)}</span>
-                          </div>
-                          <div className="flex flex-col items-center bg-[#CC1244]/10 border border-[#CC1244]/20 rounded-lg py-2 px-1">
-                            <span className="font-heading text-[9px] text-[#CC1244] tracking-widest">DULCE</span>
-                            <span className="font-heading text-white font-bold text-sm mt-0.5">{fmt(combo.precios.dulce!)}</span>
-                          </div>
-                        </>
-                      )}
                     </div>
                   </div>
                 );
@@ -175,12 +257,22 @@ export default function Snacks() {
             )}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredItems.map((item) => (
-                <div key={item.id} className="bg-[#111] rounded-xl p-4 border border-white/5 hover:border-[#CC1244]/30 transition-all duration-300 flex flex-col gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl">
-                    {item.emoji}
+                <div
+                  key={item.id}
+                  className="bg-[#111] rounded-xl border border-white/5 hover:border-[#CC1244]/30 transition-all duration-300 flex flex-col overflow-hidden"
+                >
+                  <div className="relative h-36 overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111]/60 via-transparent to-transparent" />
                   </div>
-                  <h3 className="font-heading text-sm font-bold text-white leading-snug flex-1">{item.name}</h3>
-                  <div className="pt-2 border-t border-white/10">
+                  <div className="p-3 flex flex-col gap-1">
+                    <h3 className="font-heading text-sm font-bold text-white leading-snug">{item.name}</h3>
                     <span className="font-heading text-lg font-bold text-[#CC1244]">{fmt(item.price)}</span>
                   </div>
                 </div>
