@@ -45,10 +45,14 @@ export async function GET() {
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
   const tests = {
-    // SCOESG — disponibilidad/ocupación de asientos por función
+    // SCOESG — ocupación real de asientos
     scoesg_s2_14: callScore(base, "scoesg", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "14", teatro, tercero })),
     scoesg_s2_18: callScore(base, "scoesg", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "18", teatro, tercero })),
-    scoesg_s2_21: callScore(base, "scoesg", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "21", teatro, tercero })),
+    // SCOPLA — tarifas por función (pelicula 55 = EN LA ZONA GRIS, sala 2)
+    scopla_s2_p55_14: callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "55", Sala: "2", InicioFuncion: "1400", teatro, tercero })),
+    scopla_s2_p55_18: callScore(base, "scopla", JSON.stringify({ FechaFuncion: hoy, Pelicula: "55", Sala: "2", InicioFuncion: "1800", teatro, tercero })),
+    // SCOCAR — cartelera completa
+    scocar: callScore(base, "scocar", JSON.stringify({ teatro, tercero })),
   };
 
   const results = Object.fromEntries(
