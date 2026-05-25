@@ -11,8 +11,8 @@ import type { User } from "@supabase/supabase-js";
 
 const MercadoPagoBrick = dynamic(() => import("@/components/MercadoPagoBrick"), { ssr: false });
 
-// Cambiar a true cuando Score esté conectado y la venta en línea esté habilitada
-const VENTA_ONLINE = false;
+// Cambiar a false para deshabilitar la venta en línea
+const VENTA_ONLINE = true;
 
 // ── Constantes de fallback (cuando Score no está configurado) ──────────────────
 const FALLBACK_ROWS = ["A","B","C","D","E","F","G","H"];
@@ -57,6 +57,7 @@ export default function BookingSection({ movie, funciones }: Props) {
 
   // ── Auth ──────────────────────────────────────────────────────────────────────
   const [user, setUser] = useState<User | null | "loading">("loading");
+  const [showLoginGate, setShowLoginGate] = useState(false);
 
   // ── Pasos ─────────────────────────────────────────────────────────────────────
   const [step, setStep] = useState<1|2|3|4|5>(1);
@@ -300,13 +301,14 @@ export default function BookingSection({ movie, funciones }: Props) {
   };
 
   const pickFuncion = async (f: Funcion) => {
-    setSelectedFuncion(f); setSelectedSeats(new Set()); setTimedOut(false); setScorePlanes([]);
+    setSelectedFuncion(f); setSelectedSeats(new Set()); setTimedOut(false); setScorePlanes([]); setShowLoginGate(false);
     if (VENTA_ONLINE) await Promise.all([cargarMapa(f), cargarPlanes(f)]);
     setStep(4);
   };
 
   const continueToPayment = () => {
-    if (!user || user === "loading") { setStep(5); return; }
+    if (!user || user === "loading") { setShowLoginGate(true); return; }
+    setShowLoginGate(false);
     const u = user as User;
     setPaymentInfo(prev => ({
       nombre:   prev.nombre   || u.user_metadata?.nombre_completo || u.user_metadata?.full_name || "",
@@ -747,9 +749,30 @@ export default function BookingSection({ movie, funciones }: Props) {
                   </div>
                   <button disabled={selectedSeats.size === 0} onClick={continueToPayment}
                     className="w-full sm:w-auto bg-[#CC1244] hover:bg-[#a00e35] disabled:opacity-30 disabled:cursor-not-allowed text-white font-heading text-sm tracking-widest px-8 py-3 rounded-sm transition-all">
-                    CONTINUAR AL PAGO
+                    IR AL PAGO — {fmt(total)}
                   </button>
                 </div>
+
+                {/* Gate de login — aparece solo si intenta pagar sin sesión */}
+                {showLoginGate && (
+                  <div className="flex flex-col items-center gap-5 py-8 border border-[#CC1244]/30 rounded-2xl bg-[#CC1244]/5 text-center">
+                    <div className="w-12 h-12 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#CC1244]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-heading text-white text-base tracking-wider mb-1">INICIA SESIÓN PARA CONTINUAR</p>
+                      <p className="text-gray-500 font-body text-sm">Necesitas una cuenta para completar tu compra.</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+                      <Link href={`/cuenta/login?redirect=${encodeURIComponent(pathname)}`}
+                        className="flex-1 bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">INGRESAR</Link>
+                      <Link href={`/cuenta/registrar?redirect=${encodeURIComponent(pathname)}`}
+                        className="flex-1 border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">REGISTRARSE</Link>
+                    </div>
+                  </div>
+                )}
               </>
             )
           )}
@@ -763,30 +786,6 @@ export default function BookingSection({ movie, funciones }: Props) {
             <span className="w-6 h-6 rounded-full bg-[#CC1244] text-white text-xs flex items-center justify-center font-bold">5</span>
             DATOS Y PAGO
           </h3>
-
-          {/* Gate de login */}
-          {!user && (
-            <div className="flex flex-col items-center gap-6 py-10 border border-white/10 rounded-2xl bg-[#111] text-center">
-              <div className="w-14 h-14 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#CC1244]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-heading text-white text-lg tracking-wider mb-1">NECESITAS UNA CUENTA</p>
-                <p className="text-gray-500 font-body text-sm">Inicia sesión o regístrate gratis para completar tu compra.<br />Tus asientos quedan reservados.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-                <Link href={`/cuenta/login?redirect=${encodeURIComponent(pathname)}`}
-                  className="flex-1 bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">INGRESAR</Link>
-                <Link href={`/cuenta/registrar?redirect=${encodeURIComponent(pathname)}`}
-                  className="flex-1 border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all text-center">REGISTRARSE</Link>
-              </div>
-              <button onClick={() => setStep(4)} className="text-gray-600 hover:text-white font-heading text-xs tracking-widest transition-colors">
-                ← VOLVER A MIS ASIENTOS
-              </button>
-            </div>
-          )}
 
           {user && user !== "loading" && (<>
             {/* Timer */}
