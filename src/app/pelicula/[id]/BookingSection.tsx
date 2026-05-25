@@ -463,9 +463,9 @@ export default function BookingSection({ movie, funciones }: Props) {
 
   const seatClass = (id: string) => {
     if (ocupadosSet.has(id))   return "bg-white/10 border-white/10 cursor-not-allowed opacity-40";
-    if (selectedSeats.has(id)) return "bg-[#CC1244] border-[#CC1244] cursor-pointer scale-110 shadow-[0_0_8px_rgba(204,18,68,0.6)]";
+    if (selectedSeats.has(id)) return "bg-blue-500 border-blue-500 cursor-pointer scale-110 shadow-[0_0_8px_rgba(59,130,246,0.6)]";
     if (isVipRow(id[0]))       return "bg-yellow-500/10 border-yellow-500/40 hover:bg-yellow-500/30 cursor-pointer";
-    return "bg-white/5 border-white/20 hover:bg-white/15 cursor-pointer";
+    return "bg-[#CC1244]/20 border-[#CC1244]/60 hover:bg-[#CC1244]/40 cursor-pointer";
   };
 
   const toggleSeat = (id: string) => {
@@ -725,10 +725,10 @@ export default function BookingSection({ movie, funciones }: Props) {
 
                 <div className="flex flex-wrap justify-center gap-5 text-xs font-body text-gray-500">
                   {[
-                    { color: "bg-white/5 border-white/20",           label: "Disponible" },
-                    { color: "bg-[#CC1244] border-[#CC1244]",        label: "Seleccionado" },
+                    { color: "bg-[#CC1244]/20 border-[#CC1244]/60",   label: "Disponible" },
+                    { color: "bg-blue-500 border-blue-500",            label: "Seleccionado" },
                     { color: "bg-white/10 border-white/10 opacity-40", label: "Ocupado" },
-                    { color: "bg-yellow-500/10 border-yellow-500/40", label: `VIP — ${fmt(precioVip)}` },
+                    { color: "bg-yellow-500/10 border-yellow-500/40",  label: `VIP — ${fmt(precioVip)}` },
                   ].map(l => (
                     <span key={l.label} className="flex items-center gap-1.5">
                       <span className={`w-4 h-3.5 rounded-t-sm border inline-block ${l.color}`} />
