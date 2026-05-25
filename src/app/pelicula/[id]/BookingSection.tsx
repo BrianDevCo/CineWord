@@ -468,6 +468,13 @@ export default function BookingSection({ movie, funciones }: Props) {
     return "bg-[#CC1244]/20 border-[#CC1244]/60 hover:bg-[#CC1244]/40 cursor-pointer";
   };
 
+  const seatFill = (id: string): { back: string; cushion: string; arm: string; glow: boolean } => {
+    if (ocupadosSet.has(id))   return { back: "#ffffff", cushion: "#ffffff", arm: "#ffffff", glow: false };
+    if (selectedSeats.has(id)) return { back: "#3B82F6", cushion: "#60A5FA", arm: "#2563EB", glow: true };
+    if (isVipRow(id[0]))       return { back: "#EAB308", cushion: "#FDE047", arm: "#CA8A04", glow: false };
+    return { back: "#CC1244", cushion: "#E8154F", arm: "#A50F36", glow: false };
+  };
+
   const toggleSeat = (id: string) => {
     if (ocupadosSet.has(id)) return;
     setTimedOut(false);
@@ -697,19 +704,40 @@ export default function BookingSection({ movie, funciones }: Props) {
                         {(allCols ?? colsEnFila(row)).map(col => {
                           const id = `${row}${col}`;
                           if (allCols && !seatExists(row, col)) {
-                            // Col 3 es siempre el pasillo (escaleras) independiente del espejo
                             if (col === 3) {
                               return (
-                                <div key="aisle" className="w-6 h-6 flex items-center justify-center shrink-0">
+                                <div key="aisle" className="w-6 h-8 flex items-center justify-center shrink-0">
                                   <span className="text-[7px] text-gray-700 font-heading" style={{ writingMode: "vertical-rl" }}>ESC</span>
                                 </div>
                               );
                             }
-                            return <div key={`gap-${col}`} className="w-7 h-6 shrink-0" />;
+                            return <div key={`gap-${col}`} className="w-8 h-8 shrink-0" />;
                           }
+                          const occupied = ocupadosSet.has(id);
+                          const selected = selectedSeats.has(id);
+                          const f = seatFill(id);
                           return (
-                            <button key={id} onClick={() => toggleSeat(id)} title={ocupadosSet.has(id) ? "Ocupado" : getSeatLabel(id)}
-                              className={`w-7 h-6 rounded-t-md border text-[10px] transition-all duration-150 ${seatClass(id)}`} />
+                            <button
+                              key={id}
+                              onClick={() => toggleSeat(id)}
+                              title={occupied ? "Ocupado" : getSeatLabel(id)}
+                              disabled={occupied}
+                              className={`shrink-0 transition-all duration-150 ${selected ? "scale-110" : !occupied ? "hover:scale-105" : ""} ${occupied ? "cursor-not-allowed" : "cursor-pointer"}`}
+                              style={{ background: "none", border: "none", padding: 0, filter: f.glow ? "drop-shadow(0 0 4px rgba(59,130,246,0.7))" : "none" }}
+                            >
+                              <svg viewBox="0 0 30 30" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+                                {/* Respaldo */}
+                                <rect x="4" y="1" width="22" height="17" rx="5" fill={f.back} opacity={occupied ? 0.18 : 0.85} />
+                                {/* Apoyabrazos izquierdo */}
+                                <rect x="0" y="13" width="5.5" height="15" rx="2.5" fill={f.arm} opacity={occupied ? 0.14 : 0.75} />
+                                {/* Apoyabrazos derecho */}
+                                <rect x="24.5" y="13" width="5.5" height="15" rx="2.5" fill={f.arm} opacity={occupied ? 0.14 : 0.75} />
+                                {/* Cojín del asiento */}
+                                <rect x="4" y="15" width="22" height="13" rx="4" fill={f.cushion} opacity={occupied ? 0.14 : 0.95} />
+                                {/* Línea de costura del cojín */}
+                                {!occupied && <rect x="7" y="18" width="16" height="7" rx="2.5" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />}
+                              </svg>
+                            </button>
                           );
                         })}
                       </div>
@@ -725,13 +753,18 @@ export default function BookingSection({ movie, funciones }: Props) {
 
                 <div className="flex flex-wrap justify-center gap-5 text-xs font-body text-gray-500">
                   {[
-                    { color: "bg-[#CC1244]/20 border-[#CC1244]/60",   label: "Disponible" },
-                    { color: "bg-blue-500 border-blue-500",            label: "Seleccionado" },
-                    { color: "bg-white/10 border-white/10 opacity-40", label: "Ocupado" },
-                    { color: "bg-yellow-500/10 border-yellow-500/40",  label: `VIP — ${fmt(precioVip)}` },
+                    { back: "#CC1244", cushion: "#E8154F", arm: "#A50F36", occ: false,  label: "Disponible" },
+                    { back: "#3B82F6", cushion: "#60A5FA", arm: "#2563EB", occ: false,  label: "Seleccionado" },
+                    { back: "#ffffff", cushion: "#ffffff", arm: "#ffffff", occ: true,   label: "Ocupado" },
+                    { back: "#EAB308", cushion: "#FDE047", arm: "#CA8A04", occ: false,  label: `VIP — ${fmt(precioVip)}` },
                   ].map(l => (
                     <span key={l.label} className="flex items-center gap-1.5">
-                      <span className={`w-4 h-3.5 rounded-t-sm border inline-block ${l.color}`} />
+                      <svg viewBox="0 0 30 30" width="18" height="18">
+                        <rect x="4" y="1" width="22" height="17" rx="5" fill={l.back} opacity={l.occ ? 0.18 : 0.85} />
+                        <rect x="0" y="13" width="5.5" height="15" rx="2.5" fill={l.arm} opacity={l.occ ? 0.14 : 0.75} />
+                        <rect x="24.5" y="13" width="5.5" height="15" rx="2.5" fill={l.arm} opacity={l.occ ? 0.14 : 0.75} />
+                        <rect x="4" y="15" width="22" height="13" rx="4" fill={l.cushion} opacity={l.occ ? 0.14 : 0.95} />
+                      </svg>
                       {l.label}
                     </span>
                   ))}
