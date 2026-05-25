@@ -45,10 +45,10 @@ export async function GET() {
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
   const tests = {
-    // SCOEST — disponibilidad/ocupación de asientos por función
-    scoest_s2_14: callScore(base, "scoest", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "14", teatro, tercero })),
-    scoest_s2_18: callScore(base, "scoest", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "18", teatro, tercero })),
-    scoest_s2_21: callScore(base, "scoest", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "21", teatro, tercero })),
+    // SCOESG — disponibilidad/ocupación de asientos por función
+    scoesg_s2_14: callScore(base, "scoesg", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "14", teatro, tercero })),
+    scoesg_s2_18: callScore(base, "scoesg", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "18", teatro, tercero })),
+    scoesg_s2_21: callScore(base, "scoesg", JSON.stringify({ Sala: "2", FechaFuncion: hoy, Funcion: "21", teatro, tercero })),
   };
 
   const results = Object.fromEntries(

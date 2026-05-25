@@ -31,7 +31,10 @@ async function call(
 
   const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify(encrypt(plaintext)),
   });
 
@@ -227,29 +230,27 @@ export async function scoreGetMapa(params: {
   return { raw, asientos: parseMapa(raw) };
 }
 
-/** SCOEST — disponibilidad de asientos por función (raw) */
+/** SCOESG — disponibilidad de asientos por función (raw) */
 export async function scoreGetAsientos(params: {
   fechaFuncion: string;
   sala: string;
   funcion: string; // hora "22"
-  correo: string;
 }) {
   return call(
-    "scoest",
-    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, Correo: params.correo, teatro: teatro(), tercero: tercero() }),
+    "scoesg",
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
   );
 }
 
-/** SCOEST — disponibilidad de asientos por función (parseada como mapa) */
+/** SCOESG — disponibilidad de asientos por función (parseada como mapa) */
 export async function scoreGetAsientosConMapa(params: {
   fechaFuncion: string;
   sala: string;
   funcion: string;
-  correo: string;
 }): Promise<{ raw: string; asientos: AsientoMapa[] }> {
   const { raw } = await call(
-    "scoest",
-    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, Correo: params.correo, teatro: teatro(), tercero: tercero() }),
+    "scoesg",
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
   );
   return { raw, asientos: parseMapa(raw) };
 }

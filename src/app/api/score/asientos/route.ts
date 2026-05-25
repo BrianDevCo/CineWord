@@ -5,11 +5,11 @@ import { scoreGetAsientosConMapa, toScoreFecha, toScoreHora } from "@/lib/score"
 // Body: { fechaFuncion: "YYYY-MM-DD", sala, funcion: "HH:MM:SS" }
 export async function POST(req: NextRequest) {
   try {
-    const { fechaFuncion, sala, funcion, correo } = await req.json();
+    const { fechaFuncion, sala, funcion } = await req.json();
 
-    if (!fechaFuncion || !sala || !funcion || !correo) {
+    if (!fechaFuncion || !sala || !funcion) {
       return NextResponse.json(
-        { error: "Faltan campos: fechaFuncion, sala, funcion, correo" },
+        { error: "Faltan campos: fechaFuncion, sala, funcion" },
         { status: 400 },
       );
     }
@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
       fechaFuncion: fechaFuncion.includes("-") ? toScoreFecha(fechaFuncion) : fechaFuncion,
       sala:         String(sala),
       funcion:      funcion.includes(":") ? toScoreHora(funcion) : funcion,
-      correo:       String(correo),
     });
 
     return NextResponse.json({ ok: true, raw: result.raw, asientos: result.asientos });
