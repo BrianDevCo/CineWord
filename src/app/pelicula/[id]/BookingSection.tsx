@@ -222,13 +222,35 @@ export default function BookingSection({ movie, funciones }: Props) {
     setMapaFallback(new Set());
     try {
       if (funcion.score_sala_id) {
-        const res = await fetch("/api/score/mapa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sala: funcion.score_sala_id, fechaFuncion: funcion.fecha, funcion: funcion.hora }),
-        });
-        const data = await res.json();
-        if (res.ok && data.asientos?.length) { setMapaScore(data.asientos); return; }
+        const [resMapa, resEsg] = await Promise.all([
+          fetch("/api/score/mapa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sala: funcion.score_sala_id, fechaFuncion: funcion.fecha, funcion: funcion.hora }),
+          }),
+          fetch("/api/score/asientos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sala: funcion.score_sala_id, fechaFuncion: funcion.fecha, funcion: funcion.hora }),
+          }),
+        ]);
+        const dataMapa = await resMapa.json();
+        if (resMapa.ok && dataMapa.asientos?.length) {
+          let asientos = dataMapa.asientos;
+          // Overlay ocupación real de SCOESG (clave: fila+columnaLabel)
+          if (resEsg.ok) {
+            const dataEsg = await resEsg.json();
+            const ocupacion = dataEsg.ocupacion as Record<string, string> | undefined;
+            if (ocupacion) {
+              asientos = asientos.map((a: { fila: string; columnaLabel: number; columna: number; zona: string }) => ({
+                ...a,
+                estado: (ocupacion[`${a.fila}${a.columnaLabel}`] ?? "S") as "S" | "B" | "R",
+              }));
+            }
+          }
+          setMapaScore(asientos);
+          return;
+        }
       }
       // Fallback: asientos ocupados de Supabase
       const ocupados = await getAsientosOcupados(funcion.id);

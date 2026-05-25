@@ -230,29 +230,36 @@ export async function scoreGetMapa(params: {
   return { raw, asientos: parseMapa(raw) };
 }
 
-/** SCOESG — disponibilidad de asientos por función (raw) */
-export async function scoreGetAsientos(params: {
-  fechaFuncion: string;
-  sala: string;
-  funcion: string; // hora "22"
-}) {
-  return call(
-    "scoesg",
-    JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
-  );
-}
-
-/** SCOESG — disponibilidad de asientos por función (parseada como mapa) */
-export async function scoreGetAsientosConMapa(params: {
+/** SCOESG — ocupación real por función. Retorna mapa { "K3": "S", "K4": "B", ... }
+ *  La clave es `${filRel}${columnaRelativa}` — coincide con AsientoMapa.fila + columnaLabel
+ */
+export async function scoreGetOcupacion(params: {
   fechaFuncion: string;
   sala: string;
   funcion: string;
-}): Promise<{ raw: string; asientos: AsientoMapa[] }> {
+}): Promise<Record<string, "S" | "B" | "R">> {
   const { raw } = await call(
     "scoesg",
     JSON.stringify({ FechaFuncion: params.fechaFuncion, Sala: params.sala, Funcion: params.funcion, teatro: teatro(), tercero: tercero() }),
   );
-  return { raw, asientos: parseMapa(raw) };
+  const ocupacion: Record<string, "S" | "B" | "R"> = {};
+  try {
+    const filas = JSON.parse(raw) as Array<{
+      filRel?: string;
+      DescripcionSilla?: Array<{ TipoSilla?: string; EstadoSilla?: string; Columna?: number }>;
+    }>;
+    for (const fila of filas) {
+      const f = fila.filRel?.toUpperCase();
+      if (!f) continue;
+      for (const s of fila.DescripcionSilla ?? []) {
+        if (!s.Columna || s.Columna === 0 || s.TipoSilla?.toLowerCase() === "pasillo") continue;
+        const col = Math.round(s.Columna);
+        const est = s.EstadoSilla?.toUpperCase() ?? "S";
+        ocupacion[`${f}${col}`] = est === "B" ? "B" : est === "R" ? "R" : "S";
+      }
+    }
+  } catch { /**/ }
+  return ocupacion;
 }
 
 /**
