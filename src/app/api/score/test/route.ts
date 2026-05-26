@@ -54,18 +54,32 @@ export async function GET() {
   const teatro  = process.env.SCORE_TEATRO      ?? "2";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  // Probar SCOPLA con todas las películas conocidas, salas 1 y 2, hora 14
-  const scoplaResults: Record<string, { nombre: string; sala: string; dec: string; tienesTarifas: boolean }> = {};
+  // Probar SCOPLA con todas las películas conocidas, salas 1 y 2, varios horarios
+  const HORAS = ["1200", "1400", "1600", "1800", "2000", "2200"];
+  const scoplaResults: Record<string, { nombre: string; sala: string; hora: string; dec: string; tienesTarifas: boolean }> = {};
 
   for (const [id, nombre] of Object.entries(PELICULAS)) {
     for (const sala of ["1", "2"]) {
-      const key = `pelicula_${id}_sala_${sala}`;
-      const res = await callScore(base, "scopla",
-        JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: "1400", teatro, tercero })
-      );
-      const tieneTarifas = res.dec.includes("codigo") || res.dec.includes("Codigo") || res.dec.includes("valor") || res.dec.includes("Valor");
-      scoplaResults[key] = { nombre, sala, dec: res.dec, tienesTarifas: tieneTarifas };
+      for (const hora of HORAS) {
+        const res = await callScore(base, "scopla",
+          JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: hora, teatro, tercero })
+        );
+        const tieneTarifas = res.dec.includes("codigo") || res.dec.includes("Codigo") || res.dec.includes("valor") || res.dec.includes("Valor");
+        if (tieneTarifas) {
+          // Solo guardamos si tiene tarifas reales para no llenar de errores
+          const key = `pelicula_${id}_sala_${sala}_hora_${hora}`;
+          scoplaResults[key] = { nombre, sala, hora, dec: res.dec, tienesTarifas: true };
+        }
+      }
     }
+  }
+
+  // Si no encontró ninguna con tarifas, mostrar el primer intento para diagnóstico
+  if (Object.keys(scoplaResults).length === 0) {
+    const res = await callScore(base, "scopla",
+      JSON.stringify({ FechaFuncion: hoy, Pelicula: "55", Sala: "2", InicioFuncion: "1400", teatro, tercero })
+    );
+    scoplaResults["diagnostico_55_sala2_1400"] = { nombre: "En la Zona Gris", sala: "2", hora: "1400", dec: res.dec, tienesTarifas: false };
   }
 
   // SCOCAR — cartelera completa
