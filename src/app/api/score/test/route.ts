@@ -37,61 +37,45 @@ async function callScore(base: string, service: string, plaintext: string) {
   }
 }
 
+const PELICULAS: Record<string, string> = {
+  "60": "El Pasajero del Diablo",
+  "59": "Star Wars",
+  "56": "Jugada Maestra",
+  "55": "En la Zona Gris",
+  "54": "Las Ovejas Detectives",
+  "53": "Mortal Kombat 2",
+  "52": "Exit 8",
+  "51": "El Diablo Viste a la Moda",
+};
+
 export async function GET() {
   const base    = process.env.SCORE_BASE_URL    ?? "NO CONFIGURADO";
   const tercero = process.env.SCORE_TERCERO     ?? "1";
   const teatro  = process.env.SCORE_TEATRO      ?? "2";
-  const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  // ── 1. variable41.xml — cartelera sin encriptar ───────────────────────────────
-  let xml = "";
-  let xmlError: string | null = null;
-  let peliculaId = "55";
-  let salaId = "2";
-  let inicioFuncion = "1400";
+  // Probar SCOPLA con todas las películas conocidas, salas 1 y 2, hora 14
+  const scoplaResults: Record<string, { nombre: string; sala: string; dec: string; tienesTarifas: boolean }> = {};
 
-  try {
-    const xmlRes = await fetch(`${base}/Mobile/ComJson/variable41.xml`, {
-      headers: { "ngrok-skip-browser-warning": "true" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(15000),
-    });
-    xml = await xmlRes.text();
-
-    // Intentar extraer primera película, sala y hora de la cartelera
-    const pelMatch = xml.match(/<CodigoPelicula[^>]*>(\d+)<\/CodigoPelicula>|CodigoPelicula="(\d+)"|<pelicula[^>]*id="(\d+)"/i);
-    if (pelMatch) peliculaId = pelMatch[1] ?? pelMatch[2] ?? pelMatch[3] ?? peliculaId;
-
-    const salaMatch = xml.match(/<CodigoSala[^>]*>(\d+)<\/CodigoSala>|CodigoSala="(\d+)"|<sala[^>]*id="(\d+)"/i);
-    if (salaMatch) salaId = salaMatch[1] ?? salaMatch[2] ?? salaMatch[3] ?? salaId;
-
-    const horaMatch = xml.match(/<HoraFuncion[^>]*>(\d{4})<\/HoraFuncion>|HoraFuncion="(\d{4})"/i);
-    if (horaMatch) inicioFuncion = horaMatch[1] ?? horaMatch[2] ?? inicioFuncion;
-
-  } catch (e) {
-    xmlError = String(e);
+  for (const [id, nombre] of Object.entries(PELICULAS)) {
+    for (const sala of ["1", "2"]) {
+      const key = `pelicula_${id}_sala_${sala}`;
+      const res = await callScore(base, "scopla",
+        JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: "1400", teatro, tercero })
+      );
+      const tieneTarifas = res.dec.includes("codigo") || res.dec.includes("Codigo") || res.dec.includes("valor") || res.dec.includes("Valor");
+      scoplaResults[key] = { nombre, sala, dec: res.dec, tienesTarifas: tieneTarifas };
+    }
   }
 
-  // ── 2. SCOPLA — tarifas usando datos reales de la cartelera ──────────────────
-  const scopla = await callScore(base, "scopla",
-    JSON.stringify({ FechaFuncion: hoy, Pelicula: peliculaId, Sala: salaId, InicioFuncion: inicioFuncion, teatro, tercero })
-  );
-
-  // ── 3. SCOCAR — cartelera completa ───────────────────────────────────────────
+  // SCOCAR — cartelera completa
   const scocar = await callScore(base, "scocar",
     JSON.stringify({ teatro, tercero })
   );
 
   return NextResponse.json({
-    config: { base, tercero, teatro, pv, hoy },
-    "1_variable41_xml": {
-      ok: !xmlError,
-      error: xmlError,
-      extractedFor_scopla: { peliculaId, salaId, inicioFuncion },
-      raw_preview: xml.slice(0, 2000),
-    },
-    "2_scopla": scopla,
-    "3_scocar": scocar,
+    config: { base, tercero, teatro, hoy },
+    scopla_por_pelicula: scoplaResults,
+    scocar,
   });
 }
