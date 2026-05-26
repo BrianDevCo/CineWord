@@ -44,85 +44,54 @@ export async function GET() {
   const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  // Datos de prueba — función real sala 2
-  const sala     = "2";
-  const pelicula = "55";
-  const hora     = "14";
+  // ── 1. variable41.xml — cartelera sin encriptar ───────────────────────────────
+  let xml = "";
+  let xmlError: string | null = null;
+  let peliculaId = "55";
+  let salaId = "2";
+  let inicioFuncion = "1400";
 
-  // ── 1. SCOSEC — obtener secuencia real ────────────────────────────────────────
-  const scosec = await callScore(base, "scosec",
-    JSON.stringify({ Punto: pv, teatro, tercero })
-  );
-
-  let secuencia = "TEST999";
   try {
-    const parsed = JSON.parse(scosec.dec) as { Secuencia?: string }[] | { Secuencia?: string };
-    const obj = Array.isArray(parsed) ? parsed[0] : parsed;
-    secuencia = obj?.Secuencia ?? "TEST999";
-  } catch { /**/ }
+    const xmlRes = await fetch(`${base}/Mobile/ComJson/variable41.xml`, {
+      headers: { "ngrok-skip-browser-warning": "true" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000),
+    });
+    xml = await xmlRes.text();
 
-  // ── 2. SCOMAP — layout de sillas ─────────────────────────────────────────────
-  const scomap = await callScore(base, "scomap",
-    JSON.stringify({ Sala: sala, FechaFuncion: hoy, Funcion: hora, teatro, tercero })
-  );
+    // Intentar extraer primera película, sala y hora de la cartelera
+    const pelMatch = xml.match(/<CodigoPelicula[^>]*>(\d+)<\/CodigoPelicula>|CodigoPelicula="(\d+)"|<pelicula[^>]*id="(\d+)"/i);
+    if (pelMatch) peliculaId = pelMatch[1] ?? pelMatch[2] ?? pelMatch[3] ?? peliculaId;
 
-  // ── 3. SCOPLA — tarifas por función ──────────────────────────────────────────
+    const salaMatch = xml.match(/<CodigoSala[^>]*>(\d+)<\/CodigoSala>|CodigoSala="(\d+)"|<sala[^>]*id="(\d+)"/i);
+    if (salaMatch) salaId = salaMatch[1] ?? salaMatch[2] ?? salaMatch[3] ?? salaId;
+
+    const horaMatch = xml.match(/<HoraFuncion[^>]*>(\d{4})<\/HoraFuncion>|HoraFuncion="(\d{4})"/i);
+    if (horaMatch) inicioFuncion = horaMatch[1] ?? horaMatch[2] ?? inicioFuncion;
+
+  } catch (e) {
+    xmlError = String(e);
+  }
+
+  // ── 2. SCOPLA — tarifas usando datos reales de la cartelera ──────────────────
   const scopla = await callScore(base, "scopla",
-    JSON.stringify({ FechaFuncion: hoy, Pelicula: pelicula, Sala: sala, InicioFuncion: "1400", teatro, tercero })
+    JSON.stringify({ FechaFuncion: hoy, Pelicula: peliculaId, Sala: salaId, InicioFuncion: inicioFuncion, teatro, tercero })
   );
 
-  // ── 4. SCOCAR — cartelera completa ───────────────────────────────────────────
+  // ── 3. SCOCAR — cartelera completa ───────────────────────────────────────────
   const scocar = await callScore(base, "scocar",
     JSON.stringify({ teatro, tercero })
   );
 
-  // ── 5. SCOCYA — registrar cliente de prueba ───────────────────────────────────
-  const scocya = await callScore(base, "scocya",
-    JSON.stringify({
-      Login: "test@cineworld.com", Nombre: "Test", Apellido: "Cineworld",
-      Correo: "test@cineworld.com", Cinema: teatro, Clave: "123456",
-      Celular: "3000000000", Documento: "0", FechaNacimiento: "19900101",
-      Sexo: "M", Reservas: "N", Noticias: "N", Cartelera: "N",
-      OtrasSalas: "N", Contacto: "Correo Electrónico", Accion: "C", tercero,
-    })
-  );
-
-  // ── 6. SCOGRU — hold de sillas (accion G) ────────────────────────────────────
-  const scogru = await callScore(base, "scogru",
-    JSON.stringify({
-      FechaFuncion: hoy, Sala: sala, HoraFuncion: hora, Pelicula: pelicula,
-      PuntoVenta: pv, Secuencia: secuencia,
-      Nombre: "Test", Apellido: "Cineworld", Telefono: "3000000000",
-      Ubicaciones: `FilaK,Columna9,Tarifa,FilaK,Columna10,Tarifa`,
-      Accion: "G", teatro, tercero,
-    })
-  );
-
-  // ── 7. SCOLIR — liberar hold inmediatamente ───────────────────────────────────
-  const scolir = await callScore(base, "scolir",
-    JSON.stringify({ PuntoVenta: pv, Secuencia: secuencia, teatro, tercero })
-  );
-
-  // ── 8. SCOINT V — registrar venta (con secuencia liberada, debería fallar o indicar error) ──
-  const scoint = await callScore(base, "scoint",
-    JSON.stringify({
-      FechaFuncion: hoy, Sala: sala, HoraFuncion: hora, Pelicula: pelicula,
-      PuntoVenta: pv, Secuencia: secuencia,
-      Nombre: "Test", Apellido: "Cineworld", Telefono: "3000000000",
-      Ubicaciones: `FilaK,Columna9,Tarifa,FilaK,Columna10,Tarifa`,
-      Accion: "V", teatro, tercero,
-    })
-  );
-
   return NextResponse.json({
-    config: { base, tercero, teatro, pv, hoy, secuencia_obtenida: secuencia },
-    "1_scosec":  scosec,
-    "2_scomap":  scomap,
-    "3_scopla":  scopla,
-    "4_scocar":  scocar,
-    "5_scocya":  scocya,
-    "6_scogru":  scogru,
-    "7_scolir":  scolir,
-    "8_scoint":  scoint,
+    config: { base, tercero, teatro, pv, hoy },
+    "1_variable41_xml": {
+      ok: !xmlError,
+      error: xmlError,
+      extractedFor_scopla: { peliculaId, salaId, inicioFuncion },
+      raw_preview: xml.slice(0, 2000),
+    },
+    "2_scopla": scopla,
+    "3_scocar": scocar,
   });
 }
