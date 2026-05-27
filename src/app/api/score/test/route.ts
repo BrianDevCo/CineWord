@@ -108,10 +108,25 @@ export async function GET() {
     scocya: "⚠️ NO PROBADO",
   };
 
+  // XML cartelera — fuente de IDs correctos de películas y funciones
+  let xml: { ok: boolean; contenido: string; error: string | null } = { ok: false, contenido: "", error: null };
+  try {
+    const xmlRes = await fetch(`${base}/Mobile/ComJson/variable41.xml`, {
+      cache: "no-store",
+      headers: { "ngrok-skip-browser-warning": "true" },
+      signal: AbortSignal.timeout(15000),
+    });
+    const texto = await xmlRes.text();
+    xml = { ok: xmlRes.ok, contenido: texto, error: null };
+  } catch (e) {
+    xml = { ok: false, contenido: "", error: String(e) };
+  }
+
   return NextResponse.json({
     config: { base, tercero, teatro, puntoVenta, hoy },
     resumen,
     servicios: { scosec, scomap, scoesg, scopla, scocar },
     transaccionales,
+    xml,
   });
 }
