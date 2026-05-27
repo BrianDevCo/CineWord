@@ -111,7 +111,7 @@ export async function GET() {
   // XML cartelera — fuente de IDs correctos de películas y funciones
   let xml: { ok: boolean; contenido: string; error: string | null } = { ok: false, contenido: "", error: null };
   try {
-    const xmlRes = await fetch(`${base}/Mobile/ComJson/variable41.xml`, {
+    const xmlRes = await fetch(`${base}/MobileComJson/variable41.xml`, {
       cache: "no-store",
       headers: { "ngrok-skip-browser-warning": "true" },
       signal: AbortSignal.timeout(15000),

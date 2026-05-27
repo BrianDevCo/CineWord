@@ -355,7 +355,7 @@ export async function scoreConsultarPorDocumento(documento: string) {
 export async function scoreGetCartelera(): Promise<string> {
   const base = process.env.SCORE_BASE_URL;
   if (!base) throw new Error("SCORE_BASE_URL no configurado");
-  const res = await fetch(`${base}/Mobile/ComJson/variable41.xml`);
+  const res = await fetch(`${base}/MobileComJson/variable41.xml`);
   if (!res.ok) throw new Error(`Score cartelera → HTTP ${res.status}`);
   return res.text();
 }
