@@ -59,32 +59,41 @@ export async function GET() {
   const teatro  = process.env.SCORE_TEATRO      ?? "2";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  // Probar SCOPLA con todas las películas conocidas, salas 1 y 2, varios horarios
   const HORAS = ["1340", "1350", "1400", "1520", "1600", "1610", "1620", "1640", "1650", "1810", "1830", "1840", "1850", "2050", "2100", "2120", "2130"];
   const scoplaResults: Record<string, { nombre: string; sala: string; hora: string; dec: string; tienesTarifas: boolean }> = {};
 
-  for (const [id, nombre] of Object.entries(PELICULAS)) {
-    for (const sala of ["2", "4", "5", "6"]) {
-      for (const hora of HORAS) {
-        const res = await callScore(base, "scopla",
-          JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: hora, teatro, tercero })
-        );
-        const tieneTarifas = res.dec.includes("codigo") || res.dec.includes("Codigo") || res.dec.includes("valor") || res.dec.includes("Valor");
-        if (tieneTarifas) {
-          // Solo guardamos si tiene tarifas reales para no llenar de errores
-          const key = `pelicula_${id}_sala_${sala}_hora_${hora}`;
-          scoplaResults[key] = { nombre, sala, hora, dec: res.dec, tienesTarifas: true };
+  // Probe rápido: si Score bloquea terceros, no tiene caso probar 680 combinaciones
+  const probe = await callScore(base, "scopla",
+    JSON.stringify({ FechaFuncion: hoy, Pelicula: "55", Sala: "2", InicioFuncion: "1400", teatro, tercero })
+  );
+  const bloqueadoPorTerceros = probe.dec.includes("terceros") || probe.dec.includes("Terceros");
+
+  if (bloqueadoPorTerceros) {
+    scoplaResults["diagnostico_55_sala2_1400"] = { nombre: "En la Zona Gris", sala: "2", hora: "1400", dec: probe.dec, tienesTarifas: false };
+  } else {
+    // SCOPLA habilitado — probar todas las combinaciones en paralelo
+    const tareas: Promise<void>[] = [];
+    for (const [id, nombre] of Object.entries(PELICULAS)) {
+      for (const sala of ["2", "4", "5", "6"]) {
+        for (const hora of HORAS) {
+          tareas.push(
+            callScore(base, "scopla",
+              JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: hora, teatro, tercero })
+            ).then((res) => {
+              const tieneTarifas = res.dec.includes("codigo") || res.dec.includes("Codigo") || res.dec.includes("valor") || res.dec.includes("Valor");
+              if (tieneTarifas) {
+                scoplaResults[`pelicula_${id}_sala_${sala}_hora_${hora}`] = { nombre, sala, hora, dec: res.dec, tienesTarifas: true };
+              }
+            })
+          );
         }
       }
     }
-  }
+    await Promise.all(tareas);
 
-  // Si no encontró ninguna con tarifas, mostrar el primer intento para diagnóstico
-  if (Object.keys(scoplaResults).length === 0) {
-    const res = await callScore(base, "scopla",
-      JSON.stringify({ FechaFuncion: hoy, Pelicula: "55", Sala: "2", InicioFuncion: "1400", teatro, tercero })
-    );
-    scoplaResults["diagnostico_55_sala2_1400"] = { nombre: "En la Zona Gris", sala: "2", hora: "1400", dec: res.dec, tienesTarifas: false };
+    if (Object.keys(scoplaResults).length === 0) {
+      scoplaResults["diagnostico_55_sala2_1400"] = { nombre: "En la Zona Gris", sala: "2", hora: "1400", dec: probe.dec, tienesTarifas: false };
+    }
   }
 
   // SCOCAR — cartelera completa
