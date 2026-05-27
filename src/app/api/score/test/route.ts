@@ -37,15 +37,20 @@ async function callScore(base: string, service: string, plaintext: string) {
   }
 }
 
+// score_pelicula_id conocidos (en_cartelera)
 const PELICULAS: Record<string, string> = {
-  "60": "El Pasajero del Diablo",
-  "59": "Star Wars",
-  "56": "Jugada Maestra",
   "55": "En la Zona Gris",
-  "54": "Las Ovejas Detectives",
-  "53": "Mortal Kombat 2",
+  "51": "El Diablo Viste a la Moda 2",
+  "48": "Michael",
   "52": "Exit 8",
-  "51": "El Diablo Viste a la Moda",
+  "49": "La Posesión de la Momia",
+  "50": "Buena Suerte, Diviértete, No Mueras",
+  "47": "Instinto Implacable",
+  "46": "Mario Galaxy 3D",
+  // sin score_id aún — probando IDs cercanos
+  "56": "Jugada Maestra (?)",
+  "57": "Star Wars (?)",
+  "58": "El Pasajero del Diablo (?)",
 };
 
 export async function GET() {
@@ -55,11 +60,11 @@ export async function GET() {
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
   // Probar SCOPLA con todas las películas conocidas, salas 1 y 2, varios horarios
-  const HORAS = ["1200", "1400", "1600", "1800", "2000", "2200"];
+  const HORAS = ["1340", "1350", "1400", "1520", "1600", "1610", "1620", "1640", "1650", "1810", "1830", "1840", "1850", "2050", "2100", "2120", "2130"];
   const scoplaResults: Record<string, { nombre: string; sala: string; hora: string; dec: string; tienesTarifas: boolean }> = {};
 
   for (const [id, nombre] of Object.entries(PELICULAS)) {
-    for (const sala of ["1", "2"]) {
+    for (const sala of ["2", "4", "5", "6"]) {
       for (const hora of HORAS) {
         const res = await callScore(base, "scopla",
           JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: hora, teatro, tercero })
