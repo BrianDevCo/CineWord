@@ -108,28 +108,53 @@ export async function GET() {
     scocya: "⚠️ NO PROBADO",
   };
 
-  // XML cartelera — solo primeros 50KB para ver estructura e IDs
-  let xml: { ok: boolean; contenido: string; error: string | null } = { ok: false, contenido: "", error: null };
+  // XML cartelera — buscar CineWorld dentro del stream completo
+  let xml: { ok: boolean; cinemaId: string | null; extracto: string; bytesLeidos: number; error: string | null } = {
+    ok: false, cinemaId: null, extracto: "", bytesLeidos: 0, error: null,
+  };
   try {
     const xmlRes = await fetch(`${base}/MobileComJson/variable41.xml`, {
       cache: "no-store",
       headers: { "ngrok-skip-browser-warning": "true" },
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(55000),
     });
     const reader = xmlRes.body?.getReader();
     const decoder = new TextDecoder();
-    let contenido = "";
+    let buffer = "";
+    let bytesLeidos = 0;
+    // Buscar por el ID de En la Zona Gris o por "Cali"
+    const BUSCAR = ["182511", "Cali", "cineworld", "mroutlet", "MR Outlet"];
+    let encontrado = "";
     if (reader) {
-      while (contenido.length < 50000) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        contenido += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        bytesLeidos += chunk.length;
+        buffer += chunk;
+        // Buscar en el buffer acumulado
+        for (const termino of BUSCAR) {
+          const idx = buffer.indexOf(termino);
+          if (idx !== -1) {
+            encontrado = termino;
+            // Extraer 2000 chars alrededor del match
+            const inicio = Math.max(0, idx - 500);
+            const fin = Math.min(buffer.length, idx + 1500);
+            xml = { ok: true, cinemaId: null, extracto: buffer.slice(inicio, fin), bytesLeidos, error: null };
+            reader.cancel();
+            break;
+          }
+        }
+        if (encontrado) break;
+        // Mantener solo los últimos 10KB para no consumir memoria
+        if (buffer.length > 10000) buffer = buffer.slice(-5000);
       }
-      reader.cancel();
+      if (!encontrado) {
+        xml = { ok: xmlRes.ok, cinemaId: null, extracto: "No se encontró CineWorld en el XML", bytesLeidos, error: null };
+      }
     }
-    xml = { ok: xmlRes.ok, contenido: contenido.slice(0, 50000), error: null };
   } catch (e) {
-    xml = { ok: false, contenido: "", error: String(e) };
+    xml = { ok: false, cinemaId: null, extracto: "", bytesLeidos: 0, error: String(e) };
   }
 
   return NextResponse.json({
