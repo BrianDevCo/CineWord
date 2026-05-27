@@ -108,16 +108,26 @@ export async function GET() {
     scocya: "⚠️ NO PROBADO",
   };
 
-  // XML cartelera — fuente de IDs correctos de películas y funciones
+  // XML cartelera — solo primeros 50KB para ver estructura e IDs
   let xml: { ok: boolean; contenido: string; error: string | null } = { ok: false, contenido: "", error: null };
   try {
     const xmlRes = await fetch(`${base}/MobileComJson/variable41.xml`, {
       cache: "no-store",
       headers: { "ngrok-skip-browser-warning": "true" },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(30000),
     });
-    const texto = await xmlRes.text();
-    xml = { ok: xmlRes.ok, contenido: texto, error: null };
+    const reader = xmlRes.body?.getReader();
+    const decoder = new TextDecoder();
+    let contenido = "";
+    if (reader) {
+      while (contenido.length < 50000) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        contenido += decoder.decode(value, { stream: true });
+      }
+      reader.cancel();
+    }
+    xml = { ok: xmlRes.ok, contenido: contenido.slice(0, 50000), error: null };
   } catch (e) {
     xml = { ok: false, contenido: "", error: String(e) };
   }
