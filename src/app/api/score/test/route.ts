@@ -47,7 +47,8 @@ async function callScore(base: string, service: string, plaintext: string): Prom
 }
 
 // Función de referencia para todos los tests de lectura
-const REF = { pelicula: "55", sala: "2", hora: "14", horaInicio: "1400", fecha: (hoy: string) => hoy };
+// Key completo Score para "En la Zona Gris" doblada = 182511121
+const REF = { pelicula: "182511121", sala: "2", hora: "14", horaInicio: "1400", fecha: (hoy: string) => hoy };
 
 export async function GET() {
   const base    = process.env.SCORE_BASE_URL    ?? "NO CONFIGURADO";
