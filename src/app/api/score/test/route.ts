@@ -14,7 +14,15 @@ function decrypt(b64: string): string {
   return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
 }
 
-async function callScore(base: string, service: string, plaintext: string) {
+type ServiceResult = {
+  ok: boolean;
+  status: number;
+  dec: string;
+  error: string | null;
+  nota?: string;
+};
+
+async function callScore(base: string, service: string, plaintext: string): Promise<ServiceResult> {
   try {
     const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
       method: "POST",
@@ -31,79 +39,78 @@ async function callScore(base: string, service: string, plaintext: string) {
       const item = Array.isArray(j) ? j[0] : j;
       if (item?.request) dec = decrypt(item.request);
     } catch { /**/ }
-    return { status, dec, error: null };
+    const bloqueado = dec.toLowerCase().includes("terceros") || dec.includes("no encontró") || dec.includes("diccionario");
+    return { ok: status === 200 && !bloqueado, status, dec, error: null };
   } catch (e) {
-    return { status: 0, dec: "", error: String(e) };
+    return { ok: false, status: 0, dec: "", error: String(e) };
   }
 }
 
-// score_pelicula_id conocidos (en_cartelera)
-const PELICULAS: Record<string, string> = {
-  "55": "En la Zona Gris",
-  "51": "El Diablo Viste a la Moda 2",
-  "48": "Michael",
-  "52": "Exit 8",
-  "49": "La Posesión de la Momia",
-  "50": "Buena Suerte, Diviértete, No Mueras",
-  "47": "Instinto Implacable",
-  "46": "Mario Galaxy 3D",
-  // sin score_id aún — probando IDs cercanos
-  "56": "Jugada Maestra (?)",
-  "57": "Star Wars (?)",
-  "58": "El Pasajero del Diablo (?)",
-};
+// Función de referencia para todos los tests de lectura
+const REF = { pelicula: "55", sala: "2", hora: "14", horaInicio: "1400", fecha: (hoy: string) => hoy };
 
 export async function GET() {
   const base    = process.env.SCORE_BASE_URL    ?? "NO CONFIGURADO";
   const tercero = process.env.SCORE_TERCERO     ?? "1";
   const teatro  = process.env.SCORE_TEATRO      ?? "2";
+  const puntoVenta = process.env.SCORE_PUNTO_VENTA ?? "77";
   const hoy     = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const fecha   = REF.fecha(hoy);
 
-  const HORAS = ["1340", "1350", "1400", "1520", "1600", "1610", "1620", "1640", "1650", "1810", "1830", "1840", "1850", "2050", "2100", "2120", "2130"];
-  const scoplaResults: Record<string, { nombre: string; sala: string; hora: string; dec: string; tienesTarifas: boolean }> = {};
+  // Correr todos los servicios de solo lectura en paralelo
+  const [scosec, scomap, scoesg, scopla, scocar] = await Promise.all([
 
-  // Probe rápido: si Score bloquea terceros, no tiene caso probar 680 combinaciones
-  const probe = await callScore(base, "scopla",
-    JSON.stringify({ FechaFuncion: hoy, Pelicula: "55", Sala: "2", InicioFuncion: "1400", teatro, tercero })
-  );
-  const bloqueadoPorTerceros = probe.dec.includes("terceros") || probe.dec.includes("Terceros");
+    // SCOSEC — secuencia + recargo web (necesario para iniciar cualquier compra)
+    callScore(base, "scosec",
+      JSON.stringify({ Punto: puntoVenta, teatro, tercero })
+    ).then(r => ({ ...r, params: { Punto: puntoVenta, teatro, tercero } })),
 
-  if (bloqueadoPorTerceros) {
-    scoplaResults["diagnostico_55_sala2_1400"] = { nombre: "En la Zona Gris", sala: "2", hora: "1400", dec: probe.dec, tienesTarifas: false };
-  } else {
-    // SCOPLA habilitado — probar todas las combinaciones en paralelo
-    const tareas: Promise<void>[] = [];
-    for (const [id, nombre] of Object.entries(PELICULAS)) {
-      for (const sala of ["2", "4", "5", "6"]) {
-        for (const hora of HORAS) {
-          tareas.push(
-            callScore(base, "scopla",
-              JSON.stringify({ FechaFuncion: hoy, Pelicula: id, Sala: sala, InicioFuncion: hora, teatro, tercero })
-            ).then((res) => {
-              const tieneTarifas = res.dec.includes("codigo") || res.dec.includes("Codigo") || res.dec.includes("valor") || res.dec.includes("Valor");
-              if (tieneTarifas) {
-                scoplaResults[`pelicula_${id}_sala_${sala}_hora_${hora}`] = { nombre, sala, hora, dec: res.dec, tienesTarifas: true };
-              }
-            })
-          );
-        }
-      }
-    }
-    await Promise.all(tareas);
+    // SCOMAP — mapa físico de sillas (para mostrar el selector de asientos)
+    callScore(base, "scomap",
+      JSON.stringify({ Sala: REF.sala, FechaFuncion: fecha, Funcion: REF.hora, teatro, tercero })
+    ).then(r => ({ ...r, params: { Sala: REF.sala, FechaFuncion: fecha, Funcion: REF.hora, teatro, tercero } })),
 
-    if (Object.keys(scoplaResults).length === 0) {
-      scoplaResults["diagnostico_55_sala2_1400"] = { nombre: "En la Zona Gris", sala: "2", hora: "1400", dec: probe.dec, tienesTarifas: false };
-    }
-  }
+    // SCOESG — ocupación real de sillas (saber cuáles están vendidas en taquilla)
+    callScore(base, "scoesg",
+      JSON.stringify({ FechaFuncion: fecha, Sala: REF.sala, Funcion: REF.hora, teatro, tercero })
+    ).then(r => ({ ...r, params: { FechaFuncion: fecha, Sala: REF.sala, Funcion: REF.hora, teatro, tercero } })),
 
-  // SCOCAR — cartelera completa
-  const scocar = await callScore(base, "scocar",
-    JSON.stringify({ teatro, tercero })
-  );
+    // SCOPLA — tarifas por función (precios para cobrar en web)
+    callScore(base, "scopla",
+      JSON.stringify({ FechaFuncion: fecha, Pelicula: REF.pelicula, Sala: REF.sala, InicioFuncion: REF.horaInicio, teatro, tercero })
+    ).then(r => ({ ...r, params: { FechaFuncion: fecha, Pelicula: REF.pelicula, Sala: REF.sala, InicioFuncion: REF.horaInicio, teatro, tercero } })),
+
+    // SCOCAR — cartelera automática (no tener que cargar funciones manualmente)
+    callScore(base, "scocar",
+      JSON.stringify({ teatro, tercero })
+    ).then(r => ({ ...r, params: { teatro, tercero } })),
+
+  ]);
+
+  // Resumen de servicios transaccionales (no se prueban para no afectar datos reales)
+  const transaccionales = {
+    scogru: { nota: "NO PROBADO — hold de sillas (afecta datos reales)" },
+    scolir: { nota: "NO PROBADO — liberar hold (necesita secuencia activa)" },
+    scoint: { nota: "NO PROBADO — registrar venta (afecta datos reales)" },
+    scocya: { nota: "NO PROBADO — crear/actualizar cliente (afecta datos reales)" },
+  };
+
+  const resumen = {
+    scosec: scosec.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
+    scomap: scomap.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
+    scoesg: scoesg.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
+    scopla: scopla.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
+    scocar: scocar.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
+    scogru: "⚠️ NO PROBADO",
+    scolir: "⚠️ NO PROBADO",
+    scoint: "⚠️ NO PROBADO",
+    scocya: "⚠️ NO PROBADO",
+  };
 
   return NextResponse.json({
-    config: { base, tercero, teatro, hoy },
-    scopla_por_pelicula: scoplaResults,
-    scocar,
+    config: { base, tercero, teatro, puntoVenta, hoy },
+    resumen,
+    servicios: { scosec, scomap, scoesg, scopla, scocar },
+    transaccionales,
   });
 }
