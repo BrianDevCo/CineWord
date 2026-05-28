@@ -3,6 +3,7 @@ import MercadoPagoConfig, { Payment } from "mercadopago";
 import { crearReserva, getFuncionById } from "@/lib/db";
 import { enviarEmailBoleto } from "@/lib/email";
 import { scoreReservar, scoreGetSecuencia, toScoreFecha, toScoreHora, splitNombre, type AsientoScore } from "@/lib/score";
+import type { ScoreQRParams } from "@/lib/email";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -107,16 +108,35 @@ export async function POST(req: NextRequest) {
         const h12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
         const horaLabel = `${h12}:${funcion.hora.split(":")[1]} ${ampm}`;
 
+        // Construir datos QR Score si hay secuencia y sala disponibles
+        const scoreQR: ScoreQRParams | undefined =
+          score_secuencia && score_sala && score_fecha && score_hora
+            ? {
+                puntoVenta: process.env.SCORE_PUNTO_VENTA ?? "77",
+                teatro:     process.env.SCORE_TEATRO      ?? "2",
+                secuencia:  String(score_secuencia),
+                fecha:      score_fecha,
+                sala:       String(score_sala),
+                hora:       score_hora,
+                asientos:   asientos.map((a: { fila: string; columna: number; columnaLabel?: number }) => ({
+                  fila:             a.fila,
+                  columnaRelativa:  a.columnaLabel ?? a.columna,
+                })),
+              }
+            : undefined;
+
         await enviarEmailBoleto({
-          to: emailSafe,
-          nombre: nombreSafe,
+          to:       emailSafe,
+          nombre:   nombreSafe,
           pelicula: funcion.pelicula?.titulo ?? "Película",
-          fecha: fechaLabel,
-          hora: horaLabel,
-          formato: funcion.formato,
-          asientos: asientos.map((a: { fila: string; columna: number }) => `${a.fila}${a.columna}`),
+          fecha:    fechaLabel,
+          hora:     horaLabel,
+          formato:  funcion.formato,
+          asientos: asientos.map((a: { fila: string; columna: number; columnaLabel?: number }) =>
+            `${a.fila}${a.columnaLabel ?? a.columna}`),
           total,
           qr_token: reserva.qr_token ?? "demo",
+          scoreQR,
         });
       }
     } catch (emailErr) {
