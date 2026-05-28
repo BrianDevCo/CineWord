@@ -79,6 +79,8 @@ export interface ScoreReservaParams {
   sala: string;
   horaFuncion: string;
   pelicula: string;
+  inicioFuncion?: string; // "HHMM" — requerido por SCOGRU
+  descripcion?: string;   // nombre/descripción función — requerido por SCOGRU
   secuencia: string;
   nombre: string;
   apellido: string;
@@ -269,26 +271,26 @@ export async function scoreGetOcupacion(params: {
  */
 export async function scoreReservar(params: ScoreReservaParams) {
   const ubicaciones = params.ubicaciones
-    .map(u => `Fila${u.fila},Columna${u.columna},Tarifa${u.tarifa}`)
-    .join(",");
+    .map(u => ({ Fila: u.fila, Columna: parseInt(u.columna), Tarifa: u.tarifa }));
 
   const endpoint = params.accion === "G" ? "scogru" : "scoint";
   return call(
     endpoint,
     JSON.stringify({
-      FechaFuncion: params.fechaFuncion,
-      Sala:         params.sala,
-      HoraFuncion:  params.horaFuncion,
-      Pelicula:     params.pelicula,
-      PuntoVenta:   puntoVenta(),
-      Secuencia:    params.secuencia,
-      Telefono:     params.telefono,
-      Nombre:       params.nombre,
-      Apellido:     params.apellido,
-      Ubicaciones:  ubicaciones,
-      Accion:       params.accion,
-      teatro:       teatro(),
-      tercero:      tercero(),
+      FechaFuncion:  params.fechaFuncion,
+      Sala:          parseInt(params.sala),
+      HoraFuncion:   params.horaFuncion,
+      Pelicula:      parseInt(params.pelicula),
+      Descripcion:   params.descripcion ?? "",
+      InicioFuncion: parseInt(params.inicioFuncion ?? "0"),
+      PuntoVenta:    parseInt(puntoVenta()),
+      Secuencia:     parseInt(params.secuencia),
+      Telefono:      params.telefono,
+      Nombre:        params.nombre,
+      Apellido:      params.apellido,
+      Ubicaciones:   ubicaciones,
+      teatro:        parseInt(teatro()),
+      tercero:       tercero(),
     }),
   );
 }

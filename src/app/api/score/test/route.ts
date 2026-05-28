@@ -141,20 +141,20 @@ export async function GET() {
   })();
 
   // ── 1. SCOGRU — hold de sillas (BLOQUEADO para tercero=1) ───────────────────
-  const ubicacionTest = `FilaA,Columna4,Tarifa${ref.tarifaGeneral}`;
   const scogru = await callScore(base, "scogru", JSON.stringify({
-    FechaFuncion: ref.fecha,
-    Sala:         parseInt(ref.sala),
-    Funcion:      parseInt(ref.funcion),
-    Pelicula:     parseInt(ref.pelicula),
-    Punto:        parseInt(puntoVenta),
-    Secuencia:    parseInt(secuencia),
-    Telefono:     "3000000000",
-    Nombre:       "TEST",
-    Apellido:     "PRUEBA",
-    Ubicaciones:  ubicacionTest,
-    Accion:       "G",
-    teatro:       parseInt(teatro),
+    FechaFuncion:  ref.fecha,
+    Sala:          parseInt(ref.sala),
+    HoraFuncion:   ref.funcion,
+    Pelicula:      parseInt(ref.pelicula),
+    Descripcion:   ref.tituloPelicula,
+    InicioFuncion: parseInt(ref.inicioFuncion),
+    PuntoVenta:    parseInt(puntoVenta),
+    Secuencia:     parseInt(secuencia),
+    Telefono:      "3000000000",
+    Nombre:        "TEST",
+    Apellido:      "PRUEBA",
+    Ubicaciones:   [{ Fila: "A", Columna: 4, Tarifa: ref.tarifaGeneral }],
+    teatro:        parseInt(teatro),
     tercero,
   }));
 
