@@ -293,11 +293,26 @@ export async function scoreReservar(params: ScoreReservaParams) {
   );
 }
 
-/** SCOLIR — libera un hold/preventa por secuencia */
-export async function scoreLiberarReserva(secuencia: string) {
+/** SCOSIL — libera una preventa silla por silla (Accion G de SCOGRU). SCOLIR es para reservas. */
+export async function scoreLiberarPreventa(params: {
+  fechaFuncion: string;
+  sala: string;
+  funcion: string;
+  fila: string;
+  columna: number;
+}) {
   return call(
-    "scolir",
-    JSON.stringify({ PuntoVenta: puntoVenta(), Secuencia: secuencia, teatro: teatro(), tercero: tercero() }),
+    "scosil",
+    JSON.stringify({
+      FechaFuncion: params.fechaFuncion,
+      Sala:         parseInt(params.sala),
+      Funcion:      parseInt(params.funcion),
+      Fila:         params.fila,
+      Columna:      params.columna,
+      Usuario:      parseInt(puntoVenta()),
+      teatro:       parseInt(teatro()),
+      tercero:      tercero(),
+    }),
   );
 }
 
@@ -310,7 +325,7 @@ export async function scoreGetPlanes(params: {
 }): Promise<{ raw: string; planes: ScorePlan[] }> {
   const { raw } = await call(
     "scopla",
-    JSON.stringify({ FechaFuncion: params.fechaFuncion, Pelicula: params.pelicula, Sala: params.sala, InicioFuncion: params.inicioFuncion, teatro: teatro(), tercero: tercero() }),
+    JSON.stringify({ FechaFuncion: params.fechaFuncion, Pelicula: parseInt(params.pelicula), Sala: parseInt(params.sala), InicioFuncion: parseInt(params.inicioFuncion), teatro: parseInt(teatro()), tercero: tercero() }),
   );
   return { raw, planes: parsePlanes(raw) };
 }
