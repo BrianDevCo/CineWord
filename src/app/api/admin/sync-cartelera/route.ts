@@ -9,6 +9,11 @@ function scoreToIso(fecha: string): string {
   return `${fecha.slice(0, 4)}-${fecha.slice(4, 6)}-${fecha.slice(6, 8)}`;
 }
 
+// Limpia nombres internos de Score: "MICHAEL GEN 2D GNR DOB" → "MICHAEL"
+function limpiarNombre(nombre: string): string {
+  return nombre.replace(/\s+(GEN|ORIG?|GNR|DOB|ORI|3D|2D)\b.*$/i, "").trim();
+}
+
 function militarToTime(militar: string): string {
   const padded = militar.padStart(4, "0");
   return `${padded.slice(0, 2)}:${padded.slice(2, 4)}:00`;
@@ -122,7 +127,7 @@ export async function GET() {
     peliculas,
     funciones_por_pelicula: peliculas.map(p => ({
       score_id:  p.id,
-      nombre:    p.nombre,
+      nombre:    limpiarNombre(p.nombre),
       funciones: funciones
         .filter(f => f.scorePeliculaId === p.id && f.fecha >= hoy)
         .map(f => `${f.fecha} ${f.hora.slice(0,5)} sala${f.scoreSalaId}`),
@@ -172,27 +177,48 @@ export async function POST() {
   }
 
   let peliculasCreadas = 0;
-  const erroresPeliculas: string[] = [];
+  let peliculasLinkeadas = 0;
   for (const peli of peliculasScore) {
     if (peliculaMap.has(peli.id)) continue;
-    const { data: nueva, error: errIns } = await db
+
+    const tituloLimpio = limpiarNombre(peli.nombre);
+
+    // Buscar película existente con título parecido (sin score_pelicula_id)
+    const { data: existente } = await db
       .from("peliculas")
-      .insert({
-        titulo:            peli.nombre,
-        genero:            "Por definir",
-        filter_genres:     [],
-        duracion:          "Por definir",
-        clasificacion:     "Por definir",
-        estado:            "en_cartelera",
-        activa:            true,
-        score_pelicula_id: peli.id,
-        badge:             "EN CARTELERA",
-        badge_color:       "bg-emerald-600",
-      })
       .select("id")
+      .ilike("titulo", `${tituloLimpio}%`)
+      .is("score_pelicula_id", null)
+      .limit(1)
       .single();
-    if (nueva) { peliculaMap.set(peli.id, nueva.id); peliculasCreadas++; }
-    else erroresPeliculas.push(`${peli.nombre} (${peli.id}): ${errIns?.message ?? "sin data"}`);
+
+    if (existente) {
+      // Linkear la existente con el ID de Score
+      await db.from("peliculas")
+        .update({ score_pelicula_id: peli.id, estado: "en_cartelera", activa: true })
+        .eq("id", existente.id);
+      peliculaMap.set(peli.id, existente.id);
+      peliculasLinkeadas++;
+    } else {
+      // Crear nueva con título limpio
+      const { data: nueva } = await db
+        .from("peliculas")
+        .insert({
+          titulo:            tituloLimpio,
+          genero:            "Por definir",
+          filter_genres:     [],
+          duracion:          "Por definir",
+          clasificacion:     "Por definir",
+          estado:            "en_cartelera",
+          activa:            true,
+          score_pelicula_id: peli.id,
+          badge:             "EN CARTELERA",
+          badge_color:       "bg-emerald-600",
+        })
+        .select("id")
+        .single();
+      if (nueva) { peliculaMap.set(peli.id, nueva.id); peliculasCreadas++; }
+    }
   }
 
   // ── 3. Salas ──────────────────────────────────────────────────────────────────
@@ -265,11 +291,25 @@ export async function POST() {
     funcionesCreadas++;
   }
 
+  // ── 7. Retirar películas de Score que ya no están en el JSON ─────────────────
+  const scoreIds = new Set(peliculasScore.map(p => p.id));
+  let peliculasRetiradas = 0;
+  for (const p of peliculasExistentes ?? []) {
+    if (p.score_pelicula_id && !scoreIds.has(p.score_pelicula_id)) {
+      await db.from("peliculas")
+        .update({ estado: "retirada", activa: false })
+        .eq("id", p.id);
+      peliculasRetiradas++;
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     resumen: {
       peliculas_en_json:      peliculasScore.length,
+      peliculas_linkeadas:    peliculasLinkeadas,
       peliculas_creadas:      peliculasCreadas,
+      peliculas_retiradas:    peliculasRetiradas,
       funciones_en_json:      funcionesScore.filter(f => f.fecha >= hoy).length,
       funciones_creadas:      funcionesCreadas,
       funciones_desactivadas: funcionesDesactivadas,

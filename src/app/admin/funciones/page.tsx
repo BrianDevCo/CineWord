@@ -99,7 +99,13 @@ export default function FuncionesAdminPage() {
       const data = await res.json();
       if (!res.ok) { setSyncResult(`Error: ${data.error}`); return; }
       const r = data.resumen;
-      setSyncResult(`✓ ${r.peliculas_creadas} películas nuevas · ${r.funciones_creadas} funciones creadas · ${r.funciones_desactivadas} desactivadas`);
+      const partes = [];
+      if (r.peliculas_linkeadas) partes.push(`${r.peliculas_linkeadas} películas linkeadas`);
+      if (r.peliculas_creadas)   partes.push(`${r.peliculas_creadas} películas nuevas`);
+      if (r.peliculas_retiradas) partes.push(`${r.peliculas_retiradas} retiradas`);
+      if (r.funciones_creadas)   partes.push(`${r.funciones_creadas} funciones creadas`);
+      if (r.funciones_desactivadas) partes.push(`${r.funciones_desactivadas} funciones desactivadas`);
+      setSyncResult(`✓ ${partes.length ? partes.join(" · ") : "Todo al día, sin cambios"}`);
       load();
     } catch {
       setSyncResult("Error al conectar con Score");
