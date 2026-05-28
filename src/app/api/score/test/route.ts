@@ -144,17 +144,17 @@ export async function GET() {
   const ubicacionTest = `FilaA,Columna4,Tarifa${ref.tarifaGeneral}`;
   const scogru = await callScore(base, "scogru", JSON.stringify({
     FechaFuncion: ref.fecha,
-    Sala:         ref.sala,
-    HoraFuncion:  ref.funcion,
-    Pelicula:     ref.pelicula,
-    PuntoVenta:   puntoVenta,
-    Secuencia:    secuencia,
+    Sala:         parseInt(ref.sala),
+    Funcion:      parseInt(ref.funcion),
+    Pelicula:     parseInt(ref.pelicula),
+    Punto:        parseInt(puntoVenta),
+    Secuencia:    parseInt(secuencia),
     Telefono:     "3000000000",
     Nombre:       "TEST",
     Apellido:     "PRUEBA",
     Ubicaciones:  ubicacionTest,
     Accion:       "G",
-    teatro,
+    teatro:       parseInt(teatro),
     tercero,
   }));
 
