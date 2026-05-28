@@ -43,6 +43,8 @@ export default function FuncionesAdminPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   const load = () => {
     Promise.all([
@@ -89,6 +91,23 @@ export default function FuncionesAdminPage() {
     load();
   };
 
+  const syncCartelera = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/admin/sync-cartelera", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { setSyncResult(`Error: ${data.error}`); return; }
+      const r = data.resumen;
+      setSyncResult(`✓ ${r.peliculas_creadas} películas nuevas · ${r.funciones_creadas} funciones creadas · ${r.funciones_desactivadas} desactivadas`);
+      load();
+    } catch {
+      setSyncResult("Error al conectar con Score");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const set = (k: string, v: string | number) => setForm((p) => ({ ...p, [k]: v }));
   const inputClass = "bg-[#0d0d0d] border border-white/10 text-white font-body text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-[#CC1244] w-full transition-colors";
 
@@ -106,14 +125,29 @@ export default function FuncionesAdminPage() {
           <p className="text-[#CC1244] font-heading text-xs tracking-widest uppercase mb-1">Gestión</p>
           <h1 className="font-heading text-3xl font-bold text-white tracking-wider">FUNCIONES</h1>
         </div>
-        <button onClick={() => setShowForm(!showForm)}
-          className="bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          NUEVA FUNCIÓN
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={syncCartelera} disabled={syncing}
+            className="border border-[#CC1244] text-[#CC1244] hover:bg-[#CC1244] hover:text-white disabled:opacity-40 font-heading text-sm tracking-widest px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {syncing ? "SINCRONIZANDO..." : "SINCRONIZAR SCORE"}
+          </button>
+          <button onClick={() => setShowForm(!showForm)}
+            className="bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            NUEVA FUNCIÓN
+          </button>
+        </div>
       </div>
+
+      {syncResult && (
+        <div className={`mb-6 px-4 py-3 rounded-lg font-body text-sm ${syncResult.startsWith("Error") ? "bg-red-500/10 border border-red-500/30 text-red-400" : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"}`}>
+          {syncResult}
+        </div>
+      )}
 
       {/* Formulario nueva función */}
       {showForm && (
