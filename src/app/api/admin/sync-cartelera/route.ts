@@ -94,6 +94,42 @@ function parsearCartelera(json: any, teatroId: string) {
   };
 }
 
+// GET — solo muestra qué hay en el JSON de Score, sin tocar la BD
+export async function GET() {
+  const { error: authError } = await requireAdmin();
+  if (authError) return authError;
+
+  const base   = process.env.SCORE_BASE_URL;
+  const teatro = process.env.SCORE_TEATRO ?? "2";
+  if (!base) return NextResponse.json({ error: "SCORE_BASE_URL no configurado" }, { status: 503 });
+
+  let json: unknown;
+  try {
+    const res = await fetch(`${base}/MobileComJson/variable41.json`, {
+      cache: "no-store",
+      headers: { "ngrok-skip-browser-warning": "true" },
+      signal: AbortSignal.timeout(30000),
+    });
+    json = await res.json();
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 502 });
+  }
+
+  const { peliculas, funciones } = parsearCartelera(json, teatro);
+  const hoy = new Date().toISOString().split("T")[0];
+
+  return NextResponse.json({
+    peliculas,
+    funciones_por_pelicula: peliculas.map(p => ({
+      score_id:  p.id,
+      nombre:    p.nombre,
+      funciones: funciones
+        .filter(f => f.scorePeliculaId === p.id && f.fecha >= hoy)
+        .map(f => `${f.fecha} ${f.hora.slice(0,5)} sala${f.scoreSalaId}`),
+    })),
+  });
+}
+
 export async function POST() {
   const { error: authError } = await requireAdmin();
   if (authError) return authError;
@@ -136,25 +172,27 @@ export async function POST() {
   }
 
   let peliculasCreadas = 0;
+  const erroresPeliculas: string[] = [];
   for (const peli of peliculasScore) {
     if (peliculaMap.has(peli.id)) continue;
-    const { data: nueva } = await db
+    const { data: nueva, error: errIns } = await db
       .from("peliculas")
       .insert({
-        titulo:           peli.nombre,
-        genero:           "Por definir",
-        filter_genres:    [],
-        duracion:         "Por definir",
-        clasificacion:    "Por definir",
-        estado:           "en_cartelera",
-        activa:           true,
+        titulo:            peli.nombre,
+        genero:            "Por definir",
+        filter_genres:     [],
+        duracion:          "Por definir",
+        clasificacion:     "Por definir",
+        estado:            "en_cartelera",
+        activa:            true,
         score_pelicula_id: peli.id,
-        badge:            "EN CARTELERA",
-        badge_color:      "bg-emerald-600",
+        badge:             "EN CARTELERA",
+        badge_color:       "bg-emerald-600",
       })
       .select("id")
       .single();
     if (nueva) { peliculaMap.set(peli.id, nueva.id); peliculasCreadas++; }
+    else erroresPeliculas.push(`${peli.nombre} (${peli.id}): ${errIns?.message ?? "sin data"}`);
   }
 
   // ── 3. Salas ──────────────────────────────────────────────────────────────────
