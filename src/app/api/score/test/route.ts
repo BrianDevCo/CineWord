@@ -45,46 +45,79 @@ async function callScore(base: string, service: string, plaintext: string): Prom
   }
 }
 
-// Extrae la primera función disponible de CineWorld (teatro=2) del JSON de cartelera
+// Extrae la primera función con ventasONline=true y tarifa válida para terceros
 type FuncionExtraida = {
   pelicula: string;
   sala: string;
-  funcion: string;      // hora "HH"
-  inicioFuncion: string; // "HHMM"
-  fecha: string;        // "yyyymmdd"
+  funcion: string;       // hora "HH" (p.ej. "13")
+  inicioFuncion: string; // "HHMM" (p.ej. "1340")
+  fecha: string;         // "yyyymmdd"
   tituloPelicula: string;
+  tarifaGeneral: string;
+  tarifaPremium: string;
 } | null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const arr = (x: any) => Array.isArray(x) ? x : (x != null ? [x] : []);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extraerFuncionCineWorld(json: any, teatroId: string): FuncionExtraida {
   try {
-    const peliculas = Array.isArray(json) ? json : json?.peliculas ?? json?.Peliculas ?? [];
+    // Estructura real: json.Peliculas.pelicula (array o objeto)
+    const peliculas = arr(json?.Peliculas?.pelicula);
     for (const peli of peliculas) {
-      const teatros = peli?.teatros ?? peli?.Teatros ?? [];
-      for (const teatro of teatros) {
-        const id = String(teatro?.id ?? teatro?.Id ?? teatro?.teatro ?? teatro?.Teatro ?? "");
-        if (id !== teatroId) continue;
-        const dias = teatro?.dias ?? teatro?.Dias ?? [];
-        for (const dia of dias) {
-          const fecha = String(dia?.fecha ?? dia?.Fecha ?? "").replace(/-/g, "");
-          if (!fecha || fecha.length !== 8) continue;
-          const salas = dia?.salas ?? dia?.Salas ?? [];
-          for (const sala of salas) {
-            const salaId = String(sala?.sala ?? sala?.Sala ?? sala?.id ?? sala?.Id ?? "");
-            const funciones = sala?.funciones ?? sala?.Funciones ?? [];
-            for (const funcion of funciones) {
-              const hora = String(funcion?.hora ?? funcion?.Hora ?? funcion?.funcion ?? funcion?.Funcion ?? "");
-              const peliId = String(peli?.id ?? peli?.Id ?? peli?.pelicula ?? peli?.Pelicula ?? "");
-              if (!hora || !peliId || !salaId) continue;
-              const hh = hora.padStart(2, "0").slice(0, 2);
-              const mm = (hora.includes(":") ? hora.split(":")[1] : "00") ?? "00";
+      const peliId    = String(peli?.["@id"] ?? "");
+      const peliNombre = String(peli?.["@nombre"] ?? "");
+      if (!peliId) continue;
+
+      // cinema puede ser objeto (1 cine) o array (varios)
+      for (const cinema of arr(peli?.cinemas?.cinema)) {
+        if (String(cinema?.["@id"]) !== teatroId) continue;
+
+        for (const sala of arr(cinema?.salas?.sala)) {
+          const salaId = String(sala?.["@numeroSala"] ?? "");
+          if (!salaId) continue;
+
+          for (const fecha of arr(sala?.Fecha)) {
+            const fechaUniv = String(fecha?.["@univ"] ?? "");
+            if (fechaUniv.length !== 8) continue;
+
+            for (const hora of arr(fecha?.hora)) {
+              // Solo funciones con venta online habilitada
+              if (hora?.["@ventasONline"] !== "true") continue;
+
+              const militar = String(hora?.["@militar"] ?? "");
+              if (!militar) continue;
+
+              // Extraer tarifas válidas para terceros
+              let tarifaGeneral = "";
+              let tarifaPremium = "";
+              for (const zona of arr(hora?.TipoZona)) {
+                const nombreZona = String(zona?.["@nombreZona"] ?? "").toUpperCase();
+                const tarifa = zona?.TipoSilla?.Tarifa;
+                if (!tarifa) continue;
+                if (tarifa?.["@validoTeceros"] !== "Si") continue;
+                const codigo = String(tarifa?.["@codigoTarifa"] ?? "");
+                if (!codigo) continue;
+                if (nombreZona === "PREMIUM" && !tarifaPremium) tarifaPremium = codigo;
+                else if (!tarifaGeneral) tarifaGeneral = codigo;
+              }
+              if (!tarifaGeneral) continue; // necesitamos al menos tarifa general
+
+              const horaNum = Math.floor(parseInt(militar) / 100);
+              const minNum  = parseInt(militar) % 100;
+              const hh = String(horaNum).padStart(2, "0");
+              const mm = String(minNum).padStart(2, "0");
+
               return {
-                pelicula: peliId,
-                sala: salaId,
-                funcion: hh,
-                inicioFuncion: hh + mm.padStart(2, "0"),
-                fecha,
-                tituloPelicula: String(peli?.nombre ?? peli?.Nombre ?? peli?.titulo ?? peli?.Titulo ?? ""),
+                pelicula:      peliId,
+                sala:          salaId,
+                funcion:       hh,
+                inicioFuncion: hh + mm,
+                fecha:         fechaUniv,
+                tituloPelicula: peliNombre,
+                tarifaGeneral,
+                tarifaPremium,
               };
             }
           }
@@ -131,9 +164,10 @@ export async function GET() {
 
   // ── 3. SCOPLA — usar datos reales del JSON si los encontramos ────────────────
   const refFuncion = cartelera.funcion ?? {
-    pelicula: "182511121", sala: "2", funcion: "14", inicioFuncion: "1400",
+    pelicula: "4811121", sala: "4", funcion: "13", inicioFuncion: "1340",
     fecha: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
     tituloPelicula: "fallback hardcoded",
+    tarifaGeneral: "2", tarifaPremium: "4",
   };
 
   const scopla = await callScore(base, "scopla",
@@ -148,7 +182,7 @@ export async function GET() {
   );
 
   // ── 4. SCOGRU — hold de sillas ───────────────────────────────────────────────
-  const ubicacionTest = "FilaA,Columna4,Tarifa37";
+  const ubicacionTest = `FilaA,Columna4,Tarifa${refFuncion.tarifaGeneral}`;
   const scogru = await callScore(base, "scogru", JSON.stringify({
     FechaFuncion: refFuncion.fecha,
     Sala:         refFuncion.sala,
@@ -178,7 +212,9 @@ export async function GET() {
   }));
 
   const resumen = {
-    cartelera_json: cartelera.ok ? `OK — encontró teatro=${teatro} (${refFuncion.tituloPelicula})` : "NO ENCONTRADO / ERROR",
+    cartelera_json: cartelera.ok
+      ? `OK — ${refFuncion.tituloPelicula} | sala ${refFuncion.sala} | ${refFuncion.fecha} ${refFuncion.funcion}h | tarifa general=${refFuncion.tarifaGeneral} premium=${refFuncion.tarifaPremium}`
+      : "NO ENCONTRADO / ERROR",
     scopla:  scopla.ok  ? "OK" : "BLOQUEADO/ERROR",
     scogru:  scogru.ok  ? "OK" : "BLOQUEADO/ERROR",
     scosil:  scosil.ok  ? "OK" : "BLOQUEADO/ERROR",
