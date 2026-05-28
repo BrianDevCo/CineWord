@@ -88,22 +88,50 @@ export async function GET() {
 
   ]);
 
-  // Resumen de servicios transaccionales (no se prueban para no afectar datos reales)
+  // SCOGRU → hold 1 silla → SCOLIR libera inmediatamente
+  // Usamos la secuencia que ya obtuvimos de SCOSEC
+  const secuencia = (() => {
+    try { return String(JSON.parse(scosec.dec)[0]?.Secuencia ?? "0"); } catch { return "0"; }
+  })();
+
+  const ubicacionTest = `FilaA,Columna4,Tarifa37`;
+  const scogru = await callScore(base, "scogru", JSON.stringify({
+    FechaFuncion: fecha,
+    Sala:         REF.sala,
+    HoraFuncion:  REF.hora,
+    Pelicula:     REF.pelicula,
+    PuntoVenta:   puntoVenta,
+    Secuencia:    secuencia,
+    Telefono:     "3000000000",
+    Nombre:       "TEST",
+    Apellido:     "PRUEBA",
+    Ubicaciones:  ubicacionTest,
+    Accion:       "G",
+    teatro,
+    tercero,
+  }));
+
+  // Liberar inmediatamente sin importar el resultado
+  const scolir = await callScore(base, "scolir", JSON.stringify({
+    PuntoVenta: puntoVenta,
+    Secuencia:  secuencia,
+    teatro,
+    tercero,
+  }));
+
   const transaccionales = {
-    scogru: { nota: "NO PROBADO — hold de sillas (afecta datos reales)" },
-    scolir: { nota: "NO PROBADO — liberar hold (necesita secuencia activa)" },
     scoint: { nota: "NO PROBADO — registrar venta (afecta datos reales)" },
     scocya: { nota: "NO PROBADO — crear/actualizar cliente (afecta datos reales)" },
   };
 
   const resumen = {
-    scosec: scosec.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
-    scomap: scomap.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
-    scoesg: scoesg.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
-    scopla: scopla.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
-    scocar: scocar.ok  ? "✅ OK"        : "❌ BLOQUEADO/ERROR",
-    scogru: "⚠️ NO PROBADO",
-    scolir: "⚠️ NO PROBADO",
+    scosec: scosec.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
+    scomap: scomap.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
+    scoesg: scoesg.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
+    scopla: scopla.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
+    scocar: scocar.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
+    scogru: scogru.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
+    scolir: scolir.ok  ? "✅ OK" : "❌ BLOQUEADO/ERROR",
     scoint: "⚠️ NO PROBADO",
     scocya: "⚠️ NO PROBADO",
   };
@@ -160,7 +188,7 @@ export async function GET() {
   return NextResponse.json({
     config: { base, tercero, teatro, puntoVenta, hoy },
     resumen,
-    servicios: { scosec, scomap, scoesg, scopla, scocar },
+    servicios: { scosec, scomap, scoesg, scopla, scocar, scogru: { ...scogru, params: { FechaFuncion: fecha, Sala: REF.sala, HoraFuncion: REF.hora, Pelicula: REF.pelicula, Ubicaciones: ubicacionTest, Secuencia: secuencia, Accion: "G" } }, scolir: { ...scolir, params: { PuntoVenta: puntoVenta, Secuencia: secuencia } } },
     transaccionales,
     xml,
   });
