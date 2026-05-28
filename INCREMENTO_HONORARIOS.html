@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comunicado de Incremento de Honorarios — CINEWORLD</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; background: #f5f5f0; color: #1a1a1a; }
+    .page { max-width: 800px; margin: 40px auto; background: #fff; padding: 60px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+    .header { text-align: center; border-bottom: 3px solid #CC1244; padding-bottom: 30px; margin-bottom: 40px; }
+    .logo { font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #CC1244; margin-bottom: 6px; }
+    .doc-title { font-size: 16px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-top: 16px; }
+    .doc-subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+    .meta { display: flex; justify-content: space-between; margin-bottom: 36px; font-size: 13px; color: #555; border-left: 4px solid #CC1244; padding-left: 16px; }
+    h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; color: #CC1244; margin: 32px 0 12px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    p { font-size: 14px; line-height: 1.9; color: #333; margin-bottom: 14px; text-align: justify; }
+    .highlight-box { background: #fff5f7; border-left: 4px solid #CC1244; padding: 16px 20px; margin: 20px 0; border-radius: 0 4px 4px 0; }
+    .highlight-box p { margin: 0; font-size: 13.5px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13.5px; }
+    th { background: #CC1244; color: white; padding: 10px 14px; text-align: left; font-weight: normal; letter-spacing: 0.5px; }
+    td { padding: 10px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .total-row td { font-weight: bold; background: #fff5f7 !important; border-top: 2px solid #CC1244; font-size: 14px; }
+    .firma { margin-top: 60px; display: flex; justify-content: space-between; gap: 40px; }
+    .firma-bloque { flex: 1; text-align: center; }
+    .firma-linea { border-top: 1px solid #333; margin-bottom: 8px; }
+    .firma-nombre { font-size: 13px; font-weight: bold; }
+    .firma-cargo { font-size: 12px; color: #666; margin-top: 2px; }
+    .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #aaa; }
+    @media print { body { background: white; } .page { box-shadow: none; margin: 0; } }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ENCABEZADO -->
+  <div class="header">
+    <div class="logo">CINEWORLD</div>
+    <div style="font-size:11px;color:#aaa;letter-spacing:2px;">CENTRO COMERCIAL MR OUTLET · CALI</div>
+    <div class="doc-title">Comunicado de Ajuste de Honorarios</div>
+    <div class="doc-subtitle">Desarrollo de Sitio Web Oficial — Proyecto CineWorld</div>
+  </div>
+
+  <!-- DATOS -->
+  <div class="meta">
+    <div><strong>Fecha:</strong> 26 de mayo de 2026</div>
+    <div><strong>Para:</strong> Administración CINEWORLD</div>
+    <div><strong>De:</strong> Brian López Garzón — Desarrollador Web</div>
+  </div>
+
+  <!-- ANTECEDENTES -->
+  <h2>1. Antecedentes del Proyecto</h2>
+  <p>
+    En el marco del contrato suscrito entre las partes para el desarrollo del sitio web oficial de CINEWORLD,
+    se acordó inicialmente un tiempo de ejecución de <strong>una (1) semana</strong> para la entrega del producto funcional.
+    Dicho plazo contemplaba el desarrollo de la plataforma web, la integración con el sistema de pagos y
+    la conexión con el sistema de gestión del cine <strong>(Score Projects S.A.S.)</strong>.
+  </p>
+
+  <!-- SITUACIÓN ACTUAL -->
+  <h2>2. Situación Actual — Extensión del Plazo</h2>
+  <p>
+    A la fecha, el proyecto acumula <strong>más de un mes de trabajo</strong>, superando ampliamente el tiempo
+    pactado originalmente. Esta extensión <strong>no obedece a factores atribuibles al desarrollador</strong>,
+    sino a una serie de inconvenientes técnicos externos originados en la relación entre el cine y su
+    proveedor de software Score, tal como se detalla a continuación.
+  </p>
+
+  <!-- CAUSAS EXTERNAS -->
+  <h2>3. Causas Externas que Generaron el Retraso</h2>
+
+  <table>
+    <tr>
+      <th>Causa</th>
+      <th>Descripción</th>
+    </tr>
+    <tr>
+      <td><strong>Servicios de Score no habilitados</strong></td>
+      <td>De 8 servicios de la API de Score requeridos para la venta en línea, solo 3 están activos para el tercero asignado al cine. Los 5 restantes (SCOGRU, SCOLIR, SCOINT, SCOPLA, SCOCAR) devuelven error y deben ser habilitados por Score.</td>
+    </tr>
+    <tr>
+      <td><strong>Problemas de conectividad con Score</strong></td>
+      <td>El servidor de Score opera en la red local del cine sin exposición pública a internet, lo que impidió la integración directa y obligó al uso de soluciones alternativas (túnel ngrok) mientras se gestiona el port forwarding con el proveedor de internet.</td>
+    </tr>
+    <tr>
+      <td><strong>Reinicio del servidor del cine</strong></td>
+      <td>El PC que aloja el sistema Score se reinició sin previo aviso, interrumpiendo el túnel de conexión y generando horas adicionales de diagnóstico y reconfiguración.</td>
+    </tr>
+    <tr>
+      <td><strong>Reuniones sin resolución</strong></td>
+      <td>Se participó en reuniones con el equipo de CINEWORLD pactadas como reuniones de "cierre", en las cuales no se resolvieron los bloqueos identificados, extendiendo el tiempo de gestión.</td>
+    </tr>
+    <tr>
+      <td><strong>Tareas fuera del alcance del desarrollador web</strong></td>
+      <td>Se realizaron labores de diagnóstico de red, configuración de túneles, pruebas de conectividad, identificación de endpoints incorrectos y documentación técnica para Score — tareas que corresponden a infraestructura y no al desarrollo web contratado.</td>
+    </tr>
+  </table>
+
+  <!-- TRABAJO ADICIONAL -->
+  <h2>4. Trabajo Adicional Realizado</h2>
+  <p>
+    Más allá del alcance original, se desarrollaron e implementaron funcionalidades adicionales no contempladas
+    en el acuerdo inicial, entre las que se destacan:
+  </p>
+  <table>
+    <tr>
+      <th>Funcionalidad adicional</th>
+    </tr>
+    <tr><td>Integración completa con Score API (encriptación AES-128-CBC, 8 servicios)</td></tr>
+    <tr><td>Sistema de hold de sillas en tiempo real con temporizador de 5 minutos</td></tr>
+    <tr><td>Mapa de sillas interactivo con ocupación en tiempo real desde Score (SCOESG)</td></tr>
+    <tr><td>Diagnóstico y configuración de túnel ngrok para acceso externo al servidor Score</td></tr>
+    <tr><td>Investigación y documentación de arquitectura de red del cine</td></tr>
+    <tr><td>Reuniones técnicas con proveedor Score para gestión de habilitación de servicios</td></tr>
+    <tr><td>Panel administrativo completo con gestión de películas, funciones y reservas</td></tr>
+    <tr><td>Sistema de emails automáticos con código QR del boleto</td></tr>
+  </table>
+
+  <!-- INCREMENTO -->
+  <h2>5. Ajuste de Honorarios</h2>
+  <p>
+    Dadas las circunstancias descritas — extensión del plazo por causas externas, trabajo fuera del alcance
+    contratado, reuniones adicionales y gestión técnica no prevista — se hace necesario realizar un ajuste
+    sobre el valor acordado inicialmente:
+  </p>
+
+  <table>
+    <tr>
+      <th>Concepto</th>
+      <th style="text-align:right;">Valor</th>
+    </tr>
+    <tr>
+      <td>Valor pactado originalmente</td>
+      <td style="text-align:right;">Según contrato</td>
+    </tr>
+    <tr>
+      <td>Incremento por extensión del plazo (causas externas al desarrollador)</td>
+      <td style="text-align:right;">$200.000 COP</td>
+    </tr>
+    <tr>
+      <td>Incremento por trabajo adicional fuera del alcance contratado</td>
+      <td style="text-align:right;">$100.000 COP</td>
+    </tr>
+    <tr>
+      <td>Incremento por reuniones adicionales sin resolución de bloqueos</td>
+      <td style="text-align:right;">$100.000 COP</td>
+    </tr>
+    <tr class="total-row">
+      <td>Total incremento</td>
+      <td style="text-align:right;">$400.000 COP</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box">
+    <p>
+      Este ajuste se origina exclusivamente en factores externos al desarrollador. El sitio web fue entregado
+      funcional en su totalidad. A la fecha, Score ha habilitado la totalidad de los servicios requeridos
+      para la venta en línea, por lo que la plataforma se encuentra completamente operativa técnicamente.
+      El presente comunicado constituye el cobro formal del valor adicional generado durante el proceso.
+    </p>
+  </div>
+
+  <!-- CIERRE -->
+  <h2>6. Estado Actual y Cierre</h2>
+  <p>
+    A la fecha de emisión de este documento, Score Projects S.A.S. ha habilitado la totalidad de los
+    servicios de API requeridos (SCOGRU, SCOLIR, SCOINT, SCOPLA, SCOCAR, SCOCYA), lo que permitió
+    completar la integración técnica de la plataforma. El sitio web se encuentra funcional y listo
+    para operar con venta en línea.
+  </p>
+  <p>
+    Las reuniones de cierre están programadas con el equipo de CINEWORLD, y en ellas se formalizará
+    la entrega definitiva del proyecto junto con el pago del ajuste de honorarios aquí descrito.
+    Quedo disponible para cualquier aclaración sobre el presente comunicado.
+  </p>
+
+  <!-- FIRMAS -->
+  <div class="firma">
+    <div class="firma-bloque">
+      <br><br><br>
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">Brian López Garzón</div>
+      <div class="firma-cargo">Desarrollador Web</div>
+      <div class="firma-cargo">CC 1006011463</div>
+    </div>
+    <div class="firma-bloque">
+      <br><br><br>
+      <div class="firma-linea"></div>
+      <div class="firma-nombre">Representante CINEWORLD</div>
+      <div class="firma-cargo">Centro Comercial MR Outlet, Cali</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Documento generado el 26 de mayo de 2026 · Proyecto CineWorld · Desarrollador: Brian López Garzón
+  </div>
+
+</div>
+</body>
+</html>

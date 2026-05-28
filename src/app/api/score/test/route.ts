@@ -45,79 +45,60 @@ async function callScore(base: string, service: string, plaintext: string): Prom
   }
 }
 
-// Extrae la primera función con ventasONline=true y tarifa válida para terceros
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const arr = (x: any) => Array.isArray(x) ? x : (x != null ? [x] : []);
+
 type FuncionExtraida = {
   pelicula: string;
   sala: string;
-  funcion: string;       // hora "HH" (p.ej. "13")
-  inicioFuncion: string; // "HHMM" (p.ej. "1340")
-  fecha: string;         // "yyyymmdd"
+  funcion: string;
+  inicioFuncion: string;
+  fecha: string;
   tituloPelicula: string;
   tarifaGeneral: string;
   tarifaPremium: string;
 } | null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const arr = (x: any) => Array.isArray(x) ? x : (x != null ? [x] : []);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extraerFuncionCineWorld(json: any, teatroId: string): FuncionExtraida {
   try {
-    // Estructura real: json.Peliculas.pelicula (array o objeto)
     const peliculas = arr(json?.Peliculas?.pelicula);
     for (const peli of peliculas) {
-      const peliId    = String(peli?.["@id"] ?? "");
+      const peliId     = String(peli?.["@id"] ?? "");
       const peliNombre = String(peli?.["@nombre"] ?? "");
       if (!peliId) continue;
-
-      // cinema puede ser objeto (1 cine) o array (varios)
       for (const cinema of arr(peli?.cinemas?.cinema)) {
         if (String(cinema?.["@id"]) !== teatroId) continue;
-
         for (const sala of arr(cinema?.salas?.sala)) {
           const salaId = String(sala?.["@numeroSala"] ?? "");
           if (!salaId) continue;
-
           for (const fecha of arr(sala?.Fecha)) {
             const fechaUniv = String(fecha?.["@univ"] ?? "");
             if (fechaUniv.length !== 8) continue;
-
             for (const hora of arr(fecha?.hora)) {
-              // Solo funciones con venta online habilitada
               if (hora?.["@ventasONline"] !== "true") continue;
-
               const militar = String(hora?.["@militar"] ?? "");
               if (!militar) continue;
-
-              // Extraer tarifas válidas para terceros
-              let tarifaGeneral = "";
-              let tarifaPremium = "";
+              let tarifaGeneral = "", tarifaPremium = "";
               for (const zona of arr(hora?.TipoZona)) {
                 const nombreZona = String(zona?.["@nombreZona"] ?? "").toUpperCase();
                 const tarifa = zona?.TipoSilla?.Tarifa;
-                if (!tarifa) continue;
-                if (tarifa?.["@validoTeceros"] !== "Si") continue;
+                if (!tarifa || tarifa?.["@validoTeceros"] !== "Si") continue;
                 const codigo = String(tarifa?.["@codigoTarifa"] ?? "");
                 if (!codigo) continue;
                 if (nombreZona === "PREMIUM" && !tarifaPremium) tarifaPremium = codigo;
                 else if (!tarifaGeneral) tarifaGeneral = codigo;
               }
-              if (!tarifaGeneral) continue; // necesitamos al menos tarifa general
-
+              if (!tarifaGeneral) continue;
               const horaNum = Math.floor(parseInt(militar) / 100);
               const minNum  = parseInt(militar) % 100;
               const hh = String(horaNum).padStart(2, "0");
               const mm = String(minNum).padStart(2, "0");
-
               return {
-                pelicula:      peliId,
-                sala:          salaId,
-                funcion:       hh,
-                inicioFuncion: hh + mm,
-                fecha:         fechaUniv,
-                tituloPelicula: peliNombre,
-                tarifaGeneral,
-                tarifaPremium,
+                pelicula: peliId, sala: salaId,
+                funcion: hh, inicioFuncion: hh + mm,
+                fecha: fechaUniv, tituloPelicula: peliNombre,
+                tarifaGeneral, tarifaPremium,
               };
             }
           }
@@ -134,27 +115,24 @@ export async function GET() {
   const teatro     = process.env.SCORE_TEATRO      ?? "2";
   const puntoVenta = process.env.SCORE_PUNTO_VENTA ?? "77";
 
-  // ── 1. Leer JSON de cartelera y buscar CineWorld (teatro=2) ──────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let cartelera: { ok: boolean; funcion: FuncionExtraida; extracto: any; error: string | null } = {
-    ok: false, funcion: null, extracto: null, error: null,
-  };
+  // ── Obtener función real del JSON (necesaria para SCOGRU) ────────────────────
+  let funcion: FuncionExtraida = null;
   try {
     const res = await fetch(`${base}/MobileComJson/variable41.json`, {
       cache: "no-store",
       headers: { "ngrok-skip-browser-warning": "true" },
       signal: AbortSignal.timeout(30000),
     });
-    const json = await res.json();
-    const funcion = extraerFuncionCineWorld(json, teatro);
-    // Guardar un extracto pequeño para debugging (primeras 2 entradas)
-    const extracto = Array.isArray(json) ? json.slice(0, 2) : json;
-    cartelera = { ok: !!funcion, funcion, extracto, error: null };
-  } catch (e) {
-    cartelera = { ok: false, funcion: null, extracto: null, error: String(e) };
-  }
+    funcion = extraerFuncionCineWorld(await res.json(), teatro);
+  } catch { /**/ }
 
-  // ── 2. SCOSEC — obtener secuencia (interno, no se muestra) ───────────────────
+  const ref = funcion ?? {
+    pelicula: "4811121", sala: "4", funcion: "13", inicioFuncion: "1340",
+    fecha: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
+    tituloPelicula: "fallback hardcoded", tarifaGeneral: "2", tarifaPremium: "4",
+  };
+
+  // Secuencia (SCOSEC — ya funciona, solo la necesitamos para SCOGRU)
   const scosec = await callScore(base, "scosec",
     JSON.stringify({ Punto: puntoVenta, teatro, tercero })
   );
@@ -162,32 +140,13 @@ export async function GET() {
     try { return String(JSON.parse(scosec.dec)[0]?.Secuencia ?? "0"); } catch { return "0"; }
   })();
 
-  // ── 3. SCOPLA — usar datos reales del JSON si los encontramos ────────────────
-  const refFuncion = cartelera.funcion ?? {
-    pelicula: "4811121", sala: "4", funcion: "13", inicioFuncion: "1340",
-    fecha: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
-    tituloPelicula: "fallback hardcoded",
-    tarifaGeneral: "2", tarifaPremium: "4",
-  };
-
-  const scopla = await callScore(base, "scopla",
-    JSON.stringify({
-      FechaFuncion:  refFuncion.fecha,
-      Pelicula:      parseInt(refFuncion.pelicula),
-      Sala:          parseInt(refFuncion.sala),
-      InicioFuncion: parseInt(refFuncion.inicioFuncion),
-      teatro:        parseInt(teatro),
-      tercero,
-    })
-  );
-
-  // ── 4. SCOGRU — hold de sillas ───────────────────────────────────────────────
-  const ubicacionTest = `FilaA,Columna4,Tarifa${refFuncion.tarifaGeneral}`;
+  // ── 1. SCOGRU — hold de sillas (BLOQUEADO para tercero=1) ───────────────────
+  const ubicacionTest = `FilaA,Columna4,Tarifa${ref.tarifaGeneral}`;
   const scogru = await callScore(base, "scogru", JSON.stringify({
-    FechaFuncion: refFuncion.fecha,
-    Sala:         refFuncion.sala,
-    HoraFuncion:  refFuncion.funcion,
-    Pelicula:     refFuncion.pelicula,
+    FechaFuncion: ref.fecha,
+    Sala:         ref.sala,
+    HoraFuncion:  ref.funcion,
+    Pelicula:     ref.pelicula,
     PuntoVenta:   puntoVenta,
     Secuencia:    secuencia,
     Telefono:     "3000000000",
@@ -199,36 +158,48 @@ export async function GET() {
     tercero,
   }));
 
-  // ── 5. SCOSIL — liberar preventa silla por silla ─────────────────────────────
-  const scosil = await callScore(base, "scosil", JSON.stringify({
-    FechaFuncion: refFuncion.fecha,
-    Sala:         parseInt(refFuncion.sala),
-    Funcion:      parseInt(refFuncion.funcion),
-    Fila:         "A",
-    Columna:      4,
-    Usuario:      parseInt(puntoVenta),
-    teatro:       parseInt(teatro),
+  // ── 2. SCOCYA — registrar cliente (accion C) ─────────────────────────────────
+  const scocya = await callScore(base, "scocya", JSON.stringify({
+    Login:           "test-score@cineworld.co",
+    Nombre:          "Test",
+    Apellido:        "Score",
+    Correo:          "test-score@cineworld.co",
+    Cinema:          teatro,
+    Clave:           "Test1234",
+    Celular:         "3000000000",
+    Documento:       "0",
+    FechaNacimiento: "19900101",
+    Sexo:            "M",
+    Reservas:        "N",
+    Noticias:        "N",
+    Cartelera:       "N",
+    OtrasSalas:      "N",
+    Contacto:        "Correo Electrónico",
+    Accion:          "C",
     tercero,
   }));
 
-  const resumen = {
-    cartelera_json: cartelera.ok
-      ? `OK — ${refFuncion.tituloPelicula} | sala ${refFuncion.sala} | ${refFuncion.fecha} ${refFuncion.funcion}h | tarifa general=${refFuncion.tarifaGeneral} premium=${refFuncion.tarifaPremium}`
-      : "NO ENCONTRADO / ERROR",
-    scopla:  scopla.ok  ? "OK" : "BLOQUEADO/ERROR",
-    scogru:  scogru.ok  ? "OK" : "BLOQUEADO/ERROR",
-    scosil:  scosil.ok  ? "OK" : "BLOQUEADO/ERROR",
-    scoint:  "NO PROBADO — registrar venta (afecta datos reales)",
-  };
+  // ── 3. SCOLOG — login cliente ────────────────────────────────────────────────
+  const scolog = await callScore(base, "scolog", JSON.stringify({
+    Login:   "test-score@cineworld.co",
+    Clave:   "Test1234",
+    tercero,
+  }));
+
+  // ── 4. SCOCED — consultar cliente por documento ──────────────────────────────
+  const scoced = await callScore(base, "scoced", JSON.stringify({
+    Documento: "1234567890",
+    tercero,
+  }));
 
   return NextResponse.json({
-    config: { base, tercero, teatro, puntoVenta, secuencia },
-    resumen,
-    detalle: {
-      cartelera: { ...cartelera, extracto: cartelera.extracto },
-      scopla:  { ...scopla,  params: { FechaFuncion: refFuncion.fecha, Pelicula: refFuncion.pelicula, Sala: refFuncion.sala, InicioFuncion: refFuncion.inicioFuncion, teatro, tercero } },
-      scogru:  { ...scogru,  params: { FechaFuncion: refFuncion.fecha, Sala: refFuncion.sala, HoraFuncion: refFuncion.funcion, Pelicula: refFuncion.pelicula, Ubicaciones: ubicacionTest, Secuencia: secuencia } },
-      scosil:  { ...scosil,  params: { FechaFuncion: refFuncion.fecha, Sala: refFuncion.sala, Funcion: refFuncion.funcion, Fila: "A", Columna: 4, Usuario: puntoVenta } },
+    config: { base, tercero, teatro, puntoVenta, secuencia, funcion_usada: ref.tituloPelicula },
+    resumen: {
+      scogru: scogru.ok  ? "OK" : `BLOQUEADO — ${scogru.dec || scogru.error}`,
+      scocya: scocya.ok  ? "OK" : `BLOQUEADO — ${scocya.dec || scocya.error}`,
+      scolog: scolog.ok  ? "OK" : `BLOQUEADO — ${scolog.dec || scolog.error}`,
+      scoced: scoced.ok  ? "OK" : `BLOQUEADO — ${scoced.dec || scoced.error}`,
     },
+    detalle: { scogru, scocya, scolog, scoced },
   });
 }
