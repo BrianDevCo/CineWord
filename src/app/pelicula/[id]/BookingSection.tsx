@@ -343,18 +343,21 @@ export default function BookingSection({ movie, funciones }: Props) {
             const tarifaReg = scorePlanRegular?.codigo ?? selectedFuncion.score_tarifa_regular ?? "";
             const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion.score_tarifa_vip     ?? "";
 
+            const [hh, mm] = selectedFuncion.hora.split(":");
             await fetch("/api/score/grupo", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                fechaFuncion: selectedFuncion.fecha,
-                sala:         selectedFuncion.score_sala_id,
-                horaFuncion:  selectedFuncion.hora,
-                pelicula:     selectedFuncion.score_pelicula_id,
-                secuencia:    sec,
-                nombre:       paymentInfo.nombre,
-                telefono:     paymentInfo.telefono || "",
-                ubicaciones:  asientosList.map(a => ({
+                fechaFuncion:  selectedFuncion.fecha,
+                sala:          selectedFuncion.score_sala_id,
+                horaFuncion:   selectedFuncion.hora,
+                pelicula:      selectedFuncion.score_pelicula_id,
+                inicioFuncion: (hh ?? "00") + (mm ?? "00"),
+                descripcion:   movie.titulo,
+                secuencia:     sec,
+                nombre:        paymentInfo.nombre,
+                telefono:      paymentInfo.telefono || "",
+                ubicaciones:   asientosList.map(a => ({
                   fila:    a.fila,
                   columna: String(a.columna),
                   tarifa:  isVipRow(a.fila) ? tarifaVip : tarifaReg,
