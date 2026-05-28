@@ -341,24 +341,30 @@ export async function scoreRegistrarCliente(p: ScoreClienteParams) {
       Correo:          p.email,
       Cinema:          teatro(),
       Clave:           p.clave,
-      Celular:         p.celular ?? "",
-      Documento:       p.documento ?? "0",
-      FechaNacimiento: p.fechaNacimiento ?? "19900101",
-      Sexo:            p.sexo ?? "M",
-      Reservas:        "N",
-      Noticias:        "N",
-      Cartelera:       "N",
-      OtrasSalas:      "N",
-      Contacto:        "Correo Electrónico",
+      Celular:          p.celular ?? "",
+      Telefono:         p.celular ?? "",
+      Documento:        p.documento ?? "0",
+      Fecha_Nacimiento: p.fechaNacimiento ?? "19900101",
+      Sexo:             p.sexo ?? "M",
+      Edad:             "",
+      Genero:           "",
+      Direccion:        "",
+      Barrio:           "",
+      Municipio:        "",
+      Reservas:         "N",
+      Noticias:         "N",
+      Cartelera:        "N",
+      Otras_Salas:      "N",
+      Contacto:         "Correo Electrónico",
       Accion:          p.accion,
       tercero:         tercero(),
     }),
   );
 }
 
-/** SCOLOG — login / consultar cliente por email */
+/** SCOLOG — login / consultar cliente por correo */
 export async function scoreLoginCliente(email: string, clave: string) {
-  return call("scolog", JSON.stringify({ Login: email, Clave: clave, tercero: tercero() }));
+  return call("scolog", JSON.stringify({ Correo: email, Clave: clave, tercero: tercero() }));
 }
 
 /** SCOCED — consultar cliente por número de documento */
