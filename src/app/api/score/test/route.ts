@@ -261,7 +261,7 @@ export async function GET() {
   for (const [svc, r] of Object.entries(resultados)) {
     resumen[svc] = r.ok
       ? `✅ OK (${r.elapsed}ms)`
-      : `❌ ${r.error ?? r.dec.slice(0, 120) || `HTTP ${r.status}`} (${r.elapsed}ms)`;
+      : `❌ ${(r.error ?? r.dec.slice(0, 120)) || `HTTP ${r.status}`} (${r.elapsed}ms)`;
   }
 
   const total  = Object.values(resultados).filter(r => r.status !== 0 || r.dec !== "OMITIDO — SCOGRU falló").length;
