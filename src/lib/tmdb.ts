@@ -94,26 +94,39 @@ async function fetchTmdb<T>(path: string, params: Record<string, string> = {}): 
   return res.json() as Promise<T>;
 }
 
-export async function tmdbSearch(title: string): Promise<number | null> {
+export async function tmdbSearch(title: string, year?: string): Promise<number | null> {
   const clean = cleanScoreTitle(title);
-  const data = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", { query: clean });
-  if (!data.results.length) return null;
-  // Prefiere resultado con título más parecido
+  const params: Record<string, string> = { query: clean };
+  if (year) params.year = year;
+
+  const data = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", params);
+  if (!data.results.length) {
+    // Reintenta sin año si no encontró nada
+    if (year) {
+      const retry = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", { query: clean });
+      if (!retry.results.length) return null;
+      return retry.results[0].id;
+    }
+    return null;
+  }
+  // Prefiere título exacto, luego el que tiene backdrop
   const sorted = data.results.sort((a, b) => {
-    const aMatch = a.title.toLowerCase().includes(clean.toLowerCase()) ? 0 : 1;
-    const bMatch = b.title.toLowerCase().includes(clean.toLowerCase()) ? 0 : 1;
-    return aMatch - bMatch || (b.backdrop_path ? 1 : 0) - (a.backdrop_path ? 1 : 0);
+    const cleanLower = clean.toLowerCase();
+    const aExact = a.title.toLowerCase() === cleanLower ? 0 : 1;
+    const bExact = b.title.toLowerCase() === cleanLower ? 0 : 1;
+    if (aExact !== bExact) return aExact - bExact;
+    return (b.backdrop_path ? 1 : 0) - (a.backdrop_path ? 1 : 0);
   });
   return sorted[0].id;
 }
 
-export async function tmdbEnrich(titleOrId: string | number): Promise<TmdbMovie | null> {
+export async function tmdbEnrich(titleOrId: string | number, year?: string): Promise<TmdbMovie | null> {
   try {
     let tmdbId: number;
     if (typeof titleOrId === "number") {
       tmdbId = titleOrId;
     } else {
-      const found = await tmdbSearch(titleOrId);
+      const found = await tmdbSearch(titleOrId, year);
       if (!found) return null;
       tmdbId = found;
     }

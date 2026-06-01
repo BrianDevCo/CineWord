@@ -52,9 +52,9 @@ export default function PeliculasAdminPage() {
   };
 
   const enrichOne = async (id: number) => {
-    const res = await fetch("/api/admin/enrich-tmdb", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pelicula_id: id }) });
-    const d = await res.json() as { log?: string[] };
-    setEnrichLog(d.log ?? []);
+    const res = await fetch("/api/admin/enrich-tmdb", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pelicula_id: id, force: true }) });
+    const d = await res.json() as { log?: string[]; mensaje?: string };
+    setEnrichLog(d.log ?? (d.mensaje ? [d.mensaje] : ["Sin respuesta del servidor"]));
     load();
   };
 
@@ -160,13 +160,11 @@ export default function PeliculasAdminPage() {
               </button>
 
               {/* Acciones */}
-              {!p.poster_url && (
-                <button onClick={() => enrichOne(p.id)}
-                  title="Buscar en TMDB"
-                  className="border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-blue-300 font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
-                  TMDB
-                </button>
-              )}
+              <button onClick={() => enrichOne(p.id)}
+                title="Buscar/actualizar desde TMDB"
+                className="border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-blue-300 font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
+                TMDB
+              </button>
               <Link href={`/admin/peliculas/${p.id}`}
                 className="border border-white/15 hover:border-white/40 text-gray-400 hover:text-white font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
                 EDITAR
