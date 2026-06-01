@@ -67,7 +67,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="font-heading text-sm text-white tracking-widest uppercase">Servicios</h4>
             <ul className="flex flex-col gap-2">
-              {["Compra en Línea", "Sala VIP", "Club de Puntos", "Eventos Especiales", "Cumpleaños en el Cine"].map((l) => (
+              {["Compra en Línea", "Club de Puntos", "Eventos Especiales", "Cumpleaños en el Cine"].map((l) => (
                 <li key={l}>
                   <a href="#" className="text-gray-500 hover:text-white font-body text-sm transition-colors">
                     {l}

@@ -29,9 +29,7 @@ export default function Contacto() {
                   <br />
                   Auto. Cali - Candelaria #Lt 5
                   <br />
-                  Manuela Beltrán, Candelaria
-                  <br />
-                  Valle del Cauca
+                  Candelaria, Valle del Cauca
                 </p>
               </div>
             </div>

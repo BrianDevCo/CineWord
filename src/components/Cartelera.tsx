@@ -97,7 +97,7 @@ export default function Cartelera({ peliculas }: Props) {
                       {featured.titulo}
                     </h3>
                     <p className="text-gray-400 font-body text-sm hidden sm:block">
-                      {featured.genero} · {featured.duracion}
+                      {featured.duracion}
                     </p>
                     <div className="flex items-center gap-2 text-white/70 font-heading text-xs tracking-widest group-hover:text-[#CC1244] transition-colors">
                       Ver sinopsis y comprar boleto
@@ -139,20 +139,14 @@ export default function Cartelera({ peliculas }: Props) {
                     <span className={`absolute top-2 left-2 ${movie.badge_color} text-white font-heading text-[10px] px-1.5 py-0.5 rounded-sm tracking-widest`}>
                       {movie.badge}
                     </span>
-                    {movie.filter_genres.includes("VIP") && (
-                      <span className="absolute top-2 right-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 font-heading text-[10px] px-1.5 py-0.5 rounded-sm">
-                        VIP
-                      </span>
-                    )}
 
-                    <div className="absolute inset-0 bg-[#CC1244]/0 group-hover:bg-[#CC1244]/10 transition-all duration-300 flex items-center justify-center">
+<div className="absolute inset-0 bg-[#CC1244]/0 group-hover:bg-[#CC1244]/10 transition-all duration-300 flex items-center justify-center">
                       <span className="font-heading text-white text-xs tracking-widest opacity-0 group-hover:opacity-100 bg-[#CC1244] px-4 py-2 rounded-sm transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                         VER PELÍCULA
                       </span>
                     </div>
 
                     <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-gray-400 text-[10px] font-body">{movie.genero}</p>
                       <h3 className="font-heading text-sm font-bold text-white leading-tight line-clamp-2">
                         {movie.titulo}
                       </h3>

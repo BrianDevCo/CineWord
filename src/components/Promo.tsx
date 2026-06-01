@@ -3,29 +3,20 @@ export default function Promo() {
     <section className="flex flex-col lg:flex-row overflow-hidden">
       {/* Lado izquierdo — Rojo */}
       <div className="relative flex-1 bg-[#CC1244] px-10 py-16 lg:px-16 lg:py-20 flex flex-col justify-center overflow-hidden">
-        {/* Número decorativo de fondo */}
-        <span className="absolute -right-8 top-1/2 -translate-y-1/2 font-heading font-bold text-[220px] lg:text-[280px] leading-none text-black/10 select-none pointer-events-none">
-          ½
-        </span>
-        <p className="font-heading text-white/70 text-sm tracking-[0.3em] uppercase mb-4 relative z-10">
+        <p className="font-heading text-white/70 text-sm tracking-[0.3em] uppercase mb-4">
           Promoción Especial
         </p>
-        <h2 className="font-heading font-bold text-5xl lg:text-7xl text-white leading-none tracking-wider relative z-10">
+        <h2 className="font-heading font-bold text-5xl lg:text-7xl text-white leading-none tracking-wider">
           MARTES Y
         </h2>
-        <h2 className="font-heading font-bold text-5xl lg:text-7xl text-white leading-none tracking-wider relative z-10">
+        <h2 className="font-heading font-bold text-5xl lg:text-7xl text-white leading-none tracking-wider">
           MIÉRCOLES
         </h2>
       </div>
 
       {/* Lado derecho — Oscuro */}
       <div className="relative flex-1 bg-[#0f0f0f] px-10 py-16 lg:px-16 lg:py-20 flex flex-col justify-center overflow-hidden border-l border-white/5">
-        {/* Texto decorativo de fondo */}
-        <span className="absolute right-0 top-1/2 -translate-y-1/2 font-heading font-bold text-[180px] lg:text-[220px] leading-none text-white/[0.03] select-none pointer-events-none whitespace-nowrap">
-          50% OFF
-        </span>
-
-        <div className="relative z-10 flex flex-col gap-6">
+        <div className="flex flex-col gap-6">
           <div>
             <p className="font-heading text-[#CC1244] text-sm tracking-[0.3em] uppercase mb-2">
               Tu entrada a
@@ -38,7 +29,7 @@ export default function Promo() {
           <div className="flex flex-col gap-3">
             {[
               { icon: "🎬", text: "Válido para todas las funciones del día" },
-              { icon: "🎭", text: "Aplica en salas 2D, 3D y VIP" },
+              { icon: "🎟️", text: "Aplica en todas las salas" },
               { icon: "👥", text: "Sin límite de personas por función" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">

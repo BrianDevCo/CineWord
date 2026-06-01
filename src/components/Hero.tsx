@@ -148,7 +148,6 @@ export default function Hero({ peliculas }: Props) {
               <span className={`${p.badge_color} text-white font-heading text-xs px-2 py-0.5 rounded-sm tracking-widest`}>
                 {p.badge}
               </span>
-              <span className="text-gray-400 text-xs font-body">{p.genero}</span>
             </div>
             <h2 className="font-heading text-xl sm:text-3xl font-bold text-white leading-tight">
               {p.titulo}
