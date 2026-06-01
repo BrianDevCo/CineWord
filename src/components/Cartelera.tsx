@@ -1,25 +1,15 @@
-"use client";
-
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Pelicula } from "@/lib/types";
-
-const FILTERS = ["Todas", "Acción", "Drama", "Terror", "Comedia", "Familiar"];
 
 interface Props {
   peliculas: Pelicula[];
 }
 
 export default function Cartelera({ peliculas }: Props) {
-  const [activeFilter, setActiveFilter] = useState("Todas");
-
   const featured = peliculas[0];
-  const rest =
-    activeFilter === "Todas"
-      ? peliculas.slice(1)
-      : peliculas.filter((m) => m.filter_genres.includes(activeFilter));
-  const showFeatured = activeFilter === "Todas";
+  const rest = peliculas.slice(1);
+  const showFeatured = true;
 
   if (!featured) {
     return (
@@ -36,31 +26,14 @@ export default function Cartelera({ peliculas }: Props) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
-          <div>
-            <p className="text-[#CC1244] font-heading tracking-widest text-sm uppercase mb-1 flex items-center gap-2">
-              <span className="inline-block w-6 h-px bg-[#CC1244]" />
-              Ahora en pantalla
-            </p>
-            <h2 className="font-heading text-5xl sm:text-6xl font-bold text-white tracking-wider">
-              CARTELERA
-            </h2>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className={`font-heading text-xs tracking-widest px-4 py-2 rounded-sm border transition-all duration-200 shrink-0 ${
-                  activeFilter === f
-                    ? "bg-[#CC1244] border-[#CC1244] text-white"
-                    : "border-white/15 text-gray-500 hover:border-white/30 hover:text-white"
-                }`}
-              >
-                {f.toUpperCase()}
-              </button>
-            ))}
-          </div>
+        <div className="mb-10">
+          <p className="text-[#CC1244] font-heading tracking-widest text-sm uppercase mb-1 flex items-center gap-2">
+            <span className="inline-block w-6 h-px bg-[#CC1244]" />
+            Ahora en pantalla
+          </p>
+          <h2 className="font-heading text-5xl sm:text-6xl font-bold text-white tracking-wider">
+            CARTELERA
+          </h2>
         </div>
 
         {/* FEATURED */}
@@ -147,6 +120,7 @@ export default function Cartelera({ peliculas }: Props) {
                     </div>
 
                     <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="text-gray-400 text-[10px] font-body">{movie.genero}</p>
                       <h3 className="font-heading text-sm font-bold text-white leading-tight line-clamp-2">
                         {movie.titulo}
                       </h3>
