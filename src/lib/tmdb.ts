@@ -146,9 +146,7 @@ export async function tmdbEnrich(titleOrId: string | number): Promise<TmdbMovie 
     const clasificacion = certEntry?.certification ?? "PG";
 
     // Géneros
-    const genero = details.genres.slice(0, 2).map(g => g.name).join(" / ")
-      || details.genre_ids?.slice(0, 2).map((id: number) => GENRES[id] ?? "").filter(Boolean).join(" / ")
-      || "Drama";
+    const genero = details.genres.slice(0, 2).map(g => g.name).join(" / ") || "Drama";
 
     // Accent color por defecto según género principal
     const genreAccent: Record<string, string> = {
