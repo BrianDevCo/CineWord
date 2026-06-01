@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { scoreGetCartelera } from "@/lib/score";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { tmdbEnrich, cleanScoreTitle } from "@/lib/tmdb";
 
 // ── XML helpers ────────────────────────────────────────────────────────────────
 
@@ -146,8 +147,47 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       pelUpdated++;
       log.push(`✓ Película "${pel.titulo}" (id=${peliculaId}) → score_id=${pel.score_pelicula_id}`);
     } else {
-      log.push(`⚠ Película "${pel.titulo}" no encontrada en BD (score_id=${pel.score_pelicula_id}) — créala en /admin primero`);
-      continue;
+      // Película nueva — crearla automáticamente y enriquecer desde TMDB
+      const tituloLimpio = cleanScoreTitle(pel.titulo);
+      const tmdb = await tmdbEnrich(tituloLimpio).catch(() => null);
+
+      const nuevaPelicula = {
+        titulo:            tmdb?.titulo ?? tituloLimpio,
+        sinopsis:          tmdb?.sinopsis ?? pel.sinopsis ?? "",
+        poster_url:        tmdb?.poster_url ?? "",
+        backdrop_url:      tmdb?.backdrop_url ?? "",
+        duracion:          tmdb?.duracion ?? pel.duracion ?? "",
+        clasificacion:     tmdb?.clasificacion ?? pel.clasificacion ?? "PG",
+        director:          tmdb?.director ?? "",
+        reparto:           tmdb?.reparto ?? [],
+        trailer_url:       tmdb?.trailer_url ?? "",
+        genero:            tmdb?.genero ?? "",
+        fecha_estreno:     tmdb?.fecha_estreno ?? null,
+        accent_color:      tmdb?.accent_color ?? "#CC1244",
+        badge:             "EN CARTELERA",
+        badge_color:       "bg-emerald-600",
+        estado:            "en_cartelera",
+        activa:            true,
+        orden:             0,
+        filter_genres:     tmdb?.genero ? [tmdb.genero.split(" / ")[0]] : [],
+        score_pelicula_id: pel.score_pelicula_id,
+      };
+
+      const { data: inserted, error: insertErr } = await admin
+        .from("peliculas")
+        .insert(nuevaPelicula as never)
+        .select("id")
+        .single();
+
+      if (insertErr || !inserted) {
+        log.push(`❌ No se pudo crear "${tituloLimpio}": ${insertErr?.message ?? "error"}`);
+        continue;
+      }
+
+      peliculaId = inserted.id;
+      pelUpdated++;
+      const tmdbInfo = tmdb ? ` + TMDB #${tmdb.tmdb_id}` : " (sin TMDB)";
+      log.push(`✨ Película NUEVA "${tituloLimpio}" creada (id=${peliculaId})${tmdbInfo}`);
     }
 
     // Sync funciones
