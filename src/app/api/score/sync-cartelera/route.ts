@@ -160,7 +160,7 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
         clasificacion:     tmdb?.clasificacion ?? pel.clasificacion ?? "PG",
         director:          tmdb?.director ?? "",
         reparto:           tmdb?.reparto ?? [],
-        trailer_url:       tmdb?.trailer_url ?? "",
+        trailer_search:    tmdb?.trailer_search ?? "",
         genero:            tmdb?.genero ?? "",
         fecha_estreno:     tmdb?.fecha_estreno ?? null,
         accent_color:      tmdb?.accent_color ?? "#CC1244",

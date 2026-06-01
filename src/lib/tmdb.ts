@@ -25,7 +25,7 @@ export interface TmdbMovie {
   clasificacion: string;
   director: string;
   reparto: string[];
-  trailer_url: string;
+  trailer_search: string; // URL YouTube — se guarda en columna trailer_search
   fecha_estreno: string;
   genero: string;
   accent_color: string;
@@ -184,7 +184,7 @@ export async function tmdbEnrich(titleOrId: string | number, year?: string): Pro
       clasificacion,
       director,
       reparto,
-      trailer_url:  trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : "",
+      trailer_search: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : "",
       fecha_estreno: details.release_date ?? "",
       genero,
       accent_color,

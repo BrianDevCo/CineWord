@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       if (tmdb.duracion)      updates.duracion       = tmdb.duracion;
       if (tmdb.director)      updates.director       = tmdb.director;
       if (tmdb.reparto?.length) updates.reparto      = tmdb.reparto;
-      if (tmdb.trailer_url)   updates.trailer_url    = tmdb.trailer_url;
+      if (tmdb.trailer_search) updates.trailer_search = tmdb.trailer_search;
       if (tmdb.genero)        updates.genero         = tmdb.genero;
       if (tmdb.clasificacion) updates.clasificacion  = tmdb.clasificacion;
       if (tmdb.fecha_estreno) updates.fecha_estreno  = tmdb.fecha_estreno;
