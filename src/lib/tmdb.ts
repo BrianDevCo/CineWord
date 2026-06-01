@@ -96,21 +96,27 @@ async function fetchTmdb<T>(path: string, params: Record<string, string> = {}): 
 
 export async function tmdbSearch(title: string, year?: string): Promise<number | null> {
   const clean = cleanScoreTitle(title);
-  const params: Record<string, string> = { query: clean };
-  if (year) params.year = year;
+  // Si no viene año, usa el año actual — todas las películas en cartelera son recientes
+  const searchYear = year ?? new Date().getFullYear().toString();
 
-  const data = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", params);
-  if (!data.results.length) {
-    // Reintenta sin año si no encontró nada
-    if (year) {
-      const retry = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", { query: clean });
-      if (!retry.results.length) return null;
-      return retry.results[0].id;
-    }
-    return null;
+  const data = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", { query: clean, year: searchYear });
+
+  // Si no encontró con el año exacto, reintenta con año-1 (por si es estreno tardío)
+  let results = data.results;
+  if (!results.length) {
+    const prevYear = (parseInt(searchYear) - 1).toString();
+    const retry = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", { query: clean, year: prevYear });
+    results = retry.results;
   }
+  // Si sigue sin resultados, busca sin año como último recurso
+  if (!results.length) {
+    const noYear = await fetchTmdb<{ results: TmdbSearchResult[] }>("/search/movie", { query: clean });
+    results = noYear.results;
+  }
+  if (!results.length) return null;
+
   // Prefiere título exacto, luego el que tiene backdrop
-  const sorted = data.results.sort((a, b) => {
+  const sorted = [...results].sort((a, b) => {
     const cleanLower = clean.toLowerCase();
     const aExact = a.title.toLowerCase() === cleanLower ? 0 : 1;
     const bExact = b.title.toLowerCase() === cleanLower ? 0 : 1;
