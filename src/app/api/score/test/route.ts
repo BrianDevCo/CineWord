@@ -18,60 +18,72 @@ type ServiceResult = {
   ok: boolean;
   status: number;
   dec: string;
-  error: string | null;
+  elapsed: number;
+  error?: string;
 };
 
-async function callScore(base: string, service: string, plaintext: string): Promise<ServiceResult> {
+async function callScore(base: string, service: string, payload: unknown): Promise<ServiceResult> {
+  const start = Date.now();
   try {
     const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
-      body: JSON.stringify(encrypt(plaintext)),
+      body: JSON.stringify(encrypt(JSON.stringify(payload))),
       cache: "no-store",
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(20000),
     });
-    const status = res.status;
+    const elapsed = Date.now() - start;
     const text = await res.text();
     let dec = "";
     try {
       const j = JSON.parse(text) as { request?: string }[] | { request?: string };
       const item = Array.isArray(j) ? j[0] : j;
       if (item?.request) dec = decrypt(item.request);
-    } catch { /**/ }
-    const bloqueado = dec.toLowerCase().includes("terceros") || dec.includes("no encontró") || dec.includes("diccionario");
-    return { ok: status === 200 && !bloqueado, status, dec, error: null };
+      else dec = text;
+    } catch { dec = text; }
+
+    const bloqueado =
+      dec.toLowerCase().includes("no hay tarifas") ||
+      dec.toLowerCase().includes("no autorizado") ||
+      dec.toLowerCase().includes("para terceros") ||
+      dec.includes("no encontró");
+
+    return { ok: res.status === 200 && !bloqueado, status: res.status, dec, elapsed };
   } catch (e) {
-    return { ok: false, status: 0, dec: "", error: String(e) };
+    return { ok: false, status: 0, dec: "", elapsed: Date.now() - start, error: String(e) };
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const arr = (x: any) => Array.isArray(x) ? x : (x != null ? [x] : []);
-
-type FuncionExtraida = {
-  pelicula: string;
-  sala: string;
-  funcion: string;
-  inicioFuncion: string;
-  fecha: string;
-  tituloPelicula: string;
-  tarifaGeneral: string;
-  tarifaPremium: string;
-} | null;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extraerFuncionCineWorld(json: any, teatroId: string): FuncionExtraida {
+async function callGet(base: string, path: string): Promise<ServiceResult> {
+  const start = Date.now();
   try {
-    const peliculas = arr(json?.Peliculas?.pelicula);
-    for (const peli of peliculas) {
-      const peliId     = String(peli?.["@id"] ?? "");
-      const peliNombre = String(peli?.["@nombre"] ?? "");
-      if (!peliId) continue;
+    const res = await fetch(`${base}${path}`, {
+      headers: { "ngrok-skip-browser-warning": "true" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20000),
+    });
+    const elapsed = Date.now() - start;
+    const text = await res.text();
+    return { ok: res.status === 200 && text.length > 10, status: res.status, dec: text.slice(0, 300), elapsed };
+  } catch (e) {
+    return { ok: false, status: 0, dec: "", elapsed: Date.now() - start, error: String(e) };
+  }
+}
+
+// Extrae la primera función real de la cartelera JSON de Score
+function extraerFuncion(carteraJson: string, teatroId: string): FuncionRef | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const json = JSON.parse(carteraJson) as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const arr = (x: any) => Array.isArray(x) ? x : (x != null ? [x] : []);
+    for (const peli of arr(json?.Peliculas?.pelicula)) {
+      const peliId = String(peli?.["@id"] ?? peli?.id ?? "");
+      const peliNom = String(peli?.["@nombre"] ?? peli?.nombre ?? "?");
       for (const cinema of arr(peli?.cinemas?.cinema)) {
-        if (String(cinema?.["@id"]) !== teatroId) continue;
+        if (String(cinema?.["@id"] ?? "") !== teatroId) continue;
         for (const sala of arr(cinema?.salas?.sala)) {
-          const salaId = String(sala?.["@numeroSala"] ?? "");
-          if (!salaId) continue;
+          const salaId = String(sala?.["@numeroSala"] ?? sala?.["@id"] ?? "");
           for (const fecha of arr(sala?.Fecha)) {
             const fechaUniv = String(fecha?.["@univ"] ?? "");
             if (fechaUniv.length !== 8) continue;
@@ -79,26 +91,26 @@ function extraerFuncionCineWorld(json: any, teatroId: string): FuncionExtraida {
               if (hora?.["@ventasONline"] !== "true") continue;
               const militar = String(hora?.["@militar"] ?? "");
               if (!militar) continue;
+              // Busca tarifa válida para terceros
               let tarifaGeneral = "", tarifaPremium = "";
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               for (const zona of arr(hora?.TipoZona)) {
-                const nombreZona = String(zona?.["@nombreZona"] ?? "").toUpperCase();
+                const nomZona = String(zona?.["@nombreZona"] ?? "").toUpperCase();
                 const tarifa = zona?.TipoSilla?.Tarifa;
                 if (!tarifa || tarifa?.["@validoTeceros"] !== "Si") continue;
-                const codigo = String(tarifa?.["@codigoTarifa"] ?? "");
-                if (!codigo) continue;
-                if (nombreZona === "PREMIUM" && !tarifaPremium) tarifaPremium = codigo;
-                else if (!tarifaGeneral) tarifaGeneral = codigo;
+                const cod = String(tarifa?.["@codigoTarifa"] ?? "");
+                if (!cod) continue;
+                if (nomZona === "PREMIUM" && !tarifaPremium) tarifaPremium = cod;
+                else if (!tarifaGeneral) tarifaGeneral = cod;
               }
-              if (!tarifaGeneral) continue;
-              const horaNum = Math.floor(parseInt(militar) / 100);
-              const minNum  = parseInt(militar) % 100;
-              const hh = String(horaNum).padStart(2, "0");
-              const mm = String(minNum).padStart(2, "0");
+              const hh = String(Math.floor(parseInt(militar) / 100)).padStart(2, "0");
+              const mm = String(parseInt(militar) % 100).padStart(2, "0");
               return {
                 pelicula: peliId, sala: salaId,
                 funcion: hh, inicioFuncion: hh + mm,
-                fecha: fechaUniv, tituloPelicula: peliNombre,
-                tarifaGeneral, tarifaPremium,
+                fecha: fechaUniv, titulo: peliNom,
+                tarifaGeneral: tarifaGeneral || "2",
+                tarifaPremium: tarifaPremium || "4",
               };
             }
           }
@@ -109,46 +121,76 @@ function extraerFuncionCineWorld(json: any, teatroId: string): FuncionExtraida {
   return null;
 }
 
+interface FuncionRef {
+  pelicula: string;
+  sala: string;
+  funcion: string;
+  inicioFuncion: string;
+  fecha: string;
+  titulo: string;
+  tarifaGeneral: string;
+  tarifaPremium: string;
+}
+
 export async function GET() {
-  const base       = process.env.SCORE_BASE_URL    ?? "NO CONFIGURADO";
-  const tercero    = process.env.SCORE_TERCERO     ?? "1";
-  const teatro     = process.env.SCORE_TEATRO      ?? "2";
-  const puntoVenta = process.env.SCORE_PUNTO_VENTA ?? "77";
+  const base    = process.env.SCORE_BASE_URL    ?? "NO CONFIGURADO";
+  const tercero = process.env.SCORE_TERCERO     ?? "1";
+  const teatro  = process.env.SCORE_TEATRO      ?? "2";
+  const pv      = process.env.SCORE_PUNTO_VENTA ?? "77";
 
-  // ── Obtener función real del JSON (necesaria para SCOGRU) ────────────────────
-  let funcion: FuncionExtraida = null;
-  try {
-    const res = await fetch(`${base}/MobileComJson/variable41.json`, {
-      cache: "no-store",
-      headers: { "ngrok-skip-browser-warning": "true" },
-      signal: AbortSignal.timeout(30000),
-    });
-    funcion = extraerFuncionCineWorld(await res.json(), teatro);
-  } catch { /**/ }
+  const resultados: Record<string, ServiceResult> = {};
 
-  const ref = funcion ?? {
-    pelicula: "4811121", sala: "4", funcion: "13", inicioFuncion: "1340",
-    fecha: new Date().toISOString().slice(0, 10).replace(/-/g, ""),
-    tituloPelicula: "fallback hardcoded", tarifaGeneral: "2", tarifaPremium: "4",
+  // ── 1. SCOCAR — cartelera (GET, sin encriptar) ───────────────────────────────
+  const scocarXml  = await callGet(base, "/MobileComJson/variable41.xml");
+  const scocarJson = await callGet(base, "/MobileComJson/variable41.json");
+  resultados.SCOCAR_XML  = scocarXml;
+  resultados.SCOCAR_JSON = scocarJson;
+
+  // Extraer función real de la cartelera para usar en los demás tests
+  let funcion: FuncionRef | null = null;
+  if (scocarJson.ok) funcion = extraerFuncion(scocarJson.dec, teatro);
+  const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const ref: FuncionRef = funcion ?? {
+    pelicula: "55", sala: "2", funcion: "13", inicioFuncion: "1300",
+    fecha: hoy, titulo: "FALLBACK (no hay cartelera)",
+    tarifaGeneral: "2", tarifaPremium: "4",
   };
 
-  // Secuencia (SCOSEC — ya funciona, solo la necesitamos para SCOGRU)
-  const scosec = await callScore(base, "scosec",
-    JSON.stringify({ Punto: puntoVenta, teatro, tercero })
-  );
-  const secuencia = (() => {
-    try { return String(JSON.parse(scosec.dec)[0]?.Secuencia ?? "0"); } catch { return "0"; }
-  })();
+  // ── 2. SCOSEC — secuencia + recargo web ─────────────────────────────────────
+  const scosec = await callScore(base, "scosec", { Punto: pv, teatro, tercero });
+  resultados.SCOSEC = scosec;
+  let secuencia = "1";
+  try { secuencia = String(JSON.parse(scosec.dec)[0]?.Secuencia ?? "1"); } catch { /**/ }
 
-  // ── 1. SCOGRU — hold de sillas (BLOQUEADO para tercero=1) ───────────────────
-  const scogru = await callScore(base, "scogru", JSON.stringify({
+  // ── 3. SCOMAP — mapa de sillas ───────────────────────────────────────────────
+  resultados.SCOMAP = await callScore(base, "scomap", {
+    Sala: ref.sala, FechaFuncion: ref.fecha, Funcion: ref.funcion, teatro, tercero,
+  });
+
+  // ── 4. SCOESG — ocupación real ───────────────────────────────────────────────
+  resultados.SCOESG = await callScore(base, "scoesg", {
+    FechaFuncion: ref.fecha, Sala: ref.sala, Funcion: ref.funcion, teatro, tercero,
+  });
+
+  // ── 5. SCOPLA — tarifas para terceros ────────────────────────────────────────
+  resultados.SCOPLA = await callScore(base, "scopla", {
+    FechaFuncion: ref.fecha,
+    Pelicula: parseInt(ref.pelicula),
+    Sala: parseInt(ref.sala),
+    InicioFuncion: parseInt(ref.inicioFuncion),
+    teatro: parseInt(teatro),
+    tercero,
+  });
+
+  // ── 6. SCOGRU — hold de sillas ───────────────────────────────────────────────
+  resultados.SCOGRU = await callScore(base, "scogru", {
     FechaFuncion:  ref.fecha,
     Sala:          parseInt(ref.sala),
     HoraFuncion:   ref.funcion,
     Pelicula:      parseInt(ref.pelicula),
-    Descripcion:   ref.tituloPelicula,
+    Descripcion:   ref.titulo,
     InicioFuncion: parseInt(ref.inicioFuncion),
-    PuntoVenta:    parseInt(puntoVenta),
+    PuntoVenta:    parseInt(pv),
     Secuencia:     parseInt(secuencia),
     Telefono:      "3000000000",
     Nombre:        "TEST",
@@ -156,10 +198,26 @@ export async function GET() {
     Ubicaciones:   [{ Fila: "A", Columna: 4, Tarifa: ref.tarifaGeneral }],
     teatro:        parseInt(teatro),
     tercero,
-  }));
+  });
 
-  // ── 2. SCOCYA — registrar cliente (accion C) ─────────────────────────────────
-  const scocya = await callScore(base, "scocya", JSON.stringify({
+  // ── 7. SCOSIL — liberar hold (solo si SCOGRU funcionó) ──────────────────────
+  if (resultados.SCOGRU.ok) {
+    resultados.SCOSIL = await callScore(base, "scosil", {
+      FechaFuncion: ref.fecha,
+      Sala:         parseInt(ref.sala),
+      Funcion:      parseInt(ref.funcion),
+      Fila:         "A",
+      Columna:      4,
+      Usuario:      parseInt(pv),
+      teatro:       parseInt(teatro),
+      tercero,
+    });
+  } else {
+    resultados.SCOSIL = { ok: false, status: 0, dec: "OMITIDO — SCOGRU falló", elapsed: 0 };
+  }
+
+  // ── 8. SCOCYA — registrar cliente ────────────────────────────────────────────
+  resultados.SCOCYA = await callScore(base, "scocya", {
     Login:            "test-score@cineworld.co",
     Nombre:           "Test",
     Apellido:         "Score",
@@ -171,7 +229,7 @@ export async function GET() {
     Documento:        "0",
     Fecha_Nacimiento: "19900101",
     Sexo:             "M",
-    Edad:             "34",
+    Edad:             "",
     Genero:           "",
     Direccion:        "",
     Barrio:           "",
@@ -183,29 +241,36 @@ export async function GET() {
     Contacto:         "Correo Electrónico",
     Accion:           "C",
     tercero,
-  }));
+  });
 
-  // ── 3. SCOLOG — login cliente ────────────────────────────────────────────────
-  const scolog = await callScore(base, "scolog", JSON.stringify({
+  // ── 9. SCOLOG — login cliente ────────────────────────────────────────────────
+  resultados.SCOLOG = await callScore(base, "scolog", {
     Correo:  "test-score@cineworld.co",
     Clave:   "Test1234",
     tercero,
-  }));
+  });
 
-  // ── 4. SCOCED — consultar cliente por documento ──────────────────────────────
-  const scoced = await callScore(base, "scoced", JSON.stringify({
+  // ── 10. SCOCED — consultar cliente por documento ─────────────────────────────
+  resultados.SCOCED = await callScore(base, "scoced", {
     Documento: "1234567890",
     tercero,
-  }));
+  });
+
+  // ── Resumen ──────────────────────────────────────────────────────────────────
+  const resumen: Record<string, string> = {};
+  for (const [svc, r] of Object.entries(resultados)) {
+    resumen[svc] = r.ok
+      ? `✅ OK (${r.elapsed}ms)`
+      : `❌ ${r.error ?? r.dec.slice(0, 120) || `HTTP ${r.status}`} (${r.elapsed}ms)`;
+  }
+
+  const total  = Object.values(resultados).filter(r => r.status !== 0 || r.dec !== "OMITIDO — SCOGRU falló").length;
+  const ok     = Object.values(resultados).filter(r => r.ok).length;
 
   return NextResponse.json({
-    config: { base, tercero, teatro, puntoVenta, secuencia, funcion_usada: ref.tituloPelicula },
-    resumen: {
-      scogru: scogru.ok  ? "OK" : `BLOQUEADO — ${scogru.dec || scogru.error}`,
-      scocya: scocya.ok  ? "OK" : `BLOQUEADO — ${scocya.dec || scocya.error}`,
-      scolog: scolog.ok  ? "OK" : `BLOQUEADO — ${scolog.dec || scolog.error}`,
-      scoced: scoced.ok  ? "OK" : `BLOQUEADO — ${scoced.dec || scoced.error}`,
-    },
-    detalle: { scogru, scocya, scolog, scoced },
+    resumen,
+    score_ok: `${ok}/${total}`,
+    config: { base, tercero, teatro, pv, secuencia, funcion_ref: ref },
+    detalle: resultados,
   });
 }
