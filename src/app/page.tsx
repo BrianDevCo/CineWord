@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Cartelera from "@/components/Cartelera";
-import Promo from "@/components/Promo";
 import ProximosEstrenos from "@/components/ProximosEstrenos";
 import Horarios from "@/components/Horarios";
 import Snacks from "@/components/Snacks";
@@ -24,7 +23,6 @@ export default async function Home() {
       <main>
         <Hero peliculas={heroPeliculas} />
         <Cartelera peliculas={enCartelera} />
-        <Promo />
         <ProximosEstrenos peliculas={proximas} />
         <Horarios />
         <Snacks />
