@@ -19,10 +19,10 @@ const IMGS = {
   crispetaDulce: IMG("photo-1574201742421-fffd6af7a680"), // palomitas caramelizadas
   perro:         IMG("photo-1613482084286-41f25b486fa2"), // perro caliente en plato blanco
   gaseosa:       IMG("photo-1562996506-7a4f75955d5a"),
-  nachos:        IMG("photo-1613585810055-4ea3e68a9dc4"), // chips en plato blanco
+  nachos:        IMG("photo-1542676303584-c8043a6c7618"), // nachos simples con queso
   papas:         IMG("photo-1759465201025-0f4a876efa47"),
   gomas:         IMG("photo-1703319953569-72084ac406b6"),
-  granizados:    IMG("photo-1551552539-45bbe62f3714"), // granizado slushie
+  granizados:    IMG("photo-1598268121084-c8f7126e0cef"), // granizado helado en vaso limpio
   aguasab:       IMG("photo-1761864293808-dfb96001c534"),
   queso:         IMG("photo-1571865402713-98ba5a56f12b"), // vasito queso cheddar
   amadu:         IMG("photo-1464195085758-89f3e55e821e"),
