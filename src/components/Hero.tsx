@@ -265,22 +265,6 @@ export default function Hero({ peliculas }: Props) {
         </>
       )}
 
-      {/* Barra de stats inferior */}
-      <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md border-t border-white/10 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 grid grid-cols-4 sm:flex sm:items-center sm:justify-center sm:gap-16">
-          {[
-            { value: "5", label: "En cartelera" },
-            { value: "4", label: "Salas" },
-            { value: "4", label: "Próximos" },
-            { value: "50%", label: "Mar y Mié" },
-          ].map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center gap-0.5 sm:gap-0.5">
-              <span className="font-heading text-xl sm:text-2xl font-bold text-[#CC1244]">{stat.value}</span>
-              <span className="font-body text-[10px] sm:text-xs text-gray-500 tracking-wider text-center">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Modal AVISARME */}
       {showModal && (
