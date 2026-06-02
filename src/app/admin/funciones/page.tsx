@@ -95,17 +95,10 @@ export default function FuncionesAdminPage() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch("/api/admin/sync-cartelera", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) { setSyncResult(`Error: ${data.error}`); return; }
-      const r = data.resumen;
-      const partes = [];
-      if (r.peliculas_linkeadas) partes.push(`${r.peliculas_linkeadas} películas linkeadas`);
-      if (r.peliculas_creadas)   partes.push(`${r.peliculas_creadas} películas nuevas`);
-      if (r.peliculas_retiradas) partes.push(`${r.peliculas_retiradas} retiradas`);
-      if (r.funciones_creadas)   partes.push(`${r.funciones_creadas} funciones creadas`);
-      if (r.funciones_desactivadas) partes.push(`${r.funciones_desactivadas} funciones desactivadas`);
-      setSyncResult(`✓ ${partes.length ? partes.join(" · ") : "Todo al día, sin cambios"}`);
+      const res = await fetch("/api/score/sync-cartelera?dry_run=false");
+      const data = await res.json() as { pelUpdated?: number; funcUpdated?: number; error?: string };
+      if (!res.ok || data.error) { setSyncResult(`Error: ${data.error}`); return; }
+      setSyncResult(`✓ ${data.pelUpdated ?? 0} películas · ${data.funcUpdated ?? 0} funciones sincronizadas`);
       load();
     } catch {
       setSyncResult("Error al conectar con Score");
