@@ -427,11 +427,16 @@ export default function BookingSection({ movie, funciones }: Props) {
         const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion?.score_tarifa_vip     ?? "";
 
         const scoreUbicaciones = selectedFuncion?.score_sala_id
-          ? asientosList.map(a => ({
-              fila:    a.fila,
-              columna: String(a.columna),
-              tarifa:  isVipRow(a.fila) ? tarifaVip : tarifaReg,
-            }))
+          ? asientosList.map(a => {
+              const mapaAsiento = mapaScore.find(m => m.fila === a.fila && m.columna === a.columna);
+              return {
+                fila:        a.fila,
+                columna:     String(a.columna),
+                filRelativa: a.fila,
+                colRelativa: String(mapaAsiento?.columnaLabel ?? a.columna),
+                tarifa:      isVipRow(a.fila) ? tarifaVip : tarifaReg,
+              };
+            })
           : undefined;
 
         const res = await fetch("/api/pagos/confirmar", {

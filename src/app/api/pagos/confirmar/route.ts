@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import MercadoPagoConfig, { Payment } from "mercadopago";
 import { crearReserva, getFuncionById } from "@/lib/db";
 import { enviarEmailBoleto } from "@/lib/email";
-import { scoreReservar, scoreGetSecuencia, toScoreFecha, toScoreHora, toScoreInicio, splitNombre, type AsientoScore } from "@/lib/score";
+import { scoreVenta, scoreGetSecuencia, toScoreHora, toScoreInicio, splitNombre, type AsientoScore } from "@/lib/score";
 import type { ScoreQRParams } from "@/lib/email";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
 });
+
+const puntoVentaScore = process.env.SCORE_PUNTO_VENTA ?? "77";
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -78,19 +80,21 @@ export async function POST(req: NextRequest) {
       try {
         const secuencia = score_secuencia ?? (await scoreGetSecuencia()).secuencia;
         const { nombre: pNombre, apellido: pApellido } = splitNombre(nombre);
-        const scoreResult = await scoreReservar({
-          fechaFuncion:  score_fecha ? toScoreFecha(score_fecha) : score_fecha,
-          sala:          String(score_sala),
-          horaFuncion:   score_hora ? toScoreHora(score_hora) : score_hora,
-          pelicula:      String(score_pelicula),
-          inicioFuncion: score_hora ? toScoreInicio(score_hora) : undefined,
-          descripcion:   score_descripcion ?? "",
-          secuencia,
+        const scoreResult = await scoreVenta({
+          puntoVenta:    String(puntoVentaScore),
+          factura:       secuencia,
+          correoCliente: emailSafe,
           nombre:        pNombre,
           apellido:      pApellido,
           telefono:      sanitizeStr(telefono ?? ""),
+          sala:          String(score_sala),
+          fechaFun:      score_fecha,               // ya está en "yyyy-MM-dd"
+          funcion:       toScoreHora(score_hora),   // "21"
+          inicioFun:     toScoreInicio(score_hora), // "2130"
+          pelicula:      String(score_pelicula),
           ubicaciones:   score_ubicaciones as AsientoScore[],
-          accion:        "V",
+          totalVenta:    expectedTotal,
+          pagoInterno:   expectedTotal,             // MercadoPago = cobrado externamente
         });
         scoreSecuencia = secuencia;
         scoreRespuesta = scoreResult.raw;

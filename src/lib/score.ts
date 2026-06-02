@@ -68,9 +68,32 @@ const teatro     = () => process.env.SCORE_TEATRO      ?? "2";
 // ── Tipos públicos ─────────────────────────────────────────────────────────────
 
 export interface AsientoScore {
-  fila: string;    // "A"
-  columna: string; // "1"
-  tarifa: string;  // código de tarifa Score
+  fila: string;         // "A"        → Fila (ColumnaTotal)
+  columna: string;      // "4"        → Columna (ColumnaTotal interna)
+  filRelativa?: string; // "A"        → FilRelativa (igual a fila)
+  colRelativa?: string; // "3"        → ColRelativa (ColumnaRelativa visible)
+  tarifa: string;       // código tarifa Score
+}
+
+export interface ScoreVentaParams {
+  puntoVenta: string;
+  factura: string;         // secuencia del pedido
+  correoCliente: string;
+  docIdentidad?: string;
+  nombre: string;
+  apellido: string;
+  telefono?: string;
+  sala: string;
+  fechaFun: string;        // "yyyy-MM-dd"
+  funcion: string;         // "21" (solo la hora)
+  inicioFun: string;       // "2130" (militar sin ':')
+  pelicula: string;
+  ubicaciones: AsientoScore[];
+  totalVenta: number;
+  pagoInterno?: number;    // MercadoPago = pago interno (ya cobrado externamente)
+  pagoCredito?: number;
+  pagoEfectivo?: number;
+  codMedioPago?: number;
 }
 
 /** Accion G = preventa/grupo (SCOGRU), R = reserva (SCOINT), V = venta (SCOINT) */
@@ -395,10 +418,60 @@ export function toScoreHora(timeStr: string): string {
   return timeStr.split(":")[0];
 }
 
-/** "20:30:00" → "2030"  (InicioFuncion en SCOPLA) */
+/** "20:30:00" → "2030"  (InicioFun en SCOINT) */
 export function toScoreInicio(timeStr: string): string {
   const [h, m] = timeStr.split(":");
   return (h ?? "00").padStart(2, "0") + (m ?? "00").padStart(2, "0");
+}
+
+/**
+ * SCOINT (Accion V) — Venta con boletas
+ * Usa los nombres de campo exactos del documento de Score.
+ */
+export async function scoreVenta(p: ScoreVentaParams) {
+  const ubicaciones = p.ubicaciones.map(u => ({
+    Fila:       u.fila,
+    Columna:    parseInt(u.columna),
+    FilRelativa: u.filRelativa ?? u.fila,
+    ColRelativa: parseInt(u.colRelativa ?? u.columna),
+    Tarifa:     u.tarifa,
+  }));
+
+  return call(
+    "scoint",
+    JSON.stringify({
+      PuntoVenta:       parseInt(p.puntoVenta),
+      Factura:          parseInt(p.factura),
+      CorreoCliente:    p.correoCliente,
+      DocIdentidad:     p.docIdentidad ?? "0",
+      Nombre:           p.nombre,
+      Apellido:         p.apellido,
+      Telefono:         p.telefono ?? "",
+      Direccion:        "",
+      Sala:             parseInt(p.sala),
+      FechaFun:         p.fechaFun,          // "yyyy-MM-dd" con guiones
+      Funcion:          parseInt(p.funcion), // solo la hora: 21
+      InicioFun:        p.inicioFun,         // "2130" sin ':'
+      Pelicula:         parseInt(p.pelicula),
+      Ubicaciones:      ubicaciones,
+      Productos:        [],                  // sin retail
+      Placa:            "0",
+      AudiPrev:         0,
+      TipoEntrega:      "T",
+      Cortesia:         "",
+      TipoBono:         0,
+      ClienteFrecuente: 0,
+      TotalVenta:       p.totalVenta,
+      PagoInterno:      p.pagoInterno  ?? p.totalVenta, // MercadoPago = pago externo ya cobrado
+      PagoCredito:      p.pagoCredito  ?? 0,
+      PagoEfectivo:     p.pagoEfectivo ?? 0,
+      CodMedioPago:     p.codMedioPago ?? 0,
+      Obs1: "", Obs2: "", Obs3: "", Obs4: "",
+      Accion:           "V",
+      teatro:           parseInt(teatro()),
+      tercero:          tercero(),
+    }),
+  );
 }
 
 /** "Juan Carlos López" → { nombre: "Juan", apellido: "Carlos López" } */
