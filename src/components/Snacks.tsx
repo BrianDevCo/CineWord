@@ -34,46 +34,15 @@ const IMGS = {
   jugo:          OXXO("01JE6QAS8RAJMM8VPMK8S790MB.png"),  // Jugo Hit Mora
 };
 
-type ComboTile = { image: string; label: string; qty?: number };
-
-// Exactamente qué trae cada combo — una imagen por cada item incluido
-const COMBO_CONTENTS: Record<number, ComboTile[]> = {
-  1: [ // Crispeta mediana + 1 perro + 1 gaseosa + 1 dulce
-    { image: IMGS.crispetaMed,   label: "Crispeta mediana" },
-    { image: IMGS.perro,         label: "Perro" },
-    { image: IMGS.gaseosa,       label: "Gaseosa" },
-    { image: IMGS.gomas,         label: "Dulce" },
-  ],
-  2: [ // Crispeta grande + 2 gaseosas
-    { image: IMGS.crispetaGde,   label: "Crispeta grande" },
-    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 2 },
-  ],
-  3: [ // Crispeta grande + 2 perros + 2 gaseosas + 1 dulce
-    { image: IMGS.crispetaGde,   label: "Crispeta grande" },
-    { image: IMGS.perro,         label: "Perro", qty: 2 },
-    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 2 },
-    { image: IMGS.gomas,         label: "Dulce" },
-  ],
-  4: [ // 2 crispetas medianas + 3 perros + 3 gaseosas + papas
-    { image: IMGS.crispetaMed,   label: "Crispeta mediana", qty: 2 },
-    { image: IMGS.perro,         label: "Perro", qty: 3 },
-    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 3 },
-    { image: IMGS.papas,         label: "Papas" },
-  ],
-  5: [ // Cajita + chocolatina + 1 bebida
-    { image: IMGS.papas,         label: "Cajita" },
-    { image: IMGS.chocolate,     label: "Chocolatina" },
-    { image: IMGS.gaseosa,       label: "Bebida" },
-  ],
-  6: [ // Crispeta mediana + 2 gaseosas
-    { image: IMGS.crispetaMed,   label: "Crispeta mediana" },
-    { image: IMGS.gaseosa,       label: "Gaseosa", qty: 2 },
-  ],
-  7: [ // Nachos con queso + perro + bebida
-    { image: IMGS.nachos,        label: "Nachos" },
-    { image: IMGS.perro,         label: "Perro" },
-    { image: IMGS.gaseosa,       label: "Bebida" },
-  ],
+// Imágenes reales de los combos (carpeta public/combos)
+const COMBO_IMG: Record<number, string> = {
+  1: "/combos/mi-combo.jpg",
+  2: "/combos/combo-world.jpg",
+  3: "/combos/mundo-para-dos.jpg",
+  4: "/combos/mega-familiar.jpg",
+  5: "/combos/cajita-kid.jpg",
+  6: "/combos/combo-express.jpg",
+  7: "/combos/combo-nachos.jpg",
 };
 
 const combos = [
@@ -120,40 +89,6 @@ const categorias: { key: Categoria; label: string; emoji: string }[] = [
 
 function fmt(n: number) { return `$${n.toLocaleString("es-CO")}`; }
 
-function ComboCollage({ tiles }: { tiles: ComboTile[] }) {
-  const is4 = tiles.length === 4;
-  const is3 = tiles.length === 3;
-  const gridCols = is4 ? "grid-cols-2" : is3 ? "grid-cols-3" : "grid-cols-2";
-  const cellH   = is4 ? "h-[78px]" : "h-[108px]";
-
-  return (
-    <div className={`grid ${gridCols} gap-px bg-black overflow-hidden rounded-t-xl`}>
-      {tiles.map((tile, i) => (
-        <div key={i} className={`relative ${cellH} overflow-hidden bg-[#111]`}>
-          <Image
-            src={tile.image}
-            alt={tile.label}
-            fill
-            className="object-cover"
-            sizes="200px"
-          />
-          {/* Badge de cantidad */}
-          {tile.qty && tile.qty > 1 && (
-            <span className="absolute top-1.5 right-1.5 z-10 bg-[#CC1244] text-white font-heading text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-              ×{tile.qty}
-            </span>
-          )}
-          {/* Label del item */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pt-4 pb-1 px-1.5">
-            <span className="font-heading text-white text-[8px] tracking-widest uppercase leading-none">
-              {tile.label}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function Snacks() {
   const [cat, setCat] = useState<Categoria>("todos");
@@ -214,8 +149,16 @@ export default function Snacks() {
                       </span>
                     )}
 
-                    {/* Collage con los items exactos del combo */}
-                    <ComboCollage tiles={COMBO_CONTENTS[combo.id]} />
+                    {/* Imagen real del combo */}
+                    <div className="relative h-44 overflow-hidden rounded-t-xl">
+                      <Image
+                        src={COMBO_IMG[combo.id]}
+                        alt={combo.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      />
+                    </div>
 
                     <div className="p-4 flex flex-col gap-3 flex-1">
                       <div>
