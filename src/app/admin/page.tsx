@@ -35,25 +35,6 @@ function StatCard({ label, value, sub, href, color = "white" }: {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [syncLog, setSyncLog] = useState<string[]>([]);
-
-  const syncCartelera = async () => {
-    setSyncing(true);
-    setSyncLog([]);
-    try {
-      const res = await fetch("/api/score/sync-cartelera?dry_run=false");
-      const d = await res.json() as { pelUpdated?: number; funcUpdated?: number; log?: string[]; error?: string };
-      if (d.error) setSyncLog([`❌ ${d.error}`]);
-      else setSyncLog([
-        `✅ ${d.pelUpdated ?? 0} películas · ${d.funcUpdated ?? 0} funciones sincronizadas`,
-        ...(d.log ?? []),
-      ]);
-    } catch (e) {
-      setSyncLog([`❌ Error: ${String(e)}`]);
-    }
-    setSyncing(false);
-  };
 
   useEffect(() => {
     fetch("/api/admin/stats")
@@ -108,33 +89,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Sync Score */}
-      <div className="mt-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading text-sm text-gray-500 tracking-widest uppercase">Sincronización Score</h2>
-          <button
-            onClick={syncCartelera}
-            disabled={syncing}
-            className="flex items-center gap-2 bg-[#CC1244] hover:bg-[#a00e35] disabled:opacity-40 text-white font-heading text-xs tracking-widest px-5 py-2.5 rounded-lg transition-all"
-          >
-            {syncing
-              ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <span>🔄</span>}
-            {syncing ? "SINCRONIZANDO..." : "SYNC CARTELERA"}
-          </button>
-        </div>
-
-        {syncLog.length > 0 && (
-          <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4 mb-6 max-h-48 overflow-y-auto flex flex-col gap-1">
-            {syncLog.map((line, i) => (
-              <p key={i} className="font-body text-xs text-gray-400">{line}</p>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Accesos rápidos */}
-      <div className="mt-4">
+      <div className="mt-10">
         <h2 className="font-heading text-sm text-gray-500 tracking-widest uppercase mb-4">Acciones rápidas</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
