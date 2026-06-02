@@ -97,9 +97,9 @@ export default function Hero({ peliculas }: Props) {
       ))}
 
       {/* Capas de oscurecimiento */}
-      <div className="absolute inset-0 bg-black/30 z-[1]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/10 to-transparent z-[1]" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/25 z-[1]" />
+      <div className="absolute inset-0 bg-black/15 z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/15 via-transparent to-black/15 z-[1]" />
 
       {/* Glow dinámico según accent_color */}
       <div
