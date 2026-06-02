@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       token?: string;
       payment_method_id?: string;
       installments?: number;
-      issuer_id?: string;
+      issuer_id?: number;
       transaction_amount?: number;
       payer?: unknown;
     };
