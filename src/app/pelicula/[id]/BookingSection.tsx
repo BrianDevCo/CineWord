@@ -146,11 +146,18 @@ export default function BookingSection({ movie, funciones }: Props) {
     return mapaFallback;
   }, [mapaScore, mapaFallback, usaScoreMapa]);
 
+  // ── Funciones filtradas ───────────────────────────────────────────────────────
+  const funcionesPorFecha   = selectedFecha   ? funciones.filter(f => f.fecha === selectedFecha)    : [];
+  const formatosDisponibles = [...new Set(funcionesPorFecha.map(f => f.formato))];
+  const funcionesPorFormato = selectedFormato ? funcionesPorFecha.filter(f => f.formato === selectedFormato) : [];
+
   // ── Precios ───────────────────────────────────────────────────────────────────
   const scorePlanRegular = scorePlanes.find(p => !p.zona.toUpperCase().includes("VIP"));
   const scorePlanVip     = scorePlanes.find(p =>  p.zona.toUpperCase().includes("VIP"));
-  const precioRegular = scorePlanRegular?.valor ?? selectedFuncion?.precio_regular ?? 15000;
-  const precioVip     = scorePlanVip?.valor     ?? selectedFuncion?.precio_vip     ?? 25000;
+  // Función de referencia: la seleccionada, o la primera disponible del formato/fecha
+  const funcionRef = selectedFuncion ?? funcionesPorFormato[0] ?? funcionesPorFecha[0];
+  const precioRegular = scorePlanRegular?.valor ?? funcionRef?.precio_regular ?? 15000;
+  const precioVip     = scorePlanVip?.valor     ?? funcionRef?.precio_vip     ?? 25000;
 
   const total = useMemo(
     () => [...selectedSeats].reduce((acc, id) => acc + (isVipRow(id[0]) ? precioVip : precioRegular), 0),
@@ -165,11 +172,6 @@ export default function BookingSection({ movie, funciones }: Props) {
     })),
     [selectedSeats, isVipRow],
   );
-
-  // ── Funciones filtradas ───────────────────────────────────────────────────────
-  const funcionesPorFecha   = selectedFecha   ? funciones.filter(f => f.fecha === selectedFecha)    : [];
-  const formatosDisponibles = [...new Set(funcionesPorFecha.map(f => f.formato))];
-  const funcionesPorFormato = selectedFormato ? funcionesPorFecha.filter(f => f.formato === selectedFormato) : [];
 
   // ── Timer ─────────────────────────────────────────────────────────────────────
   const startTimer = useCallback(() => {
