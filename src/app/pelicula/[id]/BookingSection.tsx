@@ -42,10 +42,14 @@ interface AsientoMapa { fila: string; columna: number; columnaLabel: number; est
 interface ScorePlan   { codigo: string; descripcion: string; valor: number; zona: string; }
 interface CalendarDay { label: string; fecha: string; dayOfWeek: number; }
 
-function buildDays(funciones: Funcion[]): CalendarDay[] {
+function getTodayStr() {
   const hoy = new Date();
-  const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
-  const mananaDate = new Date(hoy); mananaDate.setDate(hoy.getDate() + 1);
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+}
+
+function buildDays(funciones: Funcion[], hoyStr: string): CalendarDay[] {
+  const mananaDate = new Date(hoyStr + "T12:00:00");
+  mananaDate.setDate(mananaDate.getDate() + 1);
   const mananaStr = `${mananaDate.getFullYear()}-${String(mananaDate.getMonth() + 1).padStart(2, "0")}-${String(mananaDate.getDate()).padStart(2, "0")}`;
 
   return [...new Set(funciones.map((f) => f.fecha))].slice(0, 7).map((fecha) => {
@@ -59,7 +63,9 @@ interface Props { movie: Pelicula; funciones: Funcion[]; }
 
 export default function BookingSection({ movie, funciones }: Props) {
   const pathname = usePathname();
-  const days = useMemo(() => buildDays(funciones), [funciones]);
+  const [hoyStr, setHoyStr] = useState("");
+  useEffect(() => { setHoyStr(getTodayStr()); }, []);
+  const days = useMemo(() => buildDays(funciones, hoyStr), [funciones, hoyStr]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────────
   const [user, setUser] = useState<User | null | "loading">("loading");
@@ -147,17 +153,15 @@ export default function BookingSection({ movie, funciones }: Props) {
   }, [mapaScore, mapaFallback, usaScoreMapa]);
 
   // ── Funciones filtradas ───────────────────────────────────────────────────────
-  const ahora = new Date();
-  const ahoraStr = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}-${String(ahora.getDate()).padStart(2, "0")}`;
-  const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
-
-  const esFuncionValida = (f: Funcion) => {
-    if (f.fecha > ahoraStr) return true; // fecha futura, siempre válida
-    if (f.fecha < ahoraStr) return false; // fecha pasada
-    // misma fecha: comparar hora
+  const esFuncionValida = useCallback((f: Funcion) => {
+    if (!hoyStr) return true; // antes de hidratación muestra todo
+    const ahora = new Date();
+    const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+    if (f.fecha > hoyStr) return true;
+    if (f.fecha < hoyStr) return false;
     const [h, m] = f.hora.split(":").map(Number);
     return (h * 60 + m) > ahoraMinutos;
-  };
+  }, [hoyStr]);
 
   const funcionesPorFecha   = selectedFecha ? funciones.filter(f => f.fecha === selectedFecha && esFuncionValida(f)) : [];
   const formatosDisponibles = [...new Set(funcionesPorFecha.map(f => f.formato))];

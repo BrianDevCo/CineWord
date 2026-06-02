@@ -35,6 +35,11 @@ function StatCard({ label, value, sub, href, color = "white" }: {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fechaHoy, setFechaHoy] = useState("");
+
+  useEffect(() => {
+    setFechaHoy(new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" }));
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/stats")
@@ -50,7 +55,7 @@ export default function AdminDashboard() {
         <p className="text-[#CC1244] font-heading text-xs tracking-widest uppercase mb-1">Panel de Control</p>
         <h1 className="font-heading text-3xl font-bold text-white tracking-wider">DASHBOARD</h1>
         <p className="text-gray-600 font-body text-sm mt-1">
-          {new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          {fechaHoy}
         </p>
       </div>
 
