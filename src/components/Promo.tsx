@@ -18,9 +18,6 @@ export default function Promo() {
       <div className="relative flex-1 bg-[#0f0f0f] px-10 py-16 lg:px-16 lg:py-20 flex flex-col justify-center overflow-hidden border-l border-white/5">
         <div className="flex flex-col gap-6">
           <div>
-            <p className="font-heading text-[#CC1244] text-sm tracking-[0.3em] uppercase mb-2">
-              Tu entrada a
-            </p>
             <h3 className="font-heading font-bold text-5xl lg:text-6xl text-white tracking-wider leading-tight">
               MITAD DE<br />PRECIO
             </h3>
