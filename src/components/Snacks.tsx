@@ -12,19 +12,19 @@ const OXXO = (file: string) =>
   `https://prodcdnmobisoft.oxxodomicilios.com/${file}`;
 
 const IMGS = {
-  crispetaPeq:   IMG("photo-1622155037308-2fad9f04f86d"), // palomitas saladas en bol blanco pequeño
-  crispetaMed:   IMG("photo-1691480213129-106b2c7d1ee8"), // vaso rayado amarillo/blanco de cine mediano
-  crispetaGde:   IMG("photo-1609534767546-6f7611d66e98"), // bol grande de palomitas
-  crispetaMixta: IMG("photo-1523207911345-32501502db22"), // palomitas foco selectivo mixta
-  crispetaDulce: IMG("photo-1574201742421-fffd6af7a680"), // palomitas caramelizadas color caramelo
-  perro:         IMG("photo-1612392062709-bd9bc3e3bbc9"), // perro caliente solo en plato blanco
+  crispetaPeq:   IMG("photo-1622155037308-2fad9f04f86d"), // palomitas en bol blanco pequeño
+  crispetaMed:   IMG("photo-1691480213129-106b2c7d1ee8"), // vaso rayado amarillo/blanco cine mediano
+  crispetaGde:   IMG("photo-1646182044503-f6cc7f113af6"), // contenedor blanco grande de cine
+  crispetaMixta: IMG("photo-1523207911345-32501502db22"), // palomitas mixta
+  crispetaDulce: IMG("photo-1574201742421-fffd6af7a680"), // palomitas caramelizadas
+  perro:         IMG("photo-1613482084286-41f25b486fa2"), // perro caliente en plato blanco
   gaseosa:       IMG("photo-1562996506-7a4f75955d5a"),
-  nachos:        IMG("photo-1522933001375-72d29575cf05"), // nachos básicos en plato blanco
+  nachos:        IMG("photo-1613585810055-4ea3e68a9dc4"), // chips en plato blanco
   papas:         IMG("photo-1759465201025-0f4a876efa47"),
   gomas:         IMG("photo-1703319953569-72084ac406b6"),
-  granizados:    IMG("photo-1551552539-45bbe62f3714"), // granizado tipo slushie de máquina
+  granizados:    IMG("photo-1551552539-45bbe62f3714"), // granizado slushie
   aguasab:       IMG("photo-1761864293808-dfb96001c534"),
-  queso:         IMG("photo-1571865402713-98ba5a56f12b"), // vasito de queso cheddar centrado
+  queso:         IMG("photo-1571865402713-98ba5a56f12b"), // vasito queso cheddar
   amadu:         IMG("photo-1464195085758-89f3e55e821e"),
   // marcas reales desde OXXO Colombia
   chocolate:     OXXO("01HQJM6CS60DXG4ZGYN5JZHJBP.png"),
