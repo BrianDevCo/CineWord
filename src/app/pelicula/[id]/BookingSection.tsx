@@ -147,7 +147,19 @@ export default function BookingSection({ movie, funciones }: Props) {
   }, [mapaScore, mapaFallback, usaScoreMapa]);
 
   // ── Funciones filtradas ───────────────────────────────────────────────────────
-  const funcionesPorFecha   = selectedFecha   ? funciones.filter(f => f.fecha === selectedFecha)    : [];
+  const ahora = new Date();
+  const ahoraStr = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}-${String(ahora.getDate()).padStart(2, "0")}`;
+  const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+
+  const esFuncionValida = (f: Funcion) => {
+    if (f.fecha > ahoraStr) return true; // fecha futura, siempre válida
+    if (f.fecha < ahoraStr) return false; // fecha pasada
+    // misma fecha: comparar hora
+    const [h, m] = f.hora.split(":").map(Number);
+    return (h * 60 + m) > ahoraMinutos;
+  };
+
+  const funcionesPorFecha   = selectedFecha ? funciones.filter(f => f.fecha === selectedFecha && esFuncionValida(f)) : [];
   const formatosDisponibles = [...new Set(funcionesPorFecha.map(f => f.formato))];
   const funcionesPorFormato = selectedFormato ? funcionesPorFecha.filter(f => f.formato === selectedFormato) : [];
 
