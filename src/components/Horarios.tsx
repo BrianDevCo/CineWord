@@ -1,54 +1,58 @@
 export default function Horarios() {
   const info = [
-    { icon: "🎟️", label: "Taquilla abre", value: "30 min antes de la primera función" },
-    { icon: "🍿", label: "Confitería",     value: "Abre junto con taquilla" },
-    { icon: "🌐", label: "Compras",        value: "24 horas por compra web" },
+    { icon: "🎟️", label: "Taquilla", value: "Abre 30 min antes de la primera función" },
+    { icon: "🍿", label: "Confitería", value: "Abre junto con taquilla" },
+    { icon: "🌐", label: "Compra online", value: "Disponible las 24 horas" },
   ];
 
   return (
-    <section id="horarios" className="py-24 bg-[#0d0d0d]">
+    <section id="horarios" className="py-24 bg-[#0a0a0a]">
       <div className="max-w-5xl mx-auto px-4">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <span className="inline-block font-heading text-[#CC1244] text-xs tracking-widest uppercase border border-[#CC1244]/30 px-4 py-1.5 rounded-sm mb-4">
-            Horarios de Atención
-          </span>
+        <div className="text-center mb-14">
+          <p className="text-[#CC1244] font-heading tracking-widest text-sm uppercase mb-2">— Horarios</p>
           <h2 className="font-heading text-4xl sm:text-5xl font-bold text-white tracking-wider">
             ESTAMOS AQUÍ PARA TI
           </h2>
-          <p className="mt-3 font-body text-gray-500 text-sm max-w-md mx-auto">
-            Abrimos todos los días del año. Ven a vivir la magia del cine cuando más lo necesites.
-          </p>
         </div>
 
-        {/* Horario principal */}
-        <div className="relative bg-[#CC1244]/5 border border-[#CC1244]/30 rounded-2xl p-6 sm:p-10 mb-8 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 text-center sm:text-left">
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1244] text-white font-heading text-[10px] tracking-widest px-4 py-1 rounded-sm whitespace-nowrap">
-            PROMO MAR Y MIÉ — 50% DESCUENTO
-          </span>
-
-          <div className="text-6xl">🎬</div>
-
-          <div className="flex flex-col gap-1">
-            <p className="font-heading text-gray-400 text-sm tracking-widest uppercase">Todos los días</p>
-            <p className="font-heading text-white text-4xl sm:text-5xl lg:text-6xl font-bold tracking-wider">
-              1<span className="text-[#CC1244]">:</span>00 <span className="text-gray-500 text-2xl sm:text-3xl">—</span> 10<span className="text-[#CC1244]">:</span>00 PM
-            </p>
+        {/* Horario principal — gran display */}
+        <div className="flex flex-col items-center gap-3 mb-14 text-center">
+          <p className="font-heading text-gray-500 text-xs tracking-[0.3em] uppercase">
+            Abiertos todos los días
+          </p>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex flex-col items-center">
+              <span className="font-heading text-white font-bold text-6xl sm:text-8xl lg:text-9xl leading-none tracking-tight">
+                1<span className="text-[#CC1244]">:</span>00
+              </span>
+              <span className="font-heading text-gray-500 text-xs tracking-widest mt-1">PM</span>
+            </div>
+            <span className="text-[#CC1244] text-4xl sm:text-6xl font-heading font-light">—</span>
+            <div className="flex flex-col items-center">
+              <span className="font-heading text-white font-bold text-6xl sm:text-8xl lg:text-9xl leading-none tracking-tight">
+                10<span className="text-[#CC1244]">:</span>00
+              </span>
+              <span className="font-heading text-gray-500 text-xs tracking-widest mt-1">PM</span>
+            </div>
           </div>
         </div>
 
-        {/* Info row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Divisor */}
+        <div className="w-full h-px bg-white/5 mb-10" />
+
+        {/* Info cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {info.map((item) => (
             <div
               key={item.label}
-              className="flex items-start gap-3 bg-[#111] border border-white/8 rounded-xl p-4"
+              className="flex flex-col items-center text-center gap-3 bg-[#111] border border-white/5 rounded-2xl p-6 hover:border-[#CC1244]/20 transition-colors"
             >
-              <span className="text-xl shrink-0 mt-0.5">{item.icon}</span>
+              <span className="text-3xl">{item.icon}</span>
               <div>
-                <p className="font-heading text-gray-500 text-[10px] tracking-widest uppercase">{item.label}</p>
-                <p className="font-body text-white text-sm mt-0.5 leading-snug">{item.value}</p>
+                <p className="font-heading text-white text-sm tracking-widest uppercase mb-1">{item.label}</p>
+                <p className="font-body text-gray-500 text-sm leading-snug">{item.value}</p>
               </div>
             </div>
           ))}
