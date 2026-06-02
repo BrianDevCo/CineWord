@@ -624,6 +624,17 @@ export default function BookingSection({ movie, funciones }: Props) {
             )}
           </div>
           {step === 2 ? (
+            formatosDisponibles.length === 0 ? (
+              <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-4">
+                <span className="text-2xl">🎬</span>
+                <div>
+                  <p className="font-heading text-white text-sm tracking-wider">No hay funciones disponibles</p>
+                  <p className="font-body text-gray-500 text-sm mt-1">
+                    No quedan funciones para este día. Selecciona otra fecha o consúltanos en taquilla.
+                  </p>
+                </div>
+              </div>
+            ) : (
             <div className="flex gap-3 flex-wrap">
               {formatosDisponibles.map(f => (
                 <button key={f} onClick={() => pickFormato(f)}
@@ -637,6 +648,7 @@ export default function BookingSection({ movie, funciones }: Props) {
                 </button>
               ))}
             </div>
+            )
           ) : (
             <span className="text-white font-heading">{selectedFormato}</span>
           )}
