@@ -43,9 +43,15 @@ interface ScorePlan   { codigo: string; descripcion: string; valor: number; zona
 interface CalendarDay { label: string; fecha: string; dayOfWeek: number; }
 
 function buildDays(funciones: Funcion[]): CalendarDay[] {
-  return [...new Set(funciones.map((f) => f.fecha))].slice(0, 7).map((fecha, i) => {
+  const hoy = new Date();
+  const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+  const mananaDate = new Date(hoy); mananaDate.setDate(hoy.getDate() + 1);
+  const mananaStr = `${mananaDate.getFullYear()}-${String(mananaDate.getMonth() + 1).padStart(2, "0")}-${String(mananaDate.getDate()).padStart(2, "0")}`;
+
+  return [...new Set(funciones.map((f) => f.fecha))].slice(0, 7).map((fecha) => {
     const d = new Date(fecha + "T12:00:00");
-    return { label: i === 0 ? "Hoy" : i === 1 ? "Mañana" : fechaDisplay(fecha), fecha, dayOfWeek: d.getDay() };
+    const label = fecha === hoyStr ? "Hoy" : fecha === mananaStr ? "Mañana" : fechaDisplay(fecha);
+    return { label, fecha, dayOfWeek: d.getDay() };
   });
 }
 
@@ -572,8 +578,7 @@ export default function BookingSection({ movie, funciones }: Props) {
                   className={`group flex flex-col items-center gap-1 sm:gap-1.5 rounded-xl px-4 sm:px-6 py-3 sm:py-5 border transition-all hover:border-[#CC1244]/50 hover:bg-[#1a1a1a] ${isWknd ? "bg-[#111] border-yellow-500/20" : "bg-[#111] border-white/10"}`}>
                   <span className={`font-heading text-[10px] tracking-widest uppercase ${isWknd ? "text-yellow-500/70" : "text-gray-600"}`}>{fechaDisplay(day.fecha)}</span>
                   <span className="font-heading text-2xl font-bold text-white group-hover:text-[#CC1244] transition-colors">{day.label}</span>
-                  {isWknd  && <span className="text-[9px] font-heading tracking-widest text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-sm">MÁS FUNCIONES</span>}
-                  {isTueWed && !isWknd && <span className="text-[9px] font-heading tracking-widest text-[#CC1244] bg-[#CC1244]/10 px-2 py-0.5 rounded-sm">50% PROMO</span>}
+                  {isWknd && <span className="text-[9px] font-heading tracking-widest text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-sm">MÁS FUNCIONES</span>}
                 </button>
               );
             })}
