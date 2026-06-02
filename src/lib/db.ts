@@ -85,8 +85,10 @@ export async function getFuncionesByPelicula(
 ): Promise<Funcion[]> {
   if (!supabaseReady()) return getFallbackFunciones(peliculaId);
 
-  const today = new Date().toISOString().split("T")[0];
-  const until = new Date(Date.now() + dias * 86400000).toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+  const untilDate = new Date();
+  untilDate.setDate(untilDate.getDate() + dias);
+  const until = untilDate.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
   const { data, error } = await supabase
     .from("funciones")
