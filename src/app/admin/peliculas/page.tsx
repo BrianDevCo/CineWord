@@ -22,6 +22,7 @@ export default function PeliculasAdminPage() {
   const [filter, setFilter] = useState("all");
   const [enriching, setEnriching] = useState(false);
   const [enrichLog, setEnrichLog] = useState<string[]>([]);
+  const [tmdbInputs, setTmdbInputs] = useState<Record<number, string>>({});
 
   const load = () => {
     fetch("/api/admin/peliculas")
@@ -52,7 +53,12 @@ export default function PeliculasAdminPage() {
   };
 
   const enrichOne = async (id: number) => {
-    const res = await fetch("/api/admin/enrich-tmdb", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pelicula_id: id, force: true }) });
+    const tmdbId = tmdbInputs[id] ? parseInt(tmdbInputs[id]) : undefined;
+    const res = await fetch("/api/admin/enrich-tmdb", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pelicula_id: id, force: true, ...(tmdbId ? { tmdb_id: tmdbId } : {}) }),
+    });
     const d = await res.json() as { log?: string[]; mensaje?: string };
     setEnrichLog(d.log ?? (d.mensaje ? [d.mensaje] : ["Sin respuesta del servidor"]));
     load();
@@ -159,12 +165,21 @@ export default function PeliculasAdminPage() {
                 <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${p.activa ? "left-5" : "left-0.5"}`} />
               </button>
 
-              {/* Acciones */}
-              <button onClick={() => enrichOne(p.id)}
-                title="Buscar/actualizar desde TMDB"
-                className="border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-blue-300 font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
-                TMDB
-              </button>
+              {/* Acciones TMDB */}
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  type="number"
+                  placeholder="ID TMDB"
+                  value={tmdbInputs[p.id] ?? ""}
+                  onChange={e => setTmdbInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
+                  className="w-24 bg-white/5 border border-white/10 text-white text-xs font-body px-2 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                />
+                <button onClick={() => enrichOne(p.id)}
+                  title="Buscar/actualizar desde TMDB"
+                  className="border border-blue-500/30 hover:border-blue-500 text-blue-400 hover:text-blue-300 font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all">
+                  TMDB
+                </button>
+              </div>
               <Link href={`/admin/peliculas/${p.id}`}
                 className="border border-white/15 hover:border-white/40 text-gray-400 hover:text-white font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
                 EDITAR

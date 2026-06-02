@@ -12,7 +12,11 @@ export async function POST(req: NextRequest) {
   if (error) return error;
 
   const admin = createAdminClient();
-  const body = await req.json().catch(() => ({})) as { pelicula_id?: number; force?: boolean };
+  const body = await req.json().catch(() => ({})) as {
+    pelicula_id?: number;
+    force?: boolean;
+    tmdb_id?: number; // ID manual de TMDB para evitar búsqueda automática
+  };
 
   let query = admin
     .from("peliculas")
@@ -33,9 +37,9 @@ export async function POST(req: NextRequest) {
 
   for (const peli of peliculas) {
     try {
-      // Extrae año de fecha_estreno para afinar búsqueda
+      // Si viene tmdb_id manual, úsalo directo; si no, busca por título
       const year = peli.fecha_estreno ? new Date(peli.fecha_estreno).getFullYear().toString() : undefined;
-      const tmdb = await tmdbEnrich(peli.titulo, year);
+      const tmdb = await tmdbEnrich(body.tmdb_id ?? peli.titulo, year);
 
       if (!tmdb) {
         log.push(`⚠ "${peli.titulo}" — no encontrada en TMDB`);
