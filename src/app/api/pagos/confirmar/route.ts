@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import MercadoPagoConfig, { Payment } from "mercadopago";
 import { crearReserva, getFuncionById } from "@/lib/db";
 import { enviarEmailBoleto } from "@/lib/email";
-import { scoreReservar, scoreGetSecuencia, toScoreFecha, toScoreHora, splitNombre, type AsientoScore } from "@/lib/score";
+import { scoreReservar, scoreGetSecuencia, toScoreFecha, toScoreHora, toScoreInicio, splitNombre, type AsientoScore } from "@/lib/score";
 import type { ScoreQRParams } from "@/lib/email";
 
 const client = new MercadoPagoConfig({
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       payment_id, funcion_id, email, nombre, telefono, asientos, total,
       // Campos Score (opcionales — solo si el cine tiene Score configurado)
       score_fecha, score_sala, score_hora, score_pelicula, score_secuencia,
-      score_ubicaciones,
+      score_ubicaciones, score_descripcion,
     } = body;
 
     // Validar campos requeridos
@@ -73,24 +73,30 @@ export async function POST(req: NextRequest) {
 
     // Registrar venta en Score (no bloqueante — si falla no cancela la reserva)
     let scoreSecuencia: string | undefined;
+    let scoreRespuesta: string | undefined;
     if (process.env.SCORE_BASE_URL && score_sala && score_pelicula && score_ubicaciones?.length) {
       try {
         const secuencia = score_secuencia ?? (await scoreGetSecuencia()).secuencia;
         const { nombre: pNombre, apellido: pApellido } = splitNombre(nombre);
-        await scoreReservar({
-          fechaFuncion: score_fecha ? toScoreFecha(score_fecha) : score_fecha,
-          sala:         String(score_sala),
-          horaFuncion:  score_hora ? toScoreHora(score_hora) : score_hora,
-          pelicula:     String(score_pelicula),
+        const scoreResult = await scoreReservar({
+          fechaFuncion:  score_fecha ? toScoreFecha(score_fecha) : score_fecha,
+          sala:          String(score_sala),
+          horaFuncion:   score_hora ? toScoreHora(score_hora) : score_hora,
+          pelicula:      String(score_pelicula),
+          inicioFuncion: score_hora ? toScoreInicio(score_hora) : undefined,
+          descripcion:   score_descripcion ?? "",
           secuencia,
-          nombre:       pNombre,
-          apellido:     pApellido,
-          telefono:     sanitizeStr(telefono ?? ""),
-          ubicaciones:  score_ubicaciones as AsientoScore[],
-          accion:       "V",
+          nombre:        pNombre,
+          apellido:      pApellido,
+          telefono:      sanitizeStr(telefono ?? ""),
+          ubicaciones:   score_ubicaciones as AsientoScore[],
+          accion:        "V",
         });
         scoreSecuencia = secuencia;
+        scoreRespuesta = scoreResult.raw;
+        console.log("Score SCOINT V respuesta:", scoreResult.raw);
       } catch (scoreErr) {
+        scoreRespuesta = `ERROR: ${String(scoreErr)}`;
         console.error("Score venta fallida (reserva guardada igualmente):", scoreErr);
       }
     }
@@ -153,7 +159,7 @@ export async function POST(req: NextRequest) {
       console.error("Error enviando email (reserva guardada igualmente):", emailErr);
     }
 
-    return NextResponse.json({ ok: true, reserva_id: reserva.id, qr_token: reserva.qr_token, score_secuencia: scoreSecuencia ?? null });
+    return NextResponse.json({ ok: true, reserva_id: reserva.id, qr_token: reserva.qr_token, score_secuencia: scoreSecuencia ?? null, score_respuesta: scoreRespuesta ?? null });
   } catch (err) {
     console.error("Error confirmando pago:", err);
     return NextResponse.json({ error: "Error al confirmar el pago" }, { status: 500 });

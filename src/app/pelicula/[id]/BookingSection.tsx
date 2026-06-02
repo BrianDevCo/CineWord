@@ -451,6 +451,7 @@ export default function BookingSection({ movie, funciones }: Props) {
             score_pelicula:    selectedFuncion?.score_pelicula_id ?? undefined,
             score_secuencia:   scoreSecuencia ?? undefined,
             score_ubicaciones: scoreUbicaciones,
+            score_descripcion: movie.titulo,
           }),
         });
 
