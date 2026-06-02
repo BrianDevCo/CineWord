@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { createCipheriv, createDecipheriv } from "crypto";
 
 const KEY = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
@@ -133,6 +134,9 @@ interface FuncionRef {
 }
 
 export async function GET() {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
   const base    = process.env.SCORE_BASE_URL    ?? "NO CONFIGURADO";
   const tercero = process.env.SCORE_TERCERO     ?? "1";
   const teatro  = process.env.SCORE_TEATRO      ?? "2";

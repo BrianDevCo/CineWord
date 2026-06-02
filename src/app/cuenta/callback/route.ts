@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  const redirect = searchParams.get("redirect") || "/cuenta";
+  const rawRedirect = searchParams.get("redirect") || "/cuenta";
+  // Solo rutas internas — previene open redirect
+  const redirect = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+    ? rawRedirect
+    : "/cuenta";
   return NextResponse.redirect(`${origin}${redirect}`);
 }

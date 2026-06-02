@@ -51,13 +51,24 @@ export async function POST(req: NextRequest) {
     const nombreSafe = sanitizeStr(nombre);
     const emailSafe = sanitizeStr(email);
 
-    // Verificar el pago con MercadoPago (wallet ya fue procesado internamente por MP)
-    if (payment_id !== "wallet_purchase") {
-      const payment = new Payment(client);
-      const paymentData = await payment.get({ id: payment_id });
-      if (!paymentData || paymentData.status !== "approved") {
-        return NextResponse.json({ error: "Pago no aprobado" }, { status: 400 });
-      }
+    // Verificar el pago con MercadoPago — sin excepciones
+    const payment = new Payment(client);
+    const paymentData = await payment.get({ id: payment_id });
+    if (!paymentData || paymentData.status !== "approved") {
+      return NextResponse.json({ error: "Pago no aprobado" }, { status: 400 });
+    }
+
+    // Verificar que el monto pagado coincide con el precio real de la BD
+    const funcion = await getFuncionById(funcion_id);
+    if (!funcion) {
+      return NextResponse.json({ error: "Función no encontrada" }, { status: 404 });
+    }
+    const expectedTotal = (asientos as { tipo?: string }[]).reduce((sum, a) =>
+      sum + (a.tipo === "vip" ? funcion.precio_vip : funcion.precio_regular), 0);
+    const montoMP = paymentData.transaction_amount ?? 0;
+    if (montoMP < expectedTotal * 0.99) {
+      console.error(`Monto insuficiente: pagó ${montoMP}, esperado ${expectedTotal}`);
+      return NextResponse.json({ error: "El monto pagado no corresponde al precio de los boletos" }, { status: 400 });
     }
 
     // Registrar venta en Score (no bloqueante — si falla no cancela la reserva)
@@ -84,20 +95,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Crear la reserva en Supabase
+    // Crear la reserva en Supabase — usar el total real de la BD, no el del cliente
     const reserva = await crearReserva({
       funcion_id,
       email: emailSafe,
       nombre: nombreSafe,
       telefono: sanitizeStr(telefono ?? ""),
       asientos,
-      total,
+      total: expectedTotal,
     });
 
     // Enviar email con QR (no bloqueante — si falla no cancela la reserva)
     try {
-      const funcion = await getFuncionById(funcion_id);
-      if (funcion) {
+      if (funcion) { // funcion ya fue obtenida arriba para verificar precio
         const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
         const [, mes, dia] = funcion.fecha.split("-");
         const fechaLabel = `${parseInt(dia)} ${MESES[parseInt(mes) - 1]}`;

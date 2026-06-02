@@ -8,7 +8,7 @@ const client = new MercadoPagoConfig({
 
 function verifySignature(req: NextRequest, paymentId: string): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET;
-  if (!secret) return true; // Omitir validación si no está configurado
+  if (!secret) return false; // Sin secreto configurado, rechazar todo
 
   const signature = req.headers.get("x-signature");
   const requestId = req.headers.get("x-request-id");

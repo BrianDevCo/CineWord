@@ -8,24 +8,43 @@ const client = new MercadoPagoConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.json();
-    console.log("FormData recibido del brick:", JSON.stringify(formData, null, 2));
+    const body = await req.json() as Record<string, unknown>;
+
+    // Whitelist explícita — nunca pasar el body completo a MP
+    const {
+      token, payment_method_id, installments, issuer_id,
+      transaction_amount, payer,
+    } = body as {
+      token?: string;
+      payment_method_id?: string;
+      installments?: number;
+      issuer_id?: string;
+      transaction_amount?: number;
+      payer?: unknown;
+    };
+
+    if (!token || !payment_method_id || !transaction_amount || transaction_amount <= 0) {
+      return NextResponse.json({ error: "Datos de pago incompletos" }, { status: 400 });
+    }
 
     const payment = new Payment(client);
     const result = await payment.create({
       body: {
-        ...formData,
+        token,
+        payment_method_id,
+        installments: installments ?? 1,
+        issuer_id,
+        transaction_amount,
+        payer,
         description: "Boleto CINEWORLD",
         statement_descriptor: "CINEWORLD",
       },
       requestOptions: { idempotencyKey: randomUUID() },
     });
 
-    console.log("Resultado MP:", result.id, result.status);
     return NextResponse.json({ id: result.id, status: result.status });
   } catch (err) {
-    const detail = JSON.stringify(err, Object.getOwnPropertyNames(err as object), 2);
-    console.error("Error procesando pago MP:", detail);
-    return NextResponse.json({ error: "Error al procesar el pago", detail }, { status: 500 });
+    console.error("Error procesando pago MP:", String(err));
+    return NextResponse.json({ error: "Error al procesar el pago" }, { status: 500 });
   }
 }
