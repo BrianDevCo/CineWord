@@ -2,8 +2,7 @@ export default function Horarios() {
   const info = [
     { icon: "🎟️", label: "Taquilla abre", value: "30 min antes de la primera función" },
     { icon: "🍿", label: "Confitería",     value: "Abre junto con taquilla" },
-    { icon: "🅿️", label: "Parqueadero",   value: "Disponible hasta media hora después del cierre" },
-    { icon: "📞", label: "Reservas",       value: "24 horas por la app o web" },
+    { icon: "🌐", label: "Compras",        value: "24 horas por compra web" },
   ];
 
   return (
