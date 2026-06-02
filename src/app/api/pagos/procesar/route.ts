@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       installments?: number;
       issuer_id?: number;
       transaction_amount?: number;
-      payer?: unknown;
+      payer?: Record<string, unknown>;
     };
 
     if (!token || !payment_method_id || !transaction_amount || transaction_amount <= 0) {
@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
         installments: installments ?? 1,
         issuer_id,
         transaction_amount,
-        payer,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        payer: payer as any,
         description: "Boleto CINEWORLD",
         statement_descriptor: "CINEWORLD",
       },
