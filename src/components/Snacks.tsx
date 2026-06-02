@@ -12,26 +12,27 @@ const OXXO = (file: string) =>
   `https://prodcdnmobisoft.oxxodomicilios.com/${file}`;
 
 const IMGS = {
-  crispetaPeq:   IMG("photo-1682970468815-0db201b7804d"), // bol pequeño de palomitas
-  crispetaMed:   IMG("photo-1548867688-231911e4ba3c"),    // palomitas medianas sirviéndose
-  crispetaGde:   IMG("photo-1770597105062-648a2fbfa052"), // balde grande de cine
-  crispetaDulce: IMG("photo-1709019651839-56148a2b2615"), // palomitas de colores dulces
-  perro:         IMG("photo-1590759877531-559907fd23d6"),
+  crispetaPeq:   IMG("photo-1622155037308-2fad9f04f86d"), // palomitas saladas en bol blanco pequeño
+  crispetaMed:   IMG("photo-1691480213129-106b2c7d1ee8"), // vaso rayado amarillo/blanco de cine mediano
+  crispetaGde:   IMG("photo-1609534767546-6f7611d66e98"), // bol grande de palomitas
+  crispetaMixta: IMG("photo-1523207911345-32501502db22"), // palomitas foco selectivo mixta
+  crispetaDulce: IMG("photo-1574201742421-fffd6af7a680"), // palomitas caramelizadas color caramelo
+  perro:         IMG("photo-1612392062709-bd9bc3e3bbc9"), // perro caliente solo en plato blanco
   gaseosa:       IMG("photo-1562996506-7a4f75955d5a"),
-  nachos:        IMG("photo-1564758565388-0d5da0cbb08c"),
-  papas:         IMG("photo-1759465201025-0f4a876efa47"), // bolsa de papas fritas
+  nachos:        IMG("photo-1522933001375-72d29575cf05"), // nachos básicos en plato blanco
+  papas:         IMG("photo-1759465201025-0f4a876efa47"),
   gomas:         IMG("photo-1703319953569-72084ac406b6"),
-  granizados:    IMG("photo-1605116188480-2932cf9ace8b"),
+  granizados:    IMG("photo-1551552539-45bbe62f3714"), // granizado tipo slushie de máquina
   aguasab:       IMG("photo-1761864293808-dfb96001c534"),
-  queso:         IMG("photo-1529566186297-155c18f9a434"),
-  amadu:         IMG("photo-1464195085758-89f3e55e821e"), // placeholder
+  queso:         IMG("photo-1571865402713-98ba5a56f12b"), // vasito de queso cheddar centrado
+  amadu:         IMG("photo-1464195085758-89f3e55e821e"),
   // marcas reales desde OXXO Colombia
-  chocolate:     OXXO("01HQJM6CS60DXG4ZGYN5JZHJBP.png"),  // Chocolatina Jumbo
-  galleta:       OXXO("01GT6XF9RT8MZBYQH42VP5XZMN.webp"), // Galleta Wafer Jet (Noel)
-  tea:           OXXO("01K5W02ZH6HQHTMANGZ83H0XGP.png"),  // Mr. Tea Limón
-  gatorade:      OXXO("01J1WBTCAV6P9MPTS5R51FFEKQ.jpg"),  // Gatorade Blue Ice
-  agua:          OXXO("01K5SPC6NATJP42SDNCAR0QZVS.jpg"),  // Agua Cristal
-  jugo:          OXXO("01JE6QAS8RAJMM8VPMK8S790MB.png"),  // Jugo Hit Mora
+  chocolate:     OXXO("01HQJM6CS60DXG4ZGYN5JZHJBP.png"),
+  galleta:       OXXO("01GT6XF9RT8MZBYQH42VP5XZMN.webp"),
+  tea:           OXXO("01K5W02ZH6HQHTMANGZ83H0XGP.png"),
+  gatorade:      OXXO("01J1WBTCAV6P9MPTS5R51FFEKQ.jpg"),
+  agua:          OXXO("01K5SPC6NATJP42SDNCAR0QZVS.jpg"),
+  jugo:          OXXO("01JE6QAS8RAJMM8VPMK8S790MB.png"),
 };
 
 // Imágenes reales de los combos (carpeta public/combos)
@@ -59,7 +60,7 @@ const items = [
   { id: 101, name: "Crispeta Pequeña",   price: 9000,  cat: "crispetas", image: IMGS.crispetaPeq },
   { id: 102, name: "Crispeta Mediana",   price: 18000, cat: "crispetas", image: IMGS.crispetaMed },
   { id: 103, name: "Crispeta Grande",    price: 24000, cat: "crispetas", image: IMGS.crispetaGde },
-  { id: 104, name: "Crispeta Mixta",     price: 3500,  cat: "crispetas", image: IMGS.crispetaMed },
+  { id: 104, name: "Crispeta Mixta",     price: 3500,  cat: "crispetas", image: IMGS.crispetaMixta },
   { id: 105, name: "Crispeta Dulce",     price: 6000,  cat: "crispetas", image: IMGS.crispetaDulce },
   { id: 106, name: "Perro",             price: 12000, cat: "comidas",   image: IMGS.perro },
   { id: 107, name: "Granizados",         price: 12000, cat: "comidas",   image: IMGS.granizados },
