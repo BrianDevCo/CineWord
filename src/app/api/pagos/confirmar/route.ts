@@ -88,13 +88,12 @@ export async function POST(req: NextRequest) {
           apellido:      pApellido,
           telefono:      sanitizeStr(telefono ?? ""),
           sala:          String(score_sala),
-          fechaFun:      score_fecha,               // ya está en "yyyy-MM-dd"
-          funcion:       toScoreHora(score_hora),   // "21"
-          inicioFun:     toScoreInicio(score_hora), // "2130"
+          fechaFun:      score_fecha,
+          funcion:       toScoreHora(score_hora),
+          inicioFun:     toScoreInicio(score_hora),
           pelicula:      String(score_pelicula),
           ubicaciones:   score_ubicaciones as AsientoScore[],
           totalVenta:    expectedTotal,
-          pagoInterno:   expectedTotal,             // MercadoPago = cobrado externamente
         });
         scoreSecuencia = secuencia;
         scoreRespuesta = scoreResult.raw;

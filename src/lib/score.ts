@@ -90,10 +90,8 @@ export interface ScoreVentaParams {
   pelicula: string;
   ubicaciones: AsientoScore[];
   totalVenta: number;
-  pagoInterno?: number;    // MercadoPago = pago interno (ya cobrado externamente)
   pagoCredito?: number;
-  pagoEfectivo?: number;
-  codMedioPago?: number;
+  codMedioPago?: number;   // solo cuando PagoCredito > 0 (código de SCOTDC)
 }
 
 /** Accion G = preventa/grupo (SCOGRU), R = reserva (SCOINT), V = venta (SCOINT) */
@@ -426,15 +424,16 @@ export function toScoreInicio(timeStr: string): string {
 
 /**
  * SCOINT (Accion V) — Venta con boletas
- * Usa los nombres de campo exactos del documento de Score.
+ * Para ventas por internet: PagoInterno=0, PagoCredito=0, PagoEfectivo=0.
+ * El cobro ya fue realizado externamente (MercadoPago). Score solo registra la venta.
  */
 export async function scoreVenta(p: ScoreVentaParams) {
   const ubicaciones = p.ubicaciones.map(u => ({
-    Fila:       u.fila,
-    Columna:    parseInt(u.columna),
+    Fila:        u.fila,
+    Columna:     parseInt(u.columna),
     FilRelativa: u.filRelativa ?? u.fila,
     ColRelativa: parseInt(u.colRelativa ?? u.columna),
-    Tarifa:     u.tarifa,
+    Tarifa:      u.tarifa,
   }));
 
   return call(
@@ -449,12 +448,12 @@ export async function scoreVenta(p: ScoreVentaParams) {
       Telefono:         p.telefono ?? "",
       Direccion:        "",
       Sala:             parseInt(p.sala),
-      FechaFun:         p.fechaFun,          // "yyyy-MM-dd" con guiones
-      Funcion:          parseInt(p.funcion), // solo la hora: 21
-      InicioFun:        p.inicioFun,         // "2130" sin ':'
+      FechaFun:         p.fechaFun,
+      Funcion:          parseInt(p.funcion),
+      InicioFun:        p.inicioFun,
       Pelicula:         parseInt(p.pelicula),
       Ubicaciones:      ubicaciones,
-      Productos:        [],                  // sin retail
+      Productos:        [],
       Placa:            "0",
       AudiPrev:         0,
       TipoEntrega:      "T",
@@ -462,9 +461,9 @@ export async function scoreVenta(p: ScoreVentaParams) {
       TipoBono:         0,
       ClienteFrecuente: 0,
       TotalVenta:       p.totalVenta,
-      PagoInterno:      p.pagoInterno  ?? p.totalVenta, // MercadoPago = pago externo ya cobrado
-      PagoCredito:      p.pagoCredito  ?? 0,
-      PagoEfectivo:     p.pagoEfectivo ?? 0,
+      PagoInterno:      0,
+      PagoCredito:      p.pagoCredito ?? 0,
+      PagoEfectivo:     0,
       CodMedioPago:     p.codMedioPago ?? 0,
       Obs1: "", Obs2: "", Obs3: "", Obs4: "",
       Accion:           "V",
