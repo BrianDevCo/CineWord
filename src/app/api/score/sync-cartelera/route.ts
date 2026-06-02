@@ -247,6 +247,82 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
 
 // ── Route handler ──────────────────────────────────────────────────────────────
 
+async function fetchCarteleraJson(): Promise<ParsedPelicula[]> {
+  const base = process.env.SCORE_BASE_URL;
+  const teatro = process.env.SCORE_TEATRO ?? "2";
+  if (!base) throw new Error("SCORE_BASE_URL no configurado");
+
+  const res = await fetch(`${base}/MobileComJson/variable41.json`, {
+    headers: { "ngrok-skip-browser-warning": "true" },
+    cache: "no-store",
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!res.ok) throw new Error(`Score JSON → HTTP ${res.status}`);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const json = await res.json() as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arr = (x: any) => Array.isArray(x) ? x : (x != null ? [x] : []);
+
+  const peliculas: ParsedPelicula[] = [];
+
+  for (const peli of arr(json?.Peliculas?.pelicula)) {
+    const scoreId = String(peli?.["@id"] ?? "");
+    const titulo  = String(peli?.["@nombre"] ?? "");
+    const sinopsis = String(peli?.sinopsis ?? "");
+    if (!scoreId || !titulo) continue;
+
+    const funciones: ParsedFuncion[] = [];
+
+    for (const cinema of arr(peli?.cinemas?.cinema)) {
+      if (String(cinema?.["@id"] ?? "") !== teatro) continue;
+
+      for (const sala of arr(cinema?.salas?.sala)) {
+        const salaId = String(sala?.["@numeroSala"] ?? sala?.["@id"] ?? "");
+        if (!salaId) continue;
+
+        for (const fecha of arr(sala?.Fecha)) {
+          const fechaUniv = String(fecha?.["@univ"] ?? "");
+          if (fechaUniv.length !== 8) continue;
+          const fechaISO = `${fechaUniv.slice(0,4)}-${fechaUniv.slice(4,6)}-${fechaUniv.slice(6,8)}`;
+
+          for (const hora of arr(fecha?.hora)) {
+            const militar = String(hora?.["@militar"] ?? "");
+            if (!militar) continue;
+            const hh = String(Math.floor(parseInt(militar) / 100)).padStart(2, "0");
+            const mm = String(parseInt(militar) % 100).padStart(2, "0");
+            const horaISO = `${hh}:${mm}:00`;
+
+            const tarifas: ParsedTarifa[] = [];
+            for (const zona of arr(hora?.TipoZona)) {
+              for (const silla of arr(zona?.TipoSilla)) {
+                for (const tarifa of arr(silla?.Tarifa)) {
+                  const codigo = String(tarifa?.["@codigoTarifa"] ?? "");
+                  const valor  = parseInt(tarifa?.["@valor"] ?? tarifa?.["@Valor"] ?? "0");
+                  const nombre = String(zona?.["@nombreZona"] ?? "GENERAL");
+                  if (codigo && valor) tarifas.push({ codigo, nombre, valor });
+                }
+              }
+            }
+
+            funciones.push({
+              score_sala_id: salaId,
+              fecha: fechaISO,
+              hora: horaISO,
+              formato: inferFormato("", titulo),
+              tarifas,
+            });
+          }
+        }
+      }
+    }
+
+    peliculas.push({ score_pelicula_id: scoreId, titulo, sinopsis, clasificacion: "", duracion: "", funciones });
+  }
+
+  return peliculas;
+}
+
 export async function GET(req: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
@@ -254,16 +330,14 @@ export async function GET(req: NextRequest) {
   const dryRun = req.nextUrl.searchParams.get("dry_run") !== "false";
 
   try {
-    const rawXml = await scoreGetCartelera();
-    const peliculas = parseXML(rawXml);
+    // Usa JSON (incluye TODAS las películas, incluso ventasONline=false)
+    const peliculas = await fetchCarteleraJson();
 
     if (dryRun) {
       return NextResponse.json({
         dry_run: true,
         message: "Pasa ?dry_run=false para sincronizar a Supabase",
         parsed: peliculas,
-        raw_length: rawXml.length,
-        raw_preview: rawXml.slice(0, 2000),
       });
     }
 
