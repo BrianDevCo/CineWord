@@ -12,16 +12,16 @@ const OXXO = (file: string) =>
   `https://prodcdnmobisoft.oxxodomicilios.com/${file}`;
 
 const IMGS = {
-  crispetaPeq:   IMG("photo-1622155037308-2fad9f04f86d"), // palomitas en bol blanco pequeño
-  crispetaMed:   IMG("photo-1691480213129-106b2c7d1ee8"), // vaso rayado amarillo/blanco cine mediano
-  crispetaGde:   IMG("photo-1646182044503-f6cc7f113af6"), // contenedor blanco grande de cine
-  crispetaMixta: IMG("photo-1523207911345-32501502db22"), // palomitas mixta
-  crispetaDulce: IMG("photo-1574201742421-fffd6af7a680"), // palomitas caramelizadas
-  perro:         IMG("photo-1613482084286-41f25b486fa2"), // perro caliente en plato blanco
+  crispetaPeq:   "/combos/bebida-pequena.jpg",
+  crispetaMed:   "/combos/bebida-mediana.jpg",
+  crispetaGde:   "/combos/bebida-grande.jpg",
+  crispetaMixta: IMG("photo-1523207911345-32501502db22"),
+  crispetaDulce: IMG("photo-1574201742421-fffd6af7a680"),
+  perro:         IMG("photo-1613482084286-41f25b486fa2"),
   gaseosa:       IMG("photo-1562996506-7a4f75955d5a"),
-  nachos:        IMG("photo-1542676303584-c8043a6c7618"), // nachos simples con queso
-  papas:         IMG("photo-1759465201025-0f4a876efa47"),
-  gomas:         IMG("photo-1703319953569-72084ac406b6"),
+  nachos:        "/combos/nachos.jpg",
+  papas:         "/combos/paquete.jpg",
+  gomas:         "/combos/gomas.jpg",
   granizados:    IMG("photo-1598268121084-c8f7126e0cef"), // granizado helado en vaso limpio
   aguasab:       IMG("photo-1761864293808-dfb96001c534"),
   queso:         IMG("photo-1571865402713-98ba5a56f12b"), // vasito queso cheddar
