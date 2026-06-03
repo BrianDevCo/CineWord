@@ -228,6 +228,27 @@ function parseMapa(raw: string): AsientoMapa[] {
 
 // ── API pública ────────────────────────────────────────────────────────────────
 
+/** SCOTDC — medios de pago configurados para el punto de venta */
+export async function scoreGetMediosPago(): Promise<{ codigo: number; descripcion: string; raw: string }[]> {
+  const { raw } = await call(
+    "scotdc",
+    JSON.stringify({ PuntoVenta: parseInt(puntoVenta()), teatro: parseInt(teatro()), tercero: parseInt(tercero()) }),
+  );
+  const medios: { codigo: number; descripcion: string; raw: string }[] = [];
+  try {
+    const parsed = JSON.parse(raw) as Array<Record<string, unknown>>;
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    for (const item of arr) {
+      const codigo = Number(item["Codigo"] ?? item["codigo"] ?? 0);
+      const descripcion = String(item["Descripcion"] ?? item["descripcion"] ?? "");
+      if (codigo) medios.push({ codigo, descripcion, raw });
+    }
+  } catch {
+    medios.push({ codigo: 0, descripcion: "sin parsear", raw });
+  }
+  return medios;
+}
+
 /** SCOSEC — número de secuencia + recargo web */
 export async function scoreGetSecuencia(): Promise<{ secuencia: string; recargo: number }> {
   const { kv } = await call(
