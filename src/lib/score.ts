@@ -179,7 +179,7 @@ function parseMapa(raw: string): AsientoMapa[] {
             fila,
             columna:      col,
             columnaLabel: colLabel,
-            estado: est === "B" ? "B" : est === "R" ? "R" : "S",
+            estado: (est === "S" || est === "L") ? "S" : est === "R" ? "R" : "B",
             zona,
           });
         }
@@ -202,7 +202,7 @@ function parseMapa(raw: string): AsientoMapa[] {
           fila,
           columna:      col,
           columnaLabel: col,
-          estado: est === "B" ? "B" : est === "R" ? "R" : "S",
+          estado: (est === "S" || est === "L") ? "S" : est === "R" ? "R" : "B",
           zona,
         });
       }
@@ -240,7 +240,7 @@ export async function scoreGetMediosPago(): Promise<{ codigo: number; descripcio
     const arr = Array.isArray(parsed) ? parsed : [parsed];
     for (const item of arr) {
       const codigo = Number(item["Codigo"] ?? item["codigo"] ?? 0);
-      const descripcion = String(item["Descripcion"] ?? item["descripcion"] ?? "");
+      const descripcion = String(item["Descripción"] ?? item["Descripcion"] ?? item["descripcion"] ?? "");
       if (codigo) medios.push({ codigo, descripcion, raw });
     }
   } catch {
@@ -299,7 +299,7 @@ export async function scoreGetOcupacion(params: {
         if (!s.Columna || s.Columna === 0 || s.TipoSilla?.toLowerCase() === "pasillo") continue;
         const col = Math.round(s.Columna);
         const est = s.EstadoSilla?.toUpperCase() ?? "S";
-        ocupacion[`${f}${col}`] = est === "B" ? "B" : est === "R" ? "R" : "S";
+        ocupacion[`${f}${col}`] = (est === "S" || est === "L") ? "S" : est === "R" ? "R" : "B";
       }
     }
   } catch { /**/ }
