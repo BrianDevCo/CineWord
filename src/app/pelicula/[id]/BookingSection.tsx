@@ -127,6 +127,7 @@ export default function BookingSection({ movie, funciones }: Props) {
     || selectedFuncion?.sala?.score_sala_id === "5"
     || selectedFuncion?.sala?.score_sala_id === "6"
     || false;
+  if (selectedFuncion) console.log("[DEBUG sala]", JSON.stringify(selectedFuncion.sala));
 
   const allCols = useMemo(() => {
     if (!usaScoreMapa) return null;
