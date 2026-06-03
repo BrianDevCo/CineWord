@@ -327,7 +327,7 @@ export default function BookingSection({ movie, funciones }: Props) {
     setStep(4);
   };
 
-  const continueToPayment = () => {
+  const continueToPayment = async () => {
     if (!user || user === "loading") { setShowLoginGate(true); return; }
     setShowLoginGate(false);
     const u = user as User;
@@ -338,6 +338,45 @@ export default function BookingSection({ movie, funciones }: Props) {
     }));
     startTimer();
     setStep(5);
+
+    // Hold en Score al momento que el cliente avanza al paso de pago
+    if (selectedFuncion?.score_sala_id && selectedFuncion?.score_pelicula_id) {
+      try {
+        const secRes  = await fetch("/api/score/secuencia");
+        const secData = await secRes.json();
+        const sec     = secData.secuencia as string;
+        if (sec) {
+          const tarifaReg = scorePlanRegular?.codigo ?? selectedFuncion.score_tarifa_regular ?? "";
+          const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion.score_tarifa_vip     ?? "";
+          const [hh, mm]  = selectedFuncion.hora.split(":");
+          const grupoRes  = await fetch("/api/score/grupo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fechaFuncion:  selectedFuncion.fecha,
+              sala:          selectedFuncion.score_sala_id,
+              horaFuncion:   selectedFuncion.hora,
+              pelicula:      selectedFuncion.score_pelicula_id,
+              inicioFuncion: (hh ?? "00") + (mm ?? "00"),
+              descripcion:   movie.titulo,
+              secuencia:     sec,
+              nombre:        u.user_metadata?.full_name || u.email || "Cliente",
+              telefono:      u.user_metadata?.telefono || "",
+              ubicaciones:   asientosList.map(a => ({
+                fila:    a.fila,
+                columna: String(a.columna),
+                tarifa:  isVipRow(a.fila) ? tarifaVip : tarifaReg,
+              })),
+            }),
+          });
+          const grupoData = await grupoRes.json();
+          console.log("[SCOGRU]", grupoData);
+          setScoreSecuencia(sec);
+        }
+      } catch(e) {
+        console.log("[SCOGRU-error]", e);
+      }
+    }
   };
 
   const goBackToSeats = () => {
@@ -348,56 +387,12 @@ export default function BookingSection({ movie, funciones }: Props) {
     setStep(4);
   };
 
-  // ── Crear preferencia MP + hold Score (SCOSEC → SCOGRU) ──────────────────────
+  // ── Crear preferencia MP ──────────────────────────────────────────────────────
   const handleCrearPreferencia = async () => {
     if (!selectedFuncion || !paymentInfo.nombre || !paymentInfo.email) return;
     setCreatingPreference(true);
     try {
-      // 1. Hold en Score (si la función tiene IDs de Score)
-      console.log("[SCOGRU-check]", { sala: selectedFuncion.score_sala_id, peli: selectedFuncion.score_pelicula_id });
-      if (selectedFuncion.score_sala_id && selectedFuncion.score_pelicula_id) {
-        try {
-          const secRes  = await fetch("/api/score/secuencia");
-          const secData = await secRes.json();
-          const sec     = secData.secuencia as string;
-          console.log("[SCOGRU-sec]", sec);
-
-          if (sec) {
-            const tarifaReg = scorePlanRegular?.codigo ?? selectedFuncion.score_tarifa_regular ?? "";
-            const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion.score_tarifa_vip     ?? "";
-
-            const [hh, mm] = selectedFuncion.hora.split(":");
-            const grupoRes = await fetch("/api/score/grupo", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                fechaFuncion:  selectedFuncion.fecha,
-                sala:          selectedFuncion.score_sala_id,
-                horaFuncion:   selectedFuncion.hora,
-                pelicula:      selectedFuncion.score_pelicula_id,
-                inicioFuncion: (hh ?? "00") + (mm ?? "00"),
-                descripcion:   movie.titulo,
-                secuencia:     sec,
-                nombre:        paymentInfo.nombre,
-                telefono:      paymentInfo.telefono || "",
-                ubicaciones:   asientosList.map(a => ({
-                  fila:    a.fila,
-                  columna: String(a.columna),
-                  tarifa:  isVipRow(a.fila) ? tarifaVip : tarifaReg,
-                })),
-              }),
-            });
-            const grupoData = await grupoRes.json();
-            console.log("[SCOGRU]", grupoData);
-
-            setScoreSecuencia(sec);
-          }
-        } catch(e) {
-          console.log("[SCOGRU-error]", e);
-        }
-      }
-
-      // 2. Crear preferencia MercadoPago
+      // Crear preferencia MercadoPago
       const res = await fetch("/api/pagos/crear-preferencia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
