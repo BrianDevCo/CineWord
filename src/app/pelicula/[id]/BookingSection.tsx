@@ -123,7 +123,10 @@ export default function BookingSection({ movie, funciones }: Props) {
   }, [mapaScore, usaScoreMapa]);
 
   // Rango global de columnas para mostrar pasillos (columnas sin asiento = espacio vacío)
-  const mirrorCols = selectedFuncion?.sala?.mirror_columns ?? false;
+  const mirrorCols = selectedFuncion?.sala?.mirror_columns
+    || selectedFuncion?.sala?.score_sala_id === "5"
+    || selectedFuncion?.sala?.score_sala_id === "6"
+    || false;
 
   const allCols = useMemo(() => {
     if (!usaScoreMapa) return null;
