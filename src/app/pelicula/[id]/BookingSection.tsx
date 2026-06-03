@@ -354,11 +354,13 @@ export default function BookingSection({ movie, funciones }: Props) {
     setCreatingPreference(true);
     try {
       // 1. Hold en Score (si la función tiene IDs de Score)
+      console.log("[SCOGRU-check]", { sala: selectedFuncion.score_sala_id, peli: selectedFuncion.score_pelicula_id });
       if (selectedFuncion.score_sala_id && selectedFuncion.score_pelicula_id) {
         try {
           const secRes  = await fetch("/api/score/secuencia");
           const secData = await secRes.json();
           const sec     = secData.secuencia as string;
+          console.log("[SCOGRU-sec]", sec);
 
           if (sec) {
             const tarifaReg = scorePlanRegular?.codigo ?? selectedFuncion.score_tarifa_regular ?? "";
@@ -390,8 +392,8 @@ export default function BookingSection({ movie, funciones }: Props) {
 
             setScoreSecuencia(sec);
           }
-        } catch {
-          // Si Score falla el hold, continuamos sin él
+        } catch(e) {
+          console.log("[SCOGRU-error]", e);
         }
       }
 
