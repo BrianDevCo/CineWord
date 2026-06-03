@@ -22,7 +22,7 @@ const IMGS = {
   nachos:        "/combos/nachos.jpg",
   papas:         "/combos/paquete.jpg",
   gomas:         "/combos/gomas.jpg",
-  granizados:    IMG("photo-1598268121084-c8f7126e0cef"), // granizado helado en vaso limpio
+  granizados:    "/combos/granizados.png",
   aguasab:       IMG("photo-1761864293808-dfb96001c534"),
   queso:         IMG("photo-1571865402713-98ba5a56f12b"), // vasito queso cheddar
   amadu:         IMG("photo-1464195085758-89f3e55e821e"),
@@ -205,12 +205,12 @@ export default function Snacks() {
                   key={item.id}
                   className="bg-[#111] rounded-xl border border-white/5 hover:border-[#CC1244]/30 transition-all duration-300 flex flex-col overflow-hidden"
                 >
-                  <div className="relative h-36 overflow-hidden">
+                  <div className="relative h-36 overflow-hidden bg-[#0d0d0d]">
                     <Image
                       src={item.image}
                       alt={item.name}
                       fill
-                      className="object-cover"
+                      className="object-contain p-2"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#111]/60 via-transparent to-transparent" />
