@@ -151,8 +151,8 @@ export async function POST(req: NextRequest) {
           fecha:    fechaLabel,
           hora:     horaLabel,
           formato:  funcion.formato,
-          asientos: asientos.map((a: { fila: string; columna: number; columnaLabel?: number }) =>
-            `${a.fila}${a.columnaLabel ?? a.columna}`),
+          asientos: asientos.map((a: { fila: string; columna: number }) =>
+            `${a.fila}${a.columna}`),
           total,
           qr_token: reserva.qr_token ?? "demo",
           scoreQR,

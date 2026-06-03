@@ -138,14 +138,8 @@ export default function BookingSection({ movie, funciones }: Props) {
     mapaScore.some(a => a.fila === fila && a.columna === col),
   [mapaScore]);
 
-  // Convierte ID interno (A4) → etiqueta visible (A3) usando ColumnaRelativa de Score
-  const getSeatLabel = useCallback((id: string): string => {
-    if (!usaScoreMapa) return id;
-    const fila = id[0];
-    const col  = parseInt(id.slice(1));
-    const a    = mapaScore.find(s => s.fila === fila && s.columna === col);
-    return a ? `${fila}${a.columnaLabel}` : id;
-  }, [mapaScore, usaScoreMapa]);
+  // Muestra ColumnaTotal como etiqueta — coincide con el número físico del asiento
+  const getSeatLabel = useCallback((id: string): string => id, []);
 
   const ocupadosSet = useMemo(() => {
     if (usaScoreMapa) return new Set(mapaScore.filter(a => a.estado !== "S").map(a => `${a.fila}${a.columna}`));
@@ -267,10 +261,12 @@ export default function BookingSection({ movie, funciones }: Props) {
             const dataEsg = await resEsg.json();
             const ocupacion = dataEsg.ocupacion as Record<string, string> | undefined;
             if (ocupacion) {
-              asientos = asientos.map((a: { fila: string; columnaLabel: number; columna: number; zona: string }) => ({
-                ...a,
-                estado: (ocupacion[`${a.fila}${a.columnaLabel}`] ?? "S") as "S" | "B" | "R",
-              }));
+              asientos = asientos.map((a: { fila: string; columnaLabel: number; columna: number; zona: string; estado: string }) => {
+                // SCOESG puede reportar por columnaLabel (relativa) o por columna (absoluta)
+                const esgEstado = ocupacion[`${a.fila}${a.columnaLabel}`]
+                               ?? ocupacion[`${a.fila}${a.columna}`];
+                return { ...a, estado: (esgEstado ?? a.estado) as "S" | "B" | "R" };
+              });
             }
           }
           setMapaScore(asientos);
