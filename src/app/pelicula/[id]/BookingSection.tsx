@@ -128,7 +128,6 @@ export default function BookingSection({ movie, funciones }: Props) {
     || selectedFuncion?.sala?.score_sala_id === "6"
     || false;
   if (selectedFuncion) console.log("[DEBUG sala]", JSON.stringify(selectedFuncion.sala));
-  console.log("[DEBUG mirror]", mirrorCols, "allCols:", allCols?.slice(0,5), "mapaLen:", mapaScore.length);
 
   const allCols = useMemo(() => {
     if (!usaScoreMapa) return null;
@@ -136,7 +135,9 @@ export default function BookingSection({ movie, funciones }: Props) {
     const min = Math.min(...cols);
     const max = Math.max(...cols);
     const range = Array.from({ length: max - min + 1 }, (_, i) => i + min);
-    return mirrorCols ? [...range].reverse() : range;
+    const result = mirrorCols ? [...range].reverse() : range;
+    console.log("[DEBUG allCols]", mirrorCols, result.slice(0, 6));
+    return result;
   }, [mapaScore, usaScoreMapa, mirrorCols]);
 
   const seatExists = useCallback((fila: string, col: number) =>
