@@ -483,10 +483,10 @@ export async function scoreVenta(p: ScoreVentaParams) {
       ClienteFrecuente: 0,
       Membresia:        false,
       TotalVenta:       p.totalVenta,
-      PagoInterno:      p.totalVenta,
-      PagoCredito:      0,
+      PagoInterno:      0,
+      PagoCredito:      p.totalVenta,
       PagoEfectivo:     0,
-      CodMedioPago:     0,
+      CodMedioPago:     4, // "Pago en linea" — código asignado por Score Projects
       Obs1: "", Obs2: "", Obs3: "", Obs4: "",
       Accion:           "V",
       teatro:           parseInt(teatro()),
