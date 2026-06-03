@@ -96,9 +96,11 @@ export default function FuncionesAdminPage() {
     setSyncResult(null);
     try {
       const res = await fetch("/api/score/sync-cartelera?dry_run=false");
-      const data = await res.json() as { pelUpdated?: number; funcUpdated?: number; error?: string };
+      const data = await res.json() as { pelUpdated?: number; funcUpdated?: number; log?: string[]; error?: string };
       if (!res.ok || data.error) { setSyncResult(`Error: ${data.error}`); return; }
-      setSyncResult(`✓ ${data.pelUpdated ?? 0} películas · ${data.funcUpdated ?? 0} funciones sincronizadas`);
+      const resumen = `✓ ${data.pelUpdated ?? 0} películas · ${data.funcUpdated ?? 0} funciones sincronizadas`;
+      const errores = (data.log ?? []).filter(l => l.includes("❌") || l.includes("⚠"));
+      setSyncResult(errores.length ? `${resumen}\n\n${errores.join("\n")}` : resumen);
       load();
     } catch {
       setSyncResult("Error al conectar con Score");
@@ -143,7 +145,7 @@ export default function FuncionesAdminPage() {
       </div>
 
       {syncResult && (
-        <div className={`mb-6 px-4 py-3 rounded-lg font-body text-sm ${syncResult.startsWith("Error") ? "bg-red-500/10 border border-red-500/30 text-red-400" : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"}`}>
+        <div className={`mb-6 px-4 py-3 rounded-lg font-body text-sm whitespace-pre-wrap ${syncResult.startsWith("Error") || syncResult.includes("❌") ? "bg-red-500/10 border border-red-500/30 text-red-400" : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"}`}>
           {syncResult}
         </div>
       )}

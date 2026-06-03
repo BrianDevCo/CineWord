@@ -234,9 +234,11 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       };
 
       if (fnExisting) {
-        await admin.from("funciones").update(fnData as never).eq("id", fnExisting.id);
+        const { error: upErr } = await admin.from("funciones").update(fnData as never).eq("id", fnExisting.id);
+        if (upErr) { log.push(`  ❌ Update función ${fn.fecha} ${fn.hora}: ${upErr.message}`); continue; }
       } else {
-        await admin.from("funciones").insert({ ...fnData, score_pelicula_id: pel.score_pelicula_id } as never);
+        const { error: inErr } = await admin.from("funciones").insert({ ...fnData, score_pelicula_id: pel.score_pelicula_id } as never);
+        if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${inErr.message}`); continue; }
       }
       funcUpdated++;
     }
