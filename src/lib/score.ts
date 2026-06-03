@@ -327,12 +327,12 @@ export async function scoreReservar(params: ScoreReservaParams) {
       InicioFuncion: parseInt(params.inicioFuncion ?? "0"),
       PuntoVenta:    parseInt(puntoVenta()),
       Secuencia:     parseInt(params.secuencia),
-      Telefono:      params.telefono,
+      Telefono:      parseInt(params.telefono ?? "0") || 0,
       Nombre:        params.nombre,
       Apellido:      params.apellido,
       Ubicaciones:   ubicaciones,
       teatro:        parseInt(teatro()),
-      tercero:       tercero(),
+      tercero:       parseInt(tercero()),
     }),
   );
 }

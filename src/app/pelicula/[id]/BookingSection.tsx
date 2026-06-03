@@ -365,7 +365,7 @@ export default function BookingSection({ movie, funciones }: Props) {
             const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion.score_tarifa_vip     ?? "";
 
             const [hh, mm] = selectedFuncion.hora.split(":");
-            await fetch("/api/score/grupo", {
+            const grupoRes = await fetch("/api/score/grupo", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -385,6 +385,8 @@ export default function BookingSection({ movie, funciones }: Props) {
                 })),
               }),
             });
+            const grupoData = await grupoRes.json();
+            console.log("[SCOGRU]", grupoData);
 
             setScoreSecuencia(sec);
           }
