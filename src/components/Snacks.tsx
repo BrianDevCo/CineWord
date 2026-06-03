@@ -205,12 +205,12 @@ export default function Snacks() {
                   key={item.id}
                   className="bg-[#111] rounded-xl border border-white/5 hover:border-[#CC1244]/30 transition-all duration-300 flex flex-col overflow-hidden"
                 >
-                  <div className="relative h-36 overflow-hidden bg-[#0d0d0d]">
+                  <div className="relative h-44 overflow-hidden bg-[#0d0d0d]">
                     <Image
                       src={item.image}
                       alt={item.name}
                       fill
-                      className="object-contain p-2"
+                      className="object-contain"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#111]/60 via-transparent to-transparent" />
