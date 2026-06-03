@@ -127,18 +127,13 @@ export default function BookingSection({ movie, funciones }: Props) {
     || selectedFuncion?.sala?.score_sala_id === "5"
     || selectedFuncion?.sala?.score_sala_id === "6"
     || false;
-  if (selectedFuncion) console.log("[DEBUG sala]", JSON.stringify(selectedFuncion.sala));
-
   const allCols = useMemo(() => {
     if (!usaScoreMapa) return null;
     const cols = mapaScore.map(a => a.columna);
     const min = Math.min(...cols);
     const max = Math.max(...cols);
-    const range = Array.from({ length: max - min + 1 }, (_, i) => i + min);
-    const result = mirrorCols ? [...range].reverse() : range;
-    console.log("[DEBUG allCols]", mirrorCols, result.slice(0, 6));
-    return result;
-  }, [mapaScore, usaScoreMapa, mirrorCols]);
+    return Array.from({ length: max - min + 1 }, (_, i) => i + min);
+  }, [mapaScore, usaScoreMapa]);
 
   const seatExists = useCallback((fila: string, col: number) =>
     mapaScore.some(a => a.fila === fila && a.columna === col),
@@ -744,7 +739,7 @@ export default function BookingSection({ movie, funciones }: Props) {
               <>
                 <div className="flex flex-col gap-2 overflow-x-auto">
                   {[...filas].reverse().map(row => (
-                    <div key={row} className="flex items-center gap-2 justify-center">
+                    <div key={row} className={`flex items-center gap-2 justify-center ${mirrorCols ? "flex-row-reverse" : ""}`}>
                       <span className="w-5 text-center text-gray-600 text-xs font-heading shrink-0">{row}</span>
                       <div className="flex gap-1.5 items-center">
                         {(allCols ?? colsEnFila(row)).map(col => {
