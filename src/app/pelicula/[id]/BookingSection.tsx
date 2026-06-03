@@ -787,9 +787,9 @@ export default function BookingSection({ movie, funciones }: Props) {
                   ))}
                 </div>
 
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-2/3 h-2 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full" />
-                  <span className="text-gray-600 text-xs font-heading tracking-widest">PANTALLA</span>
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="w-4/5 h-4 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-sm" style={{ boxShadow: "0 0 18px 4px rgba(255,255,255,0.15)" }} />
+                  <span className="text-white/60 text-sm font-heading tracking-[0.3em] uppercase">— Pantalla —</span>
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-5 text-xs font-body text-gray-500">
