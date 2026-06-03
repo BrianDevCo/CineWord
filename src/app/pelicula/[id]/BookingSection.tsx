@@ -128,6 +128,7 @@ export default function BookingSection({ movie, funciones }: Props) {
     || selectedFuncion?.sala?.score_sala_id === "6"
     || false;
   if (selectedFuncion) console.log("[DEBUG sala]", JSON.stringify(selectedFuncion.sala));
+  console.log("[DEBUG mirror]", mirrorCols, "allCols:", allCols?.slice(0,5), "mapaLen:", mapaScore.length);
 
   const allCols = useMemo(() => {
     if (!usaScoreMapa) return null;
