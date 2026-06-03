@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { scoreGetMediosPago } from "@/lib/score";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-// GET /api/score/medios-pago — requiere sesión admin
+// GET /api/score/medios-pago — diagnóstico de medios de pago Score
 export async function GET() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
+  if (!process.env.SCORE_BASE_URL) {
+    return NextResponse.json({ error: "SCORE_BASE_URL no configurado" }, { status: 500 });
+  }
   try {
     const medios = await scoreGetMediosPago();
     return NextResponse.json({ ok: true, medios });
