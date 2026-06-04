@@ -644,9 +644,6 @@ export default function BookingSection({ movie, funciones }: Props) {
                     ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20"
                     : "border-white/15 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"}`}>
                   {f}
-                  <span className="block text-xs font-body mt-0.5 font-normal opacity-60">
-                    {f === "VIP" ? fmt(precioVip) : fmt(precioRegular)} / silla
-                  </span>
                 </button>
               ))}
             </div>
