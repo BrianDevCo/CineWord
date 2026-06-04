@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Cartelera from "@/components/Cartelera";
 import ProximosEstrenos from "@/components/ProximosEstrenos";
 import Horarios from "@/components/Horarios";
+import Precios from "@/components/Precios";
 import Snacks from "@/components/Snacks";
 import Contacto from "@/components/Contacto";
 import Footer from "@/components/Footer";
@@ -25,6 +26,7 @@ export default async function Home() {
         <Cartelera peliculas={enCartelera} />
         <ProximosEstrenos peliculas={proximas} />
         <Horarios />
+        <Precios />
         <Snacks />
         <Contacto />
       </main>

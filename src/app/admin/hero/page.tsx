@@ -33,22 +33,9 @@ export default function AdminHeroPage() {
       .then((data) => { setPeliculas(data); setLoading(false); });
   }, []);
 
-  function toggle(id: number, estado: "en_cartelera" | "proximo") {
+  function toggle(id: number) {
     setPeliculas((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p;
-        const estaActiva = p.en_hero;
-        if (!estaActiva) {
-          // Verificar límite de 2
-          const cuantas = prev.filter((x) => x.estado === estado && x.en_hero).length;
-          if (cuantas >= 2) {
-            setMsg(`Máximo 2 ${estado === "en_cartelera" ? "en cartelera" : "próximos"} en el hero`);
-            setTimeout(() => setMsg(""), 3000);
-            return p;
-          }
-        }
-        return { ...p, en_hero: !estaActiva };
-      })
+      prev.map((p) => (p.id === id ? { ...p, en_hero: !p.en_hero } : p))
     );
   }
 
@@ -86,7 +73,7 @@ export default function AdminHeroPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold text-white">Hero Carousel</h1>
-          <p className="text-gray-500 text-sm mt-1">Selecciona hasta 2 en cartelera y 2 próximos para el hero de la página principal</p>
+          <p className="text-gray-500 text-sm mt-1">Selecciona las películas que aparecen en el hero rotativo de la página principal</p>
         </div>
         <button
           onClick={guardar}
@@ -107,11 +94,11 @@ export default function AdminHeroPage() {
       <section>
         <div className="flex items-center gap-3 mb-4">
           <span className="font-heading text-sm font-bold text-white tracking-wider uppercase">En Cartelera</span>
-          <span className="text-xs text-gray-500">({selectedCartelera.length}/2 seleccionadas)</span>
+          <span className="text-xs text-gray-500">({selectedCartelera.length} seleccionadas)</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {cartelera.map((p) => (
-            <PeliculaCard key={p.id} pelicula={p} onToggle={() => toggle(p.id, p.estado)} />
+            <PeliculaCard key={p.id} pelicula={p} onToggle={() => toggle(p.id)} />
           ))}
         </div>
       </section>
@@ -120,11 +107,11 @@ export default function AdminHeroPage() {
       <section>
         <div className="flex items-center gap-3 mb-4">
           <span className="font-heading text-sm font-bold text-white tracking-wider uppercase">Próximos Estrenos</span>
-          <span className="text-xs text-gray-500">({selectedProximas.length}/2 seleccionadas)</span>
+          <span className="text-xs text-gray-500">({selectedProximas.length} seleccionadas)</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {proximas.map((p) => (
-            <PeliculaCard key={p.id} pelicula={p} onToggle={() => toggle(p.id, p.estado)} />
+            <PeliculaCard key={p.id} pelicula={p} onToggle={() => toggle(p.id)} />
           ))}
         </div>
       </section>

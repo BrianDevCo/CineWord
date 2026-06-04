@@ -52,6 +52,7 @@ export default function Footer() {
                 { label: "Próximos Estrenos", href: "#proximos" },
                 { label: "Combos", href: "#snacks" },
                 { label: "Horarios", href: "#horarios" },
+                { label: "Precios", href: "#precios" },
                 { label: "Contacto", href: "#contacto" },
               ].map((l) => (
                 <li key={l.label}>

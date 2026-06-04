@@ -50,6 +50,7 @@ export default function Navbar() {
   const links = [
     { label: "Cartelera", href: "/#cartelera" },
     { label: "Horarios", href: "/#horarios" },
+    { label: "Precios", href: "/#precios" },
     { label: "Próximos", href: "/#proximos" },
     { label: "Combos", href: "/#snacks" },
     { label: "Contacto", href: "/#contacto" },

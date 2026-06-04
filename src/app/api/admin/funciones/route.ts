@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   if (!adminReady()) return NextResponse.json({ error: "Admin no configurado" }, { status: 503 });
 
   const { searchParams } = new URL(req.url);
-  const desde = searchParams.get("desde") ?? new Date().toISOString().split("T")[0];
+  const hace7dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const desde = searchParams.get("desde") ?? hace7dias;
   const peliculaId = searchParams.get("pelicula_id");
 
   const db = createAdminClient();
