@@ -19,6 +19,7 @@ export default function Precios() {
       highlight: true,
       dotColor: "bg-[#CC1244]",
       textColor: "text-[#CC1244]",
+      horario: "Solo funciones antes de las 3:00 PM",
     },
     {
       dias: ["Viernes", "Sábado", "Domingo"],
@@ -101,6 +102,18 @@ export default function Precios() {
                   ))}
                 </div>
               </div>
+
+              {/* Horario restricción */}
+              {"horario" in g && g.horario && (
+                <div className="mx-6 mb-4 flex items-center gap-2 bg-[#CC1244]/15 border border-[#CC1244]/40 rounded-lg px-3 py-2.5">
+                  <svg className="w-4 h-4 text-[#CC1244] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-heading text-[#CC1244] text-xs tracking-wide font-bold">
+                    {g.horario}
+                  </span>
+                </div>
+              )}
 
               {/* Divisor tipo ticket */}
               <div className="relative mx-4 flex items-center gap-0">
