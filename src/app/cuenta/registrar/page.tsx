@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { VENTA_ONLINE } from "@/lib/config";
 
 export default function RegistrarPage() {
   const router = useRouter();
@@ -74,6 +75,33 @@ export default function RegistrarPage() {
       options: { redirectTo: `${window.location.origin}/cuenta/callback` },
     });
   };
+
+  if (!VENTA_ONLINE) {
+    return (
+      <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0008] via-[#0a0a0a] to-black pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#CC1244]/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="relative flex flex-col items-center gap-6 text-center max-w-sm">
+          <Link href="/">
+            <div className="bg-[#CC1244] px-4 py-2 rounded-sm">
+              <span className="font-heading text-white text-2xl font-bold tracking-widest">CINEWORLD</span>
+            </div>
+          </Link>
+          <div className="w-16 h-16 rounded-full bg-[#CC1244]/10 border border-[#CC1244]/30 flex items-center justify-center text-3xl">🎟️</div>
+          <div>
+            <p className="font-heading text-white text-xl tracking-wider mb-2">COMPRA EN LÍNEA PRÓXIMAMENTE</p>
+            <p className="text-gray-500 font-body text-sm leading-relaxed">
+              Estamos preparando la venta de boletos en línea.<br />
+              Por ahora adquiere tus boletos en <span className="text-white">taquilla</span>.
+            </p>
+          </div>
+          <Link href="/" className="bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest px-8 py-3 rounded-sm transition-all">
+            VER CARTELERA
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   if (success) {
     return (

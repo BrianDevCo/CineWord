@@ -12,7 +12,7 @@ import type { User } from "@supabase/supabase-js";
 const MercadoPagoBrick = dynamic(() => import("@/components/MercadoPagoBrick"), { ssr: false });
 
 // Cambiar a false para deshabilitar la venta en línea
-const VENTA_ONLINE = true;
+import { VENTA_ONLINE } from "@/lib/config";
 
 // ── Constantes de fallback (cuando Score no está configurado) ──────────────────
 const FALLBACK_ROWS = ["A","B","C","D","E","F","G","H"];
