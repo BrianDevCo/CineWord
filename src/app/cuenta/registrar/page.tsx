@@ -44,10 +44,13 @@ export default function RegistrarPage() {
     });
 
     if (error) {
+      const msg = error.message?.toLowerCase() ?? "";
       setError(
-        error.message.includes("already registered")
+        msg.includes("already registered") || msg.includes("already been registered")
           ? "Este correo ya tiene una cuenta. Intenta iniciar sesión."
-          : "Ocurrió un error. Intenta de nuevo."
+          : msg.includes("rate") || msg.includes("429") || (error as { status?: number }).status === 429
+          ? "Demasiados intentos. Espera unos minutos antes de volver a intentarlo."
+          : "Ocurrió un error al crear la cuenta. Intenta de nuevo."
       );
       setLoading(false);
       return;
