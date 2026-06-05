@@ -1,7 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SITIO_ACTIVO } from "@/lib/config";
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (!SITIO_ACTIVO) {
+    const esAdmin = pathname.startsWith("/admin") || pathname.startsWith("/cuenta");
+    const esRetirado = pathname === "/retirado";
+    if (!esAdmin && !esRetirado) {
+      return NextResponse.redirect(new URL("/retirado", request.url));
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
