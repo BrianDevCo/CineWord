@@ -14,11 +14,6 @@ export default function RetiradoPage() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center gap-8 text-center max-w-lg">
-        {/* Logo */}
-        <div className="bg-[#CC1244] px-4 py-2 rounded-sm opacity-60">
-          <span className="font-heading text-white text-2xl font-bold tracking-widest">CINEWORLD</span>
-        </div>
-
         {/* Ícono */}
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
@@ -34,12 +29,11 @@ export default function RetiradoPage() {
         {/* Mensaje */}
         <div className="flex flex-col gap-3">
           <h1 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-wider leading-tight">
-            ESTE SERVICIO<br />
-            <span className="text-gray-500">FUE RETIRADO</span>
+            SITIO SUSPENDIDO
           </h1>
           <p className="font-body text-gray-500 text-sm sm:text-base leading-relaxed max-w-sm mx-auto">
-            El sitio web de CINEWORLD ya no se encuentra disponible.
-            El producto fue retirado y esta plataforma dejó de operar.
+            Este sitio web fue suspendido por el desarrollador debido a
+            incumplimiento en los términos del servicio contratado.
           </p>
         </div>
 
