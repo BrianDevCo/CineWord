@@ -40,11 +40,6 @@ export default function RetiradoPage() {
         {/* Divisor */}
         <div className="w-16 h-px bg-white/10" />
 
-        {/* Contacto */}
-        <p className="font-body text-gray-600 text-xs leading-relaxed">
-          Si tienes preguntas, comunícate directamente con el cine.<br />
-          <span className="text-gray-500">Centro Comercial MR Outlet · Cali, Valle del Cauca</span>
-        </p>
       </div>
 
       {/* Tira de película abajo */}
