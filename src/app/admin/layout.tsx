@@ -25,9 +25,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const user = await getUser();
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+    .split(",").map(e => e.trim()).filter(Boolean);
 
-  if (!user || !adminEmail || user.email !== adminEmail) {
+  if (!user || !user.email || adminEmails.length === 0 || !adminEmails.includes(user.email)) {
     redirect(`/cuenta/login?redirect=/admin`);
   }
 

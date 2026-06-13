@@ -10,9 +10,10 @@ function supabaseReady() {
 export async function requireAdmin(): Promise<
   { email: string; error: null } | { email: null; error: NextResponse }
 > {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail) {
-    return { email: null, error: NextResponse.json({ error: "ADMIN_EMAIL no configurado" }, { status: 503 }) };
+  const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+    .split(",").map(e => e.trim()).filter(Boolean);
+  if (adminEmails.length === 0) {
+    return { email: null, error: NextResponse.json({ error: "ADMIN_EMAILS no configurado" }, { status: 503 }) };
   }
   if (!supabaseReady()) {
     return { email: null, error: NextResponse.json({ error: "Supabase no configurado" }, { status: 503 }) };
@@ -32,7 +33,7 @@ export async function requireAdmin(): Promise<
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.email !== adminEmail) {
+  if (!user || !user.email || !adminEmails.includes(user.email)) {
     return { email: null, error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) };
   }
 
