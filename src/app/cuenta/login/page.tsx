@@ -48,7 +48,7 @@ export default function LoginPage() {
     });
   };
 
-  if (!VENTA_ONLINE && !showAdminForm) {
+  if (!VENTA_ONLINE && !showAdminForm && !redirect.startsWith("/admin")) {
     return (
       <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a0008] via-[#0a0a0a] to-black pointer-events-none" />
