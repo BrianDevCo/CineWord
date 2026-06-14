@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient, adminReady } from "@/lib/supabase-admin";
 
@@ -34,6 +35,7 @@ export async function PUT(req: NextRequest) {
     if (setError) return NextResponse.json({ error: setError.message }, { status: 500 });
   }
 
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }
 
