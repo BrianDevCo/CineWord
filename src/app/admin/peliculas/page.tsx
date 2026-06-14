@@ -33,6 +33,12 @@ export default function PeliculasAdminPage() {
 
   useEffect(() => { load(); }, []);
 
+  const eliminar = async (p: Pelicula) => {
+    if (!confirm(`¿Eliminar "${p.titulo}"? Esta acción no se puede deshacer.`)) return;
+    await fetch(`/api/admin/peliculas/${p.id}`, { method: "DELETE" });
+    load();
+  };
+
   const toggleActiva = async (p: Pelicula) => {
     await fetch(`/api/admin/peliculas/${p.id}`, {
       method: "PUT",
@@ -151,7 +157,13 @@ export default function PeliculasAdminPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="font-heading text-white font-bold truncate">{p.titulo}</p>
-                <p className="font-body text-gray-500 text-xs">{p.genero} · {p.duracion} · {p.clasificacion}</p>
+                <p className="font-body text-gray-500 text-xs">
+                  {p.genero} · {p.duracion} · {p.clasificacion}
+                  {(p as never as Record<string, string>).score_pelicula_id
+                    ? <span className="ml-2 text-emerald-500">Score: {(p as never as Record<string, string>).score_pelicula_id}</span>
+                    : <span className="ml-2 text-yellow-600">Sin Score ID</span>
+                  }
+                </p>
               </div>
 
               {/* Estado */}
@@ -184,6 +196,10 @@ export default function PeliculasAdminPage() {
                 className="border border-white/15 hover:border-white/40 text-gray-400 hover:text-white font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
                 EDITAR
               </Link>
+              <button onClick={() => eliminar(p)}
+                className="border border-red-500/30 hover:border-red-500 text-red-500/60 hover:text-red-400 font-heading text-xs tracking-widest px-3 py-1.5 rounded-lg transition-all shrink-0">
+                ELIMINAR
+              </button>
             </div>
           ))}
         </div>

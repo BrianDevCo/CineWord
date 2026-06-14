@@ -70,7 +70,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   const db = createAdminClient();
-  const { error: dbError } = await db.from("peliculas").update({ activa: false }).eq("id", id);
+  const { error: dbError } = await db.from("peliculas").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
