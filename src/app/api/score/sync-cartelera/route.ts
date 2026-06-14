@@ -210,7 +210,11 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       const tarifaReg = fn.tarifas.find((t) => !t.nombre.toUpperCase().includes("VIP"));
       const tarifaVip = fn.tarifas.find((t) => t.nombre.toUpperCase().includes("VIP"));
 
-      const { error: inErr } = await (admin.from("funciones") as never as { upsert: (data: unknown, opts: unknown) => { error: unknown } }).upsert({
+      const { data: existe } = await admin.from("funciones").select("id")
+        .eq("pelicula_id", peliculaId).eq("sala_id", salaId).eq("fecha", fn.fecha).eq("hora", fn.hora).maybeSingle();
+      if (existe) { funcUpdated++; continue; }
+
+      const { error: inErr } = await admin.from("funciones").insert({
         pelicula_id: peliculaId,
         sala_id: salaId,
         fecha: fn.fecha,
@@ -223,8 +227,8 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
         score_tarifa_regular: tarifaReg?.codigo ?? null,
         score_tarifa_vip: tarifaVip?.codigo ?? null,
         score_pelicula_id: pel.score_pelicula_id,
-      }, { onConflict: "pelicula_id,sala_id,fecha,hora", ignoreDuplicates: true });
-      if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${(inErr as {message:string}).message}`); continue; }
+      } as never);
+      if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${inErr.message}`); continue; }
       funcUpdated++;
     }
   }
