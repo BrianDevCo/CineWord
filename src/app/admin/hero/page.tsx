@@ -27,11 +27,13 @@ export default function AdminHeroPage() {
   const selectedCartelera = cartelera.filter((p) => p.en_hero).map((p) => p.id);
   const selectedProximas = proximas.filter((p) => p.en_hero).map((p) => p.id);
 
-  useEffect(() => {
+  const load = () => {
     fetch("/api/admin/hero")
       .then((r) => r.json())
       .then((data) => { setPeliculas(data); setLoading(false); });
-  }, []);
+  };
+
+  useEffect(() => { load(); }, []);
 
   function toggle(id: number) {
     setPeliculas((prev) =>
@@ -52,6 +54,7 @@ export default function AdminHeroPage() {
     });
     setSaving(false);
     if (res.ok) {
+      load();
       setMsg("Guardado correctamente");
     } else {
       const err = await res.json();

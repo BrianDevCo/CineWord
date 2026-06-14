@@ -36,6 +36,7 @@ export async function PUT(req: NextRequest) {
   }
 
   revalidatePath("/");
+  revalidatePath("/admin/hero");
   return NextResponse.json({ ok: true });
 }
 
