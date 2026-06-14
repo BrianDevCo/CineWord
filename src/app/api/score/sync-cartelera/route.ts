@@ -119,13 +119,14 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
   const log: string[] = [];
   let pelUpdated = 0, funcUpdated = 0;
 
-  // Borra TODAS las funciones antes de insertar las nuevas
+  // Borra reservas y funciones anteriores (limpieza completa)
+  await admin.from("reservas").delete().neq("id", 0);
   const { error: delErr } = await admin.from("funciones").delete().neq("id", 0);
   if (delErr) {
     log.push(`❌ No se pudieron borrar funciones anteriores: ${delErr.message}`);
     return { pelUpdated, funcUpdated, log };
   }
-  log.push("🗑 Funciones anteriores eliminadas");
+  log.push("🗑 Funciones y reservas anteriores eliminadas");
 
   for (const pel of peliculas) {
     if (!pel.score_pelicula_id || !pel.titulo) continue;
