@@ -119,15 +119,6 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
   const log: string[] = [];
   let pelUpdated = 0, funcUpdated = 0;
 
-  // Borra reservas y funciones anteriores (limpieza completa)
-  await admin.from("reservas").delete().neq("id", 0);
-  const { error: delErr } = await admin.from("funciones").delete().neq("id", 0);
-  if (delErr) {
-    log.push(`❌ No se pudieron borrar funciones anteriores: ${delErr.message}`);
-    return { pelUpdated, funcUpdated, log };
-  }
-  log.push("🗑 Funciones y reservas anteriores eliminadas");
-
   for (const pel of peliculas) {
     if (!pel.score_pelicula_id || !pel.titulo) continue;
 
@@ -219,7 +210,7 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       const tarifaReg = fn.tarifas.find((t) => !t.nombre.toUpperCase().includes("VIP"));
       const tarifaVip = fn.tarifas.find((t) => t.nombre.toUpperCase().includes("VIP"));
 
-      const { error: inErr } = await admin.from("funciones").insert({
+      const { error: inErr } = await (admin.from("funciones") as never as { upsert: (data: unknown, opts: unknown) => { error: unknown } }).upsert({
         pelicula_id: peliculaId,
         sala_id: salaId,
         fecha: fn.fecha,
@@ -232,8 +223,8 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
         score_tarifa_regular: tarifaReg?.codigo ?? null,
         score_tarifa_vip: tarifaVip?.codigo ?? null,
         score_pelicula_id: pel.score_pelicula_id,
-      } as never);
-      if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${inErr.message}`); continue; }
+      }, { onConflict: "pelicula_id,sala_id,fecha,hora", ignoreDuplicates: true });
+      if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${(inErr as {message:string}).message}`); continue; }
       funcUpdated++;
     }
   }

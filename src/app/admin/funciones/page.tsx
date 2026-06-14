@@ -45,6 +45,7 @@ export default function FuncionesAdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [verAnteriores, setVerAnteriores] = useState(false);
 
   const load = () => {
     Promise.all([
@@ -112,8 +113,10 @@ export default function FuncionesAdminPage() {
   const set = (k: string, v: string | number) => setForm((p) => ({ ...p, [k]: v }));
   const inputClass = "bg-[#0d0d0d] border border-white/10 text-white font-body text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-[#CC1244] w-full transition-colors";
 
-  // Agrupar por fecha
-  const byDate = funciones.reduce<Record<string, FuncionAdmin[]>>((acc, f) => {
+  // Filtrar y agrupar por fecha
+  const hoy = new Date().toISOString().slice(0, 10);
+  const funcionesFiltradas = verAnteriores ? funciones : funciones.filter(f => f.fecha >= hoy);
+  const byDate = funcionesFiltradas.reduce<Record<string, FuncionAdmin[]>>((acc, f) => {
     acc[f.fecha] = acc[f.fecha] ?? [];
     acc[f.fecha].push(f);
     return acc;
@@ -127,6 +130,13 @@ export default function FuncionesAdminPage() {
           <h1 className="font-heading text-3xl font-bold text-white tracking-wider">FUNCIONES</h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={() => setVerAnteriores(!verAnteriores)}
+            className={`border font-heading text-sm tracking-widest px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 ${verAnteriores ? "border-amber-500 text-amber-400 bg-amber-500/10" : "border-white/15 text-gray-400 hover:border-white/30 hover:text-white"}`}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {verAnteriores ? "OCULTAR ANTERIORES" : "VER ANTERIORES"}
+          </button>
           <button onClick={syncCartelera} disabled={syncing}
             className="border border-[#CC1244] text-[#CC1244] hover:bg-[#CC1244] hover:text-white disabled:opacity-40 font-heading text-sm tracking-widest px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
