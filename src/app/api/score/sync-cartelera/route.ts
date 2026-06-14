@@ -119,6 +119,14 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
   const log: string[] = [];
   let pelUpdated = 0, funcUpdated = 0;
 
+  // Borra TODAS las funciones antes de insertar las nuevas
+  const { error: delErr } = await admin.from("funciones").delete().neq("id", 0);
+  if (delErr) {
+    log.push(`❌ No se pudieron borrar funciones anteriores: ${delErr.message}`);
+    return { pelUpdated, funcUpdated, log };
+  }
+  log.push("🗑 Funciones anteriores eliminadas");
+
   for (const pel of peliculas) {
     if (!pel.score_pelicula_id || !pel.titulo) continue;
 
@@ -152,7 +160,7 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       const tmdb = await tmdbEnrich(tituloLimpio).catch(() => null);
 
       const nuevaPelicula = {
-        titulo:            tmdb?.titulo ?? tituloLimpio,
+        titulo:            tituloLimpio,
         sinopsis:          tmdb?.sinopsis ?? pel.sinopsis ?? "",
         poster_url:        tmdb?.poster_url ?? "",
         backdrop_url:      tmdb?.backdrop_url ?? "",
@@ -210,16 +218,7 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       const tarifaReg = fn.tarifas.find((t) => !t.nombre.toUpperCase().includes("VIP"));
       const tarifaVip = fn.tarifas.find((t) => t.nombre.toUpperCase().includes("VIP"));
 
-      const { data: fnExisting } = await admin
-        .from("funciones")
-        .select("id")
-        .eq("pelicula_id", peliculaId)
-        .eq("sala_id", salaId)
-        .eq("fecha", fn.fecha)
-        .eq("hora", fn.hora)
-        .maybeSingle();
-
-      const fnData = {
+      const { error: inErr } = await admin.from("funciones").insert({
         pelicula_id: peliculaId,
         sala_id: salaId,
         fecha: fn.fecha,
@@ -231,15 +230,9 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
         score_sala_id: fn.score_sala_id,
         score_tarifa_regular: tarifaReg?.codigo ?? null,
         score_tarifa_vip: tarifaVip?.codigo ?? null,
-      };
-
-      if (fnExisting) {
-        const { error: upErr } = await admin.from("funciones").update(fnData as never).eq("id", fnExisting.id);
-        if (upErr) { log.push(`  ❌ Update función ${fn.fecha} ${fn.hora}: ${upErr.message}`); continue; }
-      } else {
-        const { error: inErr } = await admin.from("funciones").insert({ ...fnData, score_pelicula_id: pel.score_pelicula_id } as never);
-        if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${inErr.message}`); continue; }
-      }
+        score_pelicula_id: pel.score_pelicula_id,
+      } as never);
+      if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${inErr.message}`); continue; }
       funcUpdated++;
     }
   }
