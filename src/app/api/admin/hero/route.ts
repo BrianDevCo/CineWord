@@ -11,8 +11,8 @@ export async function PUT(req: NextRequest) {
   if (!adminReady()) return NextResponse.json({ error: "Admin no configurado" }, { status: 503 });
 
   const body = await req.json();
-  const ids_cartelera: number[] = (body.ids_cartelera ?? []).slice(0, 2);
-  const ids_proximos: number[] = (body.ids_proximos ?? []).slice(0, 2);
+  const ids_cartelera: number[] = body.ids_cartelera ?? [];
+  const ids_proximos: number[] = body.ids_proximos ?? [];
   const ids_activos = [...ids_cartelera, ...ids_proximos];
 
   const db = createAdminClient();
