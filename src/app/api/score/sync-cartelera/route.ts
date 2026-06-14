@@ -190,46 +190,57 @@ async function syncToSupabase(peliculas: ParsedPelicula[]) {
       log.push(`✨ Película NUEVA "${tituloLimpio}" creada (id=${peliculaId})${tmdbInfo}`);
     }
 
-    // Sync funciones
+    // Expandir funciones: tomar horarios únicos de Score y repetirlos 14 días desde su fecha de inicio
+    const DIAS = 7;
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+
+    // Agrupar por sala+hora para obtener horario único y fecha de inicio
+    const slots = new Map<string, { fn: ParsedFuncion; startDate: Date }>();
     for (const fn of pel.funciones) {
-      if (!fn.score_sala_id || !fn.fecha || !fn.hora) continue;
+      if (!fn.score_sala_id || !fn.hora) continue;
+      const key = `${fn.score_sala_id}|${fn.hora}`;
+      const d = new Date(fn.fecha);
+      if (!slots.has(key) || d < slots.get(key)!.startDate) slots.set(key, { fn, startDate: d });
+    }
 
+    for (const { fn, startDate } of slots.values()) {
       // Busca sala por score_sala_id
-      const { data: sala } = await admin
-        .from("salas")
-        .select("id")
-        .eq("score_sala_id" as never, fn.score_sala_id)
-        .maybeSingle();
-
+      const { data: sala } = await admin.from("salas").select("id")
+        .eq("score_sala_id" as never, fn.score_sala_id).maybeSingle();
       const salaId = sala?.id ?? null;
-      if (!salaId) {
-        log.push(`  ⚠ Sala score_id=${fn.score_sala_id} no encontrada — configúrala en /admin`);
-        continue;
-      }
+      if (!salaId) { log.push(`  ⚠ Sala score_id=${fn.score_sala_id} no encontrada`); continue; }
 
       const tarifaReg = fn.tarifas.find((t) => !t.nombre.toUpperCase().includes("VIP"));
       const tarifaVip = fn.tarifas.find((t) => t.nombre.toUpperCase().includes("VIP"));
 
-      const { data: existe } = await admin.from("funciones").select("id")
-        .eq("pelicula_id", peliculaId).eq("sala_id", salaId).eq("fecha", fn.fecha).eq("hora", fn.hora).maybeSingle();
-      if (existe) { funcUpdated++; continue; }
+      // Insertar desde max(hoy, startDate) hasta +14 días
+      const inicio = startDate > hoy ? startDate : hoy;
+      for (let i = 0; i < DIAS; i++) {
+        const d = new Date(inicio);
+        d.setDate(d.getDate() + i);
+        const fecha = d.toISOString().slice(0, 10);
 
-      const { error: inErr } = await admin.from("funciones").insert({
-        pelicula_id: peliculaId,
-        sala_id: salaId,
-        fecha: fn.fecha,
-        hora: fn.hora,
-        formato: fn.formato,
-        precio_regular: tarifaReg?.valor ?? 15000,
-        precio_vip: tarifaVip?.valor ?? 25000,
-        activa: true,
-        score_sala_id: fn.score_sala_id,
-        score_tarifa_regular: tarifaReg?.codigo ?? null,
-        score_tarifa_vip: tarifaVip?.codigo ?? null,
-        score_pelicula_id: pel.score_pelicula_id,
-      } as never);
-      if (inErr) { log.push(`  ❌ Insert función ${fn.fecha} ${fn.hora}: ${inErr.message}`); continue; }
-      funcUpdated++;
+        const { data: existe } = await admin.from("funciones").select("id")
+          .eq("pelicula_id", peliculaId).eq("sala_id", salaId).eq("fecha", fecha).eq("hora", fn.hora).maybeSingle();
+        if (existe) { funcUpdated++; continue; }
+
+        const { error: inErr } = await admin.from("funciones").insert({
+          pelicula_id: peliculaId,
+          sala_id: salaId,
+          fecha,
+          hora: fn.hora,
+          formato: fn.formato,
+          precio_regular: tarifaReg?.valor ?? 15000,
+          precio_vip: tarifaVip?.valor ?? 25000,
+          activa: true,
+          score_sala_id: fn.score_sala_id,
+          score_tarifa_regular: tarifaReg?.codigo ?? null,
+          score_tarifa_vip: tarifaVip?.codigo ?? null,
+          score_pelicula_id: pel.score_pelicula_id,
+        } as never);
+        if (inErr) { log.push(`  ❌ Insert función ${fecha} ${fn.hora}: ${inErr.message}`); continue; }
+        funcUpdated++;
+      }
     }
   }
 
