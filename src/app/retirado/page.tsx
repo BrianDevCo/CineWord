@@ -1,53 +1,149 @@
+"use client";
+
+import Image from "next/image";
+
 export default function RetiradoPage() {
   return (
-    <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Fondo */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1a0008] via-[#0a0a0a] to-black" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#CC1244]/8 blur-[140px] rounded-full" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-[#CC1244]/5 blur-[120px] rounded-full" />
+    <main className="min-h-screen bg-[#1a1208] flex flex-col items-center justify-center px-4 overflow-hidden">
+      {/* Luz ambiental de fondo */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#3a2a0a_0%,_#0e0a04_60%,_#000_100%)]" />
 
-      {/* Tira de película arriba */}
-      <div className="absolute top-0 left-0 right-0 flex">
-        {Array.from({ length: 40 }).map((_, i) => (
-          <div key={i} className="flex-1 h-3 border-r border-white/5 odd:bg-white/[0.02]" />
-        ))}
-      </div>
+      <div className="relative z-10 flex flex-col items-center gap-6">
 
-      <div className="relative z-10 flex flex-col items-center gap-8 text-center max-w-lg">
-        {/* Ícono */}
+        {/* TV */}
         <div className="relative">
-          <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-            </svg>
+
+          {/* Antena */}
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex gap-10">
+            <div
+              className="w-[3px] h-16 bg-gradient-to-t from-[#888] to-[#bbb] rounded-full origin-bottom"
+              style={{ transform: "rotate(-18deg)" }}
+            />
+            <div
+              className="w-[3px] h-16 bg-gradient-to-t from-[#888] to-[#bbb] rounded-full origin-bottom"
+              style={{ transform: "rotate(18deg)" }}
+            />
           </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-28 h-px bg-white/20 rotate-45" />
+
+          {/* Cuerpo del televisor */}
+          <div
+            className="relative rounded-[2rem] p-5 pb-8 shadow-2xl"
+            style={{
+              background: "linear-gradient(145deg, #6b5a3e 0%, #4a3d28 40%, #3a2e1a 100%)",
+              boxShadow:
+                "0 20px 60px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.5)",
+              border: "3px solid #2a2010",
+            }}
+          >
+            {/* Pantalla con marco interior */}
+            <div
+              className="relative rounded-xl overflow-hidden"
+              style={{
+                boxShadow: "inset 0 0 20px rgba(0,0,0,0.9), inset 0 0 6px rgba(0,0,0,0.6)",
+                border: "6px solid #1a1408",
+              }}
+            >
+              {/* La imagen */}
+              <div className="relative w-[520px] max-w-[85vw] aspect-[970/770]">
+                <Image
+                  src="/problemas.jpg"
+                  alt="Technical Difficulties"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+
+                {/* Scanlines */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 4px)",
+                  }}
+                />
+
+                {/* Brillo de pantalla (reflejo curvo) */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse at 30% 25%, rgba(255,255,255,0.08) 0%, transparent 60%)",
+                  }}
+                />
+
+                {/* Parpadeo */}
+                <div
+                  className="absolute inset-0 pointer-events-none animate-flicker"
+                  style={{ background: "rgba(0,0,0,0.04)" }}
+                />
+              </div>
+            </div>
+
+            {/* Panel inferior: perilla + altavoz */}
+            <div className="flex items-center justify-between mt-4 px-3">
+              {/* Altavoz (rejilla) */}
+              <div className="flex gap-[4px]">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-[3px] h-10 rounded-full"
+                    style={{ background: "linear-gradient(to bottom, #2a2010, #1a1408)" }}
+                  />
+                ))}
+              </div>
+
+              {/* Perillas */}
+              <div className="flex gap-4">
+                <div
+                  className="w-8 h-8 rounded-full"
+                  style={{
+                    background: "radial-gradient(circle at 35% 35%, #8a7a5a, #3a2e1a)",
+                    boxShadow: "2px 2px 4px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(0,0,0,0.4)",
+                  }}
+                />
+                <div
+                  className="w-8 h-8 rounded-full"
+                  style={{
+                    background: "radial-gradient(circle at 35% 35%, #8a7a5a, #3a2e1a)",
+                    boxShadow: "2px 2px 4px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(0,0,0,0.4)",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Patas del TV */}
+          <div className="flex justify-between px-10 -mt-1">
+            <div
+              className="w-6 h-5 rounded-b-md"
+              style={{ background: "linear-gradient(to bottom, #3a2e1a, #2a2010)" }}
+            />
+            <div
+              className="w-6 h-5 rounded-b-md"
+              style={{ background: "linear-gradient(to bottom, #3a2e1a, #2a2010)" }}
+            />
           </div>
         </div>
 
-        {/* Mensaje */}
-        <div className="flex flex-col gap-3">
-          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-wider leading-tight">
-            SITIO SUSPENDIDO
-          </h1>
-          <p className="font-body text-gray-500 text-sm sm:text-base leading-relaxed max-w-sm mx-auto">
-            Este sitio web fue suspendido por el desarrollador debido a
-            incumplimiento en los términos del servicio contratado.
-          </p>
-        </div>
-
-        {/* Divisor */}
-        <div className="w-16 h-px bg-white/10" />
-
+        {/* Texto debajo */}
+        <p className="text-[#5a4a2a] text-xs tracking-widest uppercase mt-2 select-none">
+          Volvemos pronto &mdash; Please stand by
+        </p>
       </div>
 
-      {/* Tira de película abajo */}
-      <div className="absolute bottom-0 left-0 right-0 flex">
-        {Array.from({ length: 40 }).map((_, i) => (
-          <div key={i} className="flex-1 h-3 border-r border-white/5 odd:bg-white/[0.02]" />
-        ))}
-      </div>
+      <style>{`
+        @keyframes flicker {
+          0%, 100% { opacity: 0; }
+          92% { opacity: 0; }
+          93% { opacity: 1; }
+          94% { opacity: 0; }
+          96% { opacity: 0.5; }
+          97% { opacity: 0; }
+        }
+        .animate-flicker {
+          animation: flicker 4s infinite;
+        }
+      `}</style>
     </main>
   );
 }
