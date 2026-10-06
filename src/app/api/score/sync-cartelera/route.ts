@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { scoreGetCartelera } from "@/lib/score";
+import { scoreGetCartelera, scoreHeaders } from "@/lib/score";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { tmdbEnrich, cleanScoreTitle } from "@/lib/tmdb";
@@ -255,7 +255,7 @@ async function fetchCarteleraJson(): Promise<ParsedPelicula[]> {
   if (!base) throw new Error("SCORE_BASE_URL no configurado");
 
   const res = await fetch(`${base}/MobileComJson/variable41.json`, {
-    headers: { "ngrok-skip-browser-warning": "true" },
+    headers: scoreHeaders(),
     cache: "no-store",
     signal: AbortSignal.timeout(30000),
   });

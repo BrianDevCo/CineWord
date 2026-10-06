@@ -13,19 +13,19 @@ const SECTIONS = [
   },
   {
     title: "2. Descripción del Servicio",
-    content: `CINEWORLD ofrece un sistema de venta en línea de boletos para las funciones de cine programadas en sus instalaciones ubicadas en el Centro Comercial MR Outlet, Cali, Colombia. El servicio incluye la selección de funciones, asientos y el pago a través de la plataforma MercadoPago.`,
+    content: `CINEWORLD ofrece un sistema de venta en línea de boletos para las funciones de cine programadas en sus instalaciones ubicadas en el Centro Comercial MR Outlet, Cali, Colombia. El servicio incluye la selección de funciones, asientos y el pago a través de la plataforma Wompi.`,
   },
   {
     title: "3. Proceso de Compra",
-    content: `3.1 Para comprar boletos debes crear una cuenta o iniciar sesión.\n3.2 Una vez seleccionada la función y los asientos, tienes 5 minutos para completar el pago. Pasado este tiempo, la reserva se libera.\n3.3 El pago se procesa a través de MercadoPago. CINEWORLD no almacena datos de tarjetas de crédito o débito.\n3.4 Al aprobarse el pago, recibirás un correo electrónico con el boleto y su código QR.`,
+    content: `3.1 Para comprar boletos debes crear una cuenta o iniciar sesión.\n3.2 Una vez seleccionada la función y los asientos, tienes 5 minutos para ingresar tus datos y 10 minutos adicionales para completar el pago. Pasado este tiempo, la reserva se libera.\n3.3 El pago se procesa a través de Wompi, con tarjeta de crédito o débito, PSE, Nequi, Botón Bancolombia o Daviplata. CINEWORLD no almacena datos de tarjetas ni de cuentas bancarias.\n3.4 Al aprobarse el pago, recibirás un correo electrónico con el boleto y su código QR.`,
   },
   {
     title: "4. Precios y Pagos",
-    content: `4.1 Todos los precios están expresados en pesos colombianos (COP) e incluyen impuestos aplicables.\n4.2 MercadoPago puede cobrar comisiones adicionales según el método de pago seleccionado.\n4.3 CINEWORLD se reserva el derecho de modificar los precios sin previo aviso, sin que esto afecte compras ya confirmadas.`,
+    content: `4.1 Todos los precios están expresados en pesos colombianos (COP) e incluyen impuestos aplicables.\n4.2 Tu banco o entidad financiera puede cobrar comisiones adicionales según el método de pago seleccionado.\n4.3 CINEWORLD se reserva el derecho de modificar los precios sin previo aviso, sin que esto afecte compras ya confirmadas.`,
   },
   {
     title: "5. Política de Devoluciones y Cancelaciones",
-    content: `5.1 Los boletos comprados en línea no tienen devolución una vez confirmado el pago, salvo en los siguientes casos:\n• Cancelación o cambio de función por parte de CINEWORLD\n• Error técnico comprobable en el proceso de compra\n\n5.2 En los casos exceptuados, el reembolso se realizará al mismo método de pago utilizado, en el plazo que determine MercadoPago (generalmente 3 a 15 días hábiles).\n\n5.3 Para solicitar un reembolso, usa el formulario de PQR o comunícate con nosotros antes de la hora de la función.`,
+    content: `5.1 Los boletos comprados en línea no tienen devolución una vez confirmado el pago, salvo en los siguientes casos:\n• Cancelación o cambio de función por parte de CINEWORLD\n• Error técnico comprobable en el proceso de compra\n\n5.2 En los casos exceptuados, el reembolso se realizará al mismo método de pago utilizado, en el plazo que determine la entidad financiera (generalmente 3 a 15 días hábiles).\n\n5.3 Para solicitar un reembolso, usa el formulario de PQR o comunícate con nosotros antes de la hora de la función.`,
   },
   {
     title: "6. Uso del Código QR",

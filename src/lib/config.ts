@@ -2,4 +2,4 @@
 export const VENTA_ONLINE = false;
 
 // Cambia a true para reactivar el sitio
-export const SITIO_ACTIVO = false;
+export const SITIO_ACTIVO = true;

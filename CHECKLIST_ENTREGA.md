@@ -10,6 +10,11 @@
 - [ ] Crear proyecto gratis en https://supabase.com
 - [ ] SQL Editor → pegar y ejecutar `supabase/schema.sql`
 - [ ] SQL Editor → pegar y ejecutar `supabase/seed.sql`
+- [ ] SQL Editor → ejecutar `supabase/migration_seguridad.sql` (cierra permisos públicos y crea la tabla de PQR)
+- [ ] Database → Advisors → Security Advisor: sin alertas
+- [ ] Authentication → Sign In / Providers → Email: **Confirm email** activado
+- [ ] Authentication → activar MFA para las cuentas admin (recomendado)
+- [ ] Plan **Pro** (el plan gratis pausa el proyecto por inactividad y no tiene backups diarios)
 - [ ] Copiar **Project URL** → pegar en `NEXT_PUBLIC_SUPABASE_URL`
 - [ ] Copiar **anon public key** → pegar en `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - [ ] Copiar **service_role key** → pegar en `SUPABASE_SERVICE_ROLE_KEY`
@@ -20,7 +25,7 @@
 
 - [ ] Supabase → Authentication → Providers → activar **Google OAuth**
 - [ ] Crear app en https://console.cloud.google.com → copiar Client ID y Secret → pegarlos en Supabase
-- [ ] Llenar `ADMIN_EMAIL` con el correo del administrador del cine
+- [ ] Llenar `ADMIN_EMAILS` con los correos de los administradores (separados por coma)
 
 ---
 
@@ -33,12 +38,12 @@
 
 ---
 
-## 4. MercadoPago — Producción
+## 4. Wompi (pagos)
 
-- [ ] En el panel de MP → cambiar tokens **TEST** por los de **producción**
-- [ ] Actualizar `MP_ACCESS_TOKEN` y `NEXT_PUBLIC_MP_PUBLIC_KEY`
-- [ ] Configurar webhook en MP apuntando a: `https://tudominio.com/api/pagos/webhook`
-- [ ] Copiar **webhook secret** → pegar en `MP_WEBHOOK_SECRET`
+- [ ] El cine crea su cuenta de comercio en https://comercios.wompi.co
+- [ ] Supabase → SQL Editor → ejecutar `supabase/migration_ordenes_pago.sql`
+- [ ] Desarrolladores → copiar las 4 llaves en `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_EVENTS_SECRET`, `WOMPI_INTEGRITY_SECRET` (primero las de sandbox, luego las de producción)
+- [ ] Configurar la URL de eventos apuntando a: `https://tudominio.com/api/pagos/wompi/webhook`
 
 ---
 
@@ -59,13 +64,20 @@
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-MP_ACCESS_TOKEN=
-NEXT_PUBLIC_MP_PUBLIC_KEY=
-MP_WEBHOOK_SECRET=
+WOMPI_PUBLIC_KEY=
+WOMPI_PRIVATE_KEY=
+WOMPI_EVENTS_SECRET=
+WOMPI_INTEGRITY_SECRET=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
+PQR_EMAIL=
+SCORE_BASE_URL=
+SCORE_AES_KEY=
+SCORE_TERCERO=
+SCORE_PUNTO_VENTA=
+SCORE_TEATRO=
 NEXT_PUBLIC_BASE_URL=
-ADMIN_EMAIL=
+ADMIN_EMAILS=
 ```
 
 ---
@@ -81,8 +93,7 @@ ADMIN_EMAIL=
 
 ## 8. Prueba final antes de entregar
 
-- [ ] Hacer una compra completa con tarjeta de prueba de MercadoPago
-  → Tarjetas de prueba: https://www.mercadopago.com.co/developers/es/docs/checkout-bricks/additional-content/your-integrations/test/cards
+- [ ] Hacer compras de prueba en sandbox de Wompi (tarjeta `4242 4242 4242 4242`, Nequi `3991111111`, y un pago rechazado) — ver `docs/WOMPI.md`
 - [ ] Verificar que llega el email con el código QR al correo
 - [ ] Verificar que la reserva aparece en `/cuenta` del usuario
 - [ ] Verificar que la reserva aparece en `/admin/reservas`
@@ -97,4 +108,4 @@ ADMIN_EMAIL=
 
 ---
 
-*Desarrollado por Brian López Garzón — brian280499@gmail.com — 3128599206*
+*Desarrollado por Brian López Garzón*

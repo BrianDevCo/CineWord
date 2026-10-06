@@ -14,14 +14,28 @@ export default function PQRPage() {
   const [form, setForm] = useState({ nombre: "", email: "", mensaje: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [radicado, setRadicado] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simula envío (aquí puedes conectar con Resend o un endpoint real)
-    await new Promise((r) => setTimeout(r, 800));
-    setSent(true);
-    setLoading(false);
+    setError("");
+    try {
+      const res = await fetch("/api/pqr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo, ...form }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.radicado) throw new Error(data.error);
+      setRadicado(data.radicado);
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "No pudimos enviar tu solicitud. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,6 +79,11 @@ export default function PQRPage() {
               <p className="text-gray-400 font-body text-sm leading-relaxed max-w-sm">
                 Hemos recibido tu solicitud. Recibirás una respuesta en <strong className="text-white">15 días hábiles</strong> al correo <strong className="text-white">{form.email}</strong>.
               </p>
+              {radicado && (
+                <p className="text-gray-400 font-body text-sm mt-3">
+                  Número de radicado: <strong className="text-white font-mono">{radicado}</strong>
+                </p>
+              )}
             </div>
             <Link
               href="/"
@@ -160,6 +179,12 @@ export default function PQRPage() {
               </Link>
               .
             </p>
+
+            {error && (
+              <p className="text-red-400 text-sm font-body bg-red-500/10 border border-red-500/20 rounded-sm px-4 py-3">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"

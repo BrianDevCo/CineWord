@@ -4,12 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { VENTA_ONLINE } from "@/lib/config";
+import { safeRedirect } from "@/lib/redirect";
 
 export default function LoginPage() {
   const searchParams = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search)
     : null;
-  const redirect = searchParams?.get("redirect") || "/cuenta";
+  const redirect = safeRedirect(searchParams?.get("redirect"));
   const [showAdminForm, setShowAdminForm] = useState(false);
 
   const [email, setEmail] = useState("");

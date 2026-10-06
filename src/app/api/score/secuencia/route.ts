@@ -1,12 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { scoreGetSecuencia } from "@/lib/score";
+import { errorInterno, rateLimit, requireUser } from "@/lib/seguridad";
 
-export async function GET() {
+// GET /api/score/secuencia — requiere sesión (se usa justo antes del hold de sillas)
+export async function GET(req: NextRequest) {
+  const limitado = rateLimit(req, "score-secuencia", 10, 60_000);
+  if (limitado) return limitado;
+
+  const { error } = await requireUser();
+  if (error) return error;
+
   try {
-    const data = await scoreGetSecuencia();
-    return NextResponse.json(data);
+    const { secuencia } = await scoreGetSecuencia();
+    return NextResponse.json({ secuencia });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error Score";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorInterno("Score secuencia", err, 502);
   }
 }

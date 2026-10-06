@@ -151,3 +151,47 @@ export async function enviarEmailBoleto(data: TicketEmailData) {
     attachments,
   });
 }
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+export interface PQREmailData {
+  radicado: string;
+  tipo:     string;
+  nombre:   string;
+  email:    string;
+  mensaje:  string;
+}
+
+/** Envía la PQR al buzón del cine y una constancia con el radicado al cliente */
+export async function enviarEmailPQR(data: PQREmailData) {
+  const from = process.env.RESEND_FROM_EMAIL ?? "CINEWORLD <onboarding@resend.dev>";
+  const destino = process.env.PQR_EMAIL;
+  const d = {
+    radicado: escapeHtml(data.radicado),
+    tipo:     escapeHtml(data.tipo),
+    nombre:   escapeHtml(data.nombre),
+    email:    escapeHtml(data.email),
+    mensaje:  escapeHtml(data.mensaje).replace(/\n/g, "<br />"),
+  };
+
+  if (destino) {
+    await resend.emails.send({
+      from,
+      to:      destino,
+      replyTo: data.email,
+      subject: `PQR ${data.radicado} — ${data.tipo}`,
+      html: `<p><b>Radicado:</b> ${d.radicado}<br /><b>Tipo:</b> ${d.tipo}<br /><b>Nombre:</b> ${d.nombre}<br /><b>Correo:</b> ${d.email}</p><p>${d.mensaje}</p>`,
+    });
+  } else {
+    console.error(`PQR ${data.radicado}: PQR_EMAIL no configurado, solo se guardó en la base de datos`);
+  }
+
+  await resend.emails.send({
+    from,
+    to:      data.email,
+    subject: `Recibimos tu solicitud — radicado ${data.radicado}`,
+    html: `<p>Hola ${d.nombre},</p><p>Recibimos tu ${d.tipo} con el número de radicado <b>${d.radicado}</b>. Te responderemos a este correo en un plazo máximo de 15 días hábiles.</p><p style="color:#666">${d.mensaje}</p><p>— CINEWORLD</p>`,
+  });
+}

@@ -137,11 +137,11 @@ export async function getAsientosOcupados(funcionId: number): Promise<AsientoOcu
 
   const { data, error } = await supabase
     .from("asientos_ocupados")
-    .select("*")
+    .select("id, funcion_id, fila, columna")
     .eq("funcion_id", funcionId);
 
   if (error) return [];
-  return data ?? [];
+  return (data ?? []) as AsientoOcupado[];
 }
 
 export interface CreateReservaInput {
@@ -151,6 +151,7 @@ export interface CreateReservaInput {
   telefono?: string;
   asientos: Array<{ fila: string; columna: number; tipo: "regular" | "vip" }>;
   total: number;
+  referencia_pago?: string;
 }
 
 export async function crearReserva(input: CreateReservaInput) {
@@ -171,6 +172,7 @@ export async function crearReserva(input: CreateReservaInput) {
       asientos: input.asientos,
       total: input.total,
       estado: "pagado",
+      referencia_pago: input.referencia_pago ?? null,
     })
     .select()
     .single();
@@ -191,14 +193,4 @@ export async function crearReserva(input: CreateReservaInput) {
   if (seatsError) throw seatsError;
 
   return reserva;
-}
-
-export async function registrarNotificacionEstreno(peliculaId: number, email: string) {
-  if (!supabaseReady()) return;
-
-  const { error } = await supabase
-    .from("notificaciones_estreno")
-    .upsert({ pelicula_id: peliculaId, email });
-
-  if (error) throw error;
 }

@@ -1,9 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import Reconsultar from "./Reconsultar";
 
 export const metadata: Metadata = { title: "Pago Pendiente" };
 
-export default function PagoPendientePage() {
+export default async function PagoPendientePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>;
+}) {
+  const { id } = await searchParams;
+
   return (
     <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a1a] via-[#0a0a0a] to-black pointer-events-none" />
@@ -31,6 +38,8 @@ export default function PagoPendientePage() {
             </p>
           </div>
         </div>
+
+        {id && <Reconsultar transactionId={id} />}
 
         <div className="flex flex-col sm:flex-row gap-3 w-full">
           <Link

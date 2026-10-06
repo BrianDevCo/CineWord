@@ -1,41 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
-import { scoreReservar, toScoreFecha, toScoreHora, splitNombre, type AsientoScore } from "@/lib/score";
+import { scoreReservar, toScoreFecha, toScoreHora, splitNombre } from "@/lib/score";
+import { esFecha, esHora, esId, validarUbicaciones } from "@/lib/score-validacion";
+import { errorInterno, rateLimit, requireUser, sanitizeStr } from "@/lib/seguridad";
 
-// POST /api/score/grupo  — SCOGRU: hold de sillas antes del pago
+// POST /api/score/grupo  — SCOGRU: hold de sillas antes del pago (requiere sesión)
 // Body: { fechaFuncion, sala, horaFuncion, pelicula, inicioFuncion, descripcion, secuencia, nombre, telefono?, ubicaciones }
 export async function POST(req: NextRequest) {
+  const limitado = rateLimit(req, "score-grupo", 10, 60_000);
+  if (limitado) return limitado;
+
+  const { error } = await requireUser();
+  if (error) return error;
+
   try {
     const body = await req.json();
-    const { fechaFuncion, sala, horaFuncion, pelicula, inicioFuncion, descripcion, secuencia, nombre, telefono, ubicaciones } = body;
+    const { fechaFuncion, sala, horaFuncion, pelicula, inicioFuncion, descripcion, secuencia, nombre, telefono } = body;
+    const ubicaciones = validarUbicaciones(body.ubicaciones);
 
-    if (!fechaFuncion || !sala || !horaFuncion || !pelicula || !secuencia || !nombre || !ubicaciones?.length) {
-      return NextResponse.json(
-        { error: "Faltan campos requeridos" },
-        { status: 400 },
-      );
+    if (!esFecha(fechaFuncion) || !esId(sala) || !esHora(horaFuncion) || !esId(pelicula) || !esId(secuencia)
+        || !ubicaciones || (inicioFuncion !== undefined && !/^\d{1,4}$/.test(String(inicioFuncion)))) {
+      return NextResponse.json({ error: "Parámetros inválidos" }, { status: 400 });
     }
 
-    const { nombre: pNombre, apellido: pApellido } = splitNombre(nombre);
+    const { nombre: pNombre, apellido: pApellido } = splitNombre(sanitizeStr(nombre, 100) || "Cliente");
 
     const result = await scoreReservar({
-      fechaFuncion:  fechaFuncion.includes("-") ? toScoreFecha(fechaFuncion) : fechaFuncion,
+      fechaFuncion:  toScoreFecha(fechaFuncion),
       sala:          String(sala),
-      horaFuncion:   horaFuncion.includes(":") ? toScoreHora(horaFuncion) : horaFuncion,
+      horaFuncion:   toScoreHora(horaFuncion),
       pelicula:      String(pelicula),
       inicioFuncion: String(inicioFuncion ?? ""),
-      descripcion:   String(descripcion ?? ""),
+      descripcion:   sanitizeStr(descripcion, 100),
       secuencia:     String(secuencia),
       nombre:        pNombre,
       apellido:      pApellido,
-      telefono:      String(telefono ?? ""),
-      ubicaciones:   ubicaciones as AsientoScore[],
+      telefono:      String(telefono ?? "").replace(/\D/g, "").slice(0, 15),
+      ubicaciones,
       accion:        "G",
     });
 
     const exitoso = !result.raw.toLowerCase().includes("error");
-    return NextResponse.json({ ok: exitoso, raw: result.raw });
+    if (!exitoso) console.error("Score SCOGRU:", result.raw);
+    return NextResponse.json({ ok: exitoso });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error Score";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorInterno("Score grupo", err, 502);
   }
 }

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/supabase-server";
 import AdminSidebar from "./AdminSidebar";
+import { esAdmin } from "@/lib/admin-auth";
 
 export const metadata = { title: { default: "Admin", template: "%s | Admin CINEWORLD" } };
 
@@ -25,10 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const user = await getUser();
-  const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
-    .split(",").map(e => e.trim()).filter(Boolean);
-
-  if (!user || !user.email || adminEmails.length === 0 || !adminEmails.includes(user.email)) {
+  if (!user || !esAdmin(user.email)) {
     redirect(`/cuenta/login?redirect=/admin`);
   }
 

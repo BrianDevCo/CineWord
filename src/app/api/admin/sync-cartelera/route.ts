@@ -1,3 +1,4 @@
+import { scoreHeaders } from "@/lib/score";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient, adminReady } from "@/lib/supabase-admin";
@@ -112,7 +113,7 @@ export async function GET() {
   try {
     const res = await fetch(`${base}/MobileComJson/variable41.json`, {
       cache: "no-store",
-      headers: { "ngrok-skip-browser-warning": "true" },
+      headers: scoreHeaders(),
       signal: AbortSignal.timeout(30000),
     });
     json = await res.json();
@@ -150,7 +151,7 @@ export async function POST() {
   try {
     const res = await fetch(`${base}/MobileComJson/variable41.json`, {
       cache: "no-store",
-      headers: { "ngrok-skip-browser-warning": "true" },
+      headers: scoreHeaders(),
       signal: AbortSignal.timeout(30000),
     });
     json = await res.json();

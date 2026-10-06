@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { safeRedirect } from "@/lib/redirect";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -25,10 +26,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  const rawRedirect = searchParams.get("redirect") || "/cuenta";
   // Solo rutas internas — previene open redirect
-  const redirect = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
-    ? rawRedirect
-    : "/cuenta";
+  const redirect = safeRedirect(searchParams.get("redirect"));
   return NextResponse.redirect(`${origin}${redirect}`);
 }

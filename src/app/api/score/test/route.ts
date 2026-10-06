@@ -1,19 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { createCipheriv, createDecipheriv } from "crypto";
-
-const KEY = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
-const IV  = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
-
-function encrypt(text: string): string {
-  const c = createCipheriv("aes-128-cbc", KEY, IV);
-  return Buffer.concat([c.update(text, "utf8"), c.final()]).toString("base64");
-}
-
-function decrypt(b64: string): string {
-  const d = createDecipheriv("aes-128-cbc", KEY, IV);
-  return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
-}
+import { encrypt, decrypt, scoreHeaders } from "@/lib/score";
 
 type ServiceResult = {
   ok: boolean;
@@ -28,7 +15,7 @@ async function callScore(base: string, service: string, payload: unknown): Promi
   try {
     const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+      headers: scoreHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(encrypt(JSON.stringify(payload))),
       cache: "no-store",
       signal: AbortSignal.timeout(20000),
@@ -59,7 +46,7 @@ async function callGet(base: string, path: string): Promise<ServiceResult> {
   const start = Date.now();
   try {
     const res = await fetch(`${base}${path}`, {
-      headers: { "ngrok-skip-browser-warning": "true" },
+      headers: scoreHeaders(),
       cache: "no-store",
       signal: AbortSignal.timeout(20000),
     });

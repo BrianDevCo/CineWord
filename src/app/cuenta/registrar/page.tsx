@@ -2,15 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { VENTA_ONLINE } from "@/lib/config";
 
 export default function RegistrarPage() {
-  const router = useRouter();
-  const redirect = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("redirect") || "/cuenta"
-    : "/cuenta";
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +13,7 @@ export default function RegistrarPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [aceptaDatos, setAceptaDatos] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +23,12 @@ export default function RegistrarPage() {
       setError("Las contraseñas no coinciden.");
       return;
     }
-    if (password.length < 6) {
-      setError("La contraseña debe tener mínimo 6 caracteres.");
+    if (password.length < 8) {
+      setError("La contraseña debe tener mínimo 8 caracteres.");
+      return;
+    }
+    if (!aceptaDatos) {
+      setError("Debes aceptar la política de tratamiento de datos para crear tu cuenta.");
       return;
     }
 
@@ -57,18 +57,15 @@ export default function RegistrarPage() {
       return;
     }
 
-    // Registrar en Score (no bloqueante — si falla el usuario queda en Supabase)
-    fetch("/api/score/cliente", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, nombreCompleto: nombre, clave: password }),
-    }).catch(() => {});
-
     setSuccess(true);
     setLoading(false);
   };
 
   const handleGoogle = async () => {
+    if (!aceptaDatos) {
+      setError("Debes aceptar la política de tratamiento de datos para crear tu cuenta.");
+      return;
+    }
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -217,7 +214,8 @@ export default function RegistrarPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
+                minLength={8}
                 className="bg-white/5 border border-white/10 focus:border-[#CC1244] text-white font-body text-sm px-4 py-3 rounded-lg outline-none transition-colors placeholder-gray-600"
               />
             </div>
@@ -235,6 +233,22 @@ export default function RegistrarPage() {
                 className="bg-white/5 border border-white/10 focus:border-[#CC1244] text-white font-body text-sm px-4 py-3 rounded-lg outline-none transition-colors placeholder-gray-600"
               />
             </div>
+
+            <label className="flex items-start gap-3 text-gray-400 font-body text-xs leading-relaxed cursor-pointer">
+              <input
+                type="checkbox"
+                checked={aceptaDatos}
+                onChange={(e) => setAceptaDatos(e.target.checked)}
+                required
+                className="mt-0.5 accent-[#CC1244] shrink-0"
+              />
+              <span>
+                Autorizo el tratamiento de mis datos personales conforme a la{" "}
+                <Link href="/privacidad" target="_blank" className="text-[#CC1244] hover:underline">Política de Privacidad</Link>{" "}
+                (Ley 1581 de 2012) y acepto los{" "}
+                <Link href="/terminos" target="_blank" className="text-[#CC1244] hover:underline">Términos y Condiciones</Link>.
+              </span>
+            </label>
 
             {error && (
               <p className="text-red-400 text-sm font-body bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">

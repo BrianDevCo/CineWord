@@ -1,12 +1,17 @@
+import { scoreHeaders } from "@/lib/score";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET() {
+  const { error: authError } = await requireAdmin();
+  if (authError) return authError;
+
   const base = process.env.SCORE_BASE_URL;
   const teatro = process.env.SCORE_TEATRO ?? "2";
   if (!base) return NextResponse.json({ error: "SCORE_BASE_URL no configurado" }, { status: 500 });
 
   const res = await fetch(`${base}/MobileComJson/variable41.json`, {
-    headers: { "ngrok-skip-browser-warning": "true" },
+    headers: scoreHeaders(),
     cache: "no-store",
     signal: AbortSignal.timeout(20000),
   });

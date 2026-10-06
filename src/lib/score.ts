@@ -1,16 +1,36 @@
 import { createCipheriv, createDecipheriv } from "crypto";
 
-const KEY = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
-const IV  = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
+// Llave AES-128 entregada por Score Projects (16 caracteres). Score usa la misma como IV.
+function aesKey(): Buffer {
+  const key = process.env.SCORE_AES_KEY ?? "";
+  if (Buffer.byteLength(key, "utf8") !== 16) throw new Error("SCORE_AES_KEY no configurada");
+  return Buffer.from(key, "utf8");
+}
 
-function encrypt(text: string): string {
-  const c = createCipheriv("aes-128-cbc", KEY, IV);
+export function encrypt(text: string): string {
+  const key = aesKey();
+  const c = createCipheriv("aes-128-cbc", key, key);
   return Buffer.concat([c.update(text, "utf8"), c.final()]).toString("base64");
 }
 
-function decrypt(base64: string): string {
-  const d = createDecipheriv("aes-128-cbc", KEY, IV);
+export function decrypt(base64: string): string {
+  const key = aesKey();
+  const d = createDecipheriv("aes-128-cbc", key, key);
   return Buffer.concat([d.update(Buffer.from(base64, "base64")), d.final()]).toString("utf8");
+}
+
+/**
+ * Cabeceras para toda petición al servidor Score.
+ * Si Score se publica con Cloudflare Tunnel + Access, SCORE_ACCESS_CLIENT_ID y
+ * SCORE_ACCESS_CLIENT_SECRET (service token) hacen que solo este servidor pueda entrar.
+ */
+export function scoreHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const h: Record<string, string> = { "ngrok-skip-browser-warning": "true", ...extra };
+  if (process.env.SCORE_ACCESS_CLIENT_ID && process.env.SCORE_ACCESS_CLIENT_SECRET) {
+    h["CF-Access-Client-Id"] = process.env.SCORE_ACCESS_CLIENT_ID;
+    h["CF-Access-Client-Secret"] = process.env.SCORE_ACCESS_CLIENT_SECRET;
+  }
+  return h;
 }
 
 function parseKV(text: string): Record<string, string> {
@@ -31,10 +51,7 @@ async function call(
 
   const res = await fetch(`${base}/ThirdParty/api/SCOact/${service}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "true",
-    },
+    headers: scoreHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(encrypt(plaintext)),
   });
 
@@ -420,7 +437,7 @@ export async function scoreConsultarPorDocumento(documento: string) {
 export async function scoreGetCartelera(): Promise<string> {
   const base = process.env.SCORE_BASE_URL;
   if (!base) throw new Error("SCORE_BASE_URL no configurado");
-  const res = await fetch(`${base}/MobileComJson/variable41.xml`);
+  const res = await fetch(`${base}/MobileComJson/variable41.xml`, { headers: scoreHeaders() });
   if (!res.ok) throw new Error(`Score cartelera → HTTP ${res.status}`);
   return res.text();
 }
@@ -446,7 +463,7 @@ export function toScoreInicio(timeStr: string): string {
 /**
  * SCOINT (Accion V) — Venta con boletas
  * Para ventas por internet: PagoInterno=0, PagoCredito=0, PagoEfectivo=0.
- * El cobro ya fue realizado externamente (MercadoPago). Score solo registra la venta.
+ * El cobro ya fue realizado externamente (Wompi). Score solo registra la venta.
  */
 export async function scoreVenta(p: ScoreVentaParams) {
   const ubicaciones = p.ubicaciones.map(u => ({

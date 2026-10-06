@@ -8,8 +8,8 @@ const BASE     = process.env.SCORE_BASE_URL    ?? "http://189.168.10.245";
 const TERCERO  = process.env.SCORE_TERCERO     ?? "1";
 const TEATRO   = process.env.SCORE_TEATRO      ?? "2";
 const PV       = process.env.SCORE_PUNTO_VENTA ?? "77";
-const KEY_BUF  = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
-const IV_BUF   = Buffer.from("tHIrd!sc0R3Is.00", "utf8");
+const KEY_BUF  = Buffer.from(process.env.SCORE_AES_KEY ?? "", "utf8");
+const IV_BUF   = KEY_BUF;
 
 function encrypt(text) {
   const c = createCipheriv("aes-128-cbc", KEY_BUF, IV_BUF);

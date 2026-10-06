@@ -13,7 +13,7 @@ const SECTIONS = [
   },
   {
     title: "2. Datos que Recolectamos",
-    content: `Recolectamos los siguientes datos cuando usas nuestros servicios:\n• Nombre completo\n• Correo electrónico\n• Número de teléfono (opcional)\n• Información de pago (procesada directamente por MercadoPago — no almacenamos datos de tarjetas)\n• Historial de reservas y compras realizadas en el sitio`,
+    content: `Recolectamos los siguientes datos cuando usas nuestros servicios:\n• Nombre completo\n• Correo electrónico\n• Número de teléfono (opcional)\n• Información de pago (procesada directamente por Wompi — no almacenamos datos de tarjetas ni de cuentas bancarias)\n• Historial de reservas y compras realizadas en el sitio`,
   },
   {
     title: "3. Finalidad del Tratamiento",
@@ -29,7 +29,7 @@ const SECTIONS = [
   },
   {
     title: "6. Compartición con Terceros",
-    content: `Tus datos pueden ser compartidos únicamente con:\n• MercadoPago: para procesar pagos de forma segura\n• Resend: para el envío de correos electrónicos transaccionales\n• Supabase: como proveedor de base de datos segura\n\nNo vendemos, alquilamos ni compartimos tus datos con terceros para fines publicitarios.`,
+    content: `Tus datos pueden ser compartidos únicamente con:\n• Wompi (Bancolombia): para procesar pagos de forma segura\n• Resend: para el envío de correos electrónicos transaccionales\n• Supabase: como proveedor de base de datos segura\n\nNo vendemos, alquilamos ni compartimos tus datos con terceros para fines publicitarios.`,
   },
   {
     title: "7. Tus Derechos",

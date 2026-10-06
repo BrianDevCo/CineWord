@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { Pelicula } from "@/lib/types";
-import { registrarNotificacionEstreno } from "@/lib/db";
 
 function formatFecha(iso: string) {
   const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -27,8 +26,12 @@ export default function ProximosEstrenos({ peliculas }: Props) {
     if (!email || !email.includes("@")) return;
     setMovieState(movie.id, "loading");
     try {
-      await registrarNotificacionEstreno(movie.id, email);
-      setMovieState(movie.id, "done");
+      const res = await fetch("/api/notificaciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, pelicula_id: movie.id }),
+      });
+      setMovieState(movie.id, res.ok ? "done" : "error");
     } catch {
       setMovieState(movie.id, "error");
     }

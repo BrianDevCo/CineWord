@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Pelicula, Funcion } from "@/lib/types";
 import { getAsientosOcupados } from "@/lib/db";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import type { User } from "@supabase/supabase-js";
 
-const MercadoPagoBrick = dynamic(() => import("@/components/MercadoPagoBrick"), { ssr: false });
+const WompiCheckout = dynamic(() => import("@/components/WompiCheckout"), { ssr: false });
+import type { WompiCheckoutData } from "@/components/WompiCheckout";
 
 // Cambiar a false para deshabilitar la venta en línea
 import { VENTA_ONLINE } from "@/lib/config";
@@ -63,6 +64,7 @@ interface Props { movie: Pelicula; funciones: Funcion[]; }
 
 export default function BookingSection({ movie, funciones }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const [hoyStr, setHoyStr] = useState("");
   useEffect(() => { setHoyStr(getTodayStr()); }, []);
   const days = useMemo(() => buildDays(funciones, hoyStr), [funciones, hoyStr]);
@@ -91,12 +93,11 @@ export default function BookingSection({ movie, funciones }: Props) {
   const [scoreSecuencia, setScoreSecuencia] = useState<string | null>(null);
 
   // ── Pago ──────────────────────────────────────────────────────────────────────
-  const [paymentDone,        setPaymentDone]        = useState(false);
   const [timerSeconds,       setTimerSeconds]        = useState<number | null>(null);
   const [timedOut,           setTimedOut]            = useState(false);
   const [paymentInfo,        setPaymentInfo]         = useState({ nombre: "", email: "", telefono: "" });
-  const [preferenceId,       setPreferenceId]        = useState<string | null>(null);
-  const [creatingPreference, setCreatingPreference]  = useState(false);
+  const [wompiData,          setWompiData]           = useState<WompiCheckoutData | null>(null);
+  const [iniciandoPago,      setIniciandoPago]       = useState(false);
   const [showAgeModal,       setShowAgeModal]        = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -201,13 +202,17 @@ export default function BookingSection({ movie, funciones }: Props) {
     setTimerSeconds(null);
   }, []);
 
-  // ── Liberar hold en Score (SCOLIR) ────────────────────────────────────────────
-  const liberarHold = useCallback((sec: string | null) => {
-    if (!sec) return;
+  // ── Liberar hold en Score (SCOSIL, silla por silla) ───────────────────────────
+  const holdRef = useRef<{ fechaFuncion: string; sala: string; funcion: string; asientos: { fila: string; columna: number }[] } | null>(null);
+  const liberarHold = useCallback(() => {
+    const hold = holdRef.current;
+    holdRef.current = null;
+    if (!hold) return;
     fetch("/api/score/liberar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secuencia: sec }),
+      body: JSON.stringify(hold),
+      keepalive: true,
     }).catch(() => {});
   }, []);
 
@@ -218,10 +223,13 @@ export default function BookingSection({ movie, funciones }: Props) {
       setSelectedSeats(new Set());
       setStep(4);
       setTimerSeconds(null);
-      liberarHold(scoreSecuencia);
+      liberarHold();
       setScoreSecuencia(null);
     }
-  }, [timerSeconds, scoreSecuencia, liberarHold]);
+  }, [timerSeconds, liberarHold]);
+
+  // Si el cliente sale de la página sin pagar, liberar las sillas
+  useEffect(() => liberarHold, [liberarHold]);
 
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
@@ -301,17 +309,6 @@ export default function BookingSection({ movie, funciones }: Props) {
   }
 
   // ── Handlers de navegación ────────────────────────────────────────────────────
-  const reset = () => {
-    stopTimer();
-    liberarHold(scoreSecuencia);
-    setStep(1); setSelectedFecha(null); setSelectedFormato(null);
-    setSelectedFuncion(null); setSelectedSeats(new Set());
-    setMapaScore([]); setMapaFallback(new Set()); setScorePlanes([]);
-    setPaymentDone(false); setTimedOut(false);
-    setPaymentInfo({ nombre: "", email: "", telefono: "" });
-    setPreferenceId(null); setScoreSecuencia(null);
-  };
-
   const pickFecha = (fecha: string) => {
     setSelectedFecha(fecha); setSelectedFormato(null); setSelectedFuncion(null);
     setSelectedSeats(new Set()); setTimedOut(false); setStep(2);
@@ -370,117 +367,98 @@ export default function BookingSection({ movie, funciones }: Props) {
             }),
           });
           const grupoData = await grupoRes.json();
-          console.log("[SCOGRU]", grupoData);
+          if (grupoRes.ok && grupoData.ok) {
+            holdRef.current = {
+              fechaFuncion: selectedFuncion.fecha,
+              sala:         selectedFuncion.score_sala_id,
+              funcion:      selectedFuncion.hora,
+              asientos:     asientosList.map(a => ({ fila: a.fila, columna: a.columna })),
+            };
+          }
           setScoreSecuencia(sec);
         }
-      } catch(e) {
-        console.log("[SCOGRU-error]", e);
-      }
+      } catch { /* sin hold en Score: la venta se valida igual al confirmar */ }
     }
   };
 
   const goBackToSeats = () => {
     stopTimer();
-    liberarHold(scoreSecuencia);
+    liberarHold();
     setScoreSecuencia(null);
-    setPreferenceId(null);
+    setWompiData(null);
     setStep(4);
   };
 
-  // ── Crear preferencia MP ──────────────────────────────────────────────────────
-  const handleCrearPreferencia = async () => {
+  // ── Iniciar pago Wompi: guarda la orden en el servidor y devuelve los datos firmados ──
+  const handleIniciarPago = async () => {
     if (!selectedFuncion || !paymentInfo.nombre || !paymentInfo.email) return;
-    setCreatingPreference(true);
+    setIniciandoPago(true);
     try {
-      // Crear preferencia MercadoPago
-      const res = await fetch("/api/pagos/crear-preferencia", {
+      const tarifaReg = scorePlanRegular?.codigo ?? selectedFuncion.score_tarifa_regular ?? "";
+      const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion.score_tarifa_vip     ?? "";
+
+      const columnaLabel = (fila: string, columna: number) =>
+        mapaScore.find(m => m.fila === fila && m.columna === columna)?.columnaLabel ?? columna;
+
+      const scoreUbicaciones = selectedFuncion.score_sala_id
+        ? asientosList.map(a => ({
+            fila:        a.fila,
+            columna:     String(a.columna),
+            filRelativa: a.fila,
+            colRelativa: String(columnaLabel(a.fila, a.columna)),
+            tarifa:      isVipRow(a.fila) ? tarifaVip : tarifaReg,
+          }))
+        : undefined;
+
+      const res = await fetch("/api/pagos/wompi/iniciar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          titulo:     movie.titulo,
-          asientos:   [...selectedSeats].sort(),
+          funcion_id:        selectedFuncion.id,
+          email:             paymentInfo.email,
+          nombre:            paymentInfo.nombre,
+          telefono:          paymentInfo.telefono || undefined,
+          asientos:          asientosList.map(a => ({ ...a, columnaLabel: columnaLabel(a.fila, a.columna) })),
           total,
-          email:      paymentInfo.email,
-          nombre:     paymentInfo.nombre,
-          funcion_id: selectedFuncion.id,
+          score_fecha:       selectedFuncion.fecha,
+          score_sala:        selectedFuncion.score_sala_id  ?? undefined,
+          score_hora:        selectedFuncion.hora,
+          score_pelicula:    selectedFuncion.score_pelicula_id ?? undefined,
+          score_secuencia:   scoreSecuencia ?? undefined,
+          score_ubicaciones: scoreUbicaciones,
+          score_descripcion: movie.titulo,
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.preference_id) throw new Error(data.error);
-      setPreferenceId(data.preference_id);
+      if (!res.ok || !data.reference) throw new Error(data.error);
+
+      // A partir de aquí el tiempo para pagar lo controla Wompi (expirationTime)
+      stopTimer();
+      try {
+        const dayInfo = days.find(d => d.fecha === selectedFecha);
+        sessionStorage.setItem("cw-last-ticket", JSON.stringify({
+          pelicula: movie.titulo,
+          fecha:    dayInfo ? `${dayInfo.label} · ${fechaDisplay(dayInfo.fecha)}` : selectedFecha ?? "",
+          hora:     horaDisplay(selectedFuncion.hora),
+          formato:  selectedFuncion.formato,
+          asientos: [...selectedSeats].sort().map(getSeatLabel).join(", "),
+          total:    `$${total.toLocaleString("es-CO")}`,
+        }));
+      } catch { /* sessionStorage no disponible */ }
+      setWompiData(data as WompiCheckoutData);
     } catch {
       alert("No se pudo conectar con el sistema de pago. Intenta de nuevo.");
     } finally {
-      setCreatingPreference(false);
+      setIniciandoPago(false);
     }
   };
 
-  // ── Pago exitoso ──────────────────────────────────────────────────────────────
-  const handlePaymentSuccess = useCallback(
-    async (paymentId: string) => {
-      try {
-        const tarifaReg = scorePlanRegular?.codigo ?? selectedFuncion?.score_tarifa_regular ?? "";
-        const tarifaVip = scorePlanVip?.codigo     ?? selectedFuncion?.score_tarifa_vip     ?? "";
-
-        const scoreUbicaciones = selectedFuncion?.score_sala_id
-          ? asientosList.map(a => {
-              const mapaAsiento = mapaScore.find(m => m.fila === a.fila && m.columna === a.columna);
-              return {
-                fila:        a.fila,
-                columna:     String(a.columna),
-                filRelativa: a.fila,
-                colRelativa: String(mapaAsiento?.columnaLabel ?? a.columna),
-                tarifa:      isVipRow(a.fila) ? tarifaVip : tarifaReg,
-              };
-            })
-          : undefined;
-
-        const res = await fetch("/api/pagos/confirmar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            payment_id:        paymentId,
-            funcion_id:        selectedFuncion?.id,
-            email:             paymentInfo.email,
-            nombre:            paymentInfo.nombre,
-            telefono:          paymentInfo.telefono || undefined,
-            asientos:          asientosList,
-            total,
-            score_fecha:       selectedFuncion?.fecha,
-            score_sala:        selectedFuncion?.score_sala_id  ?? undefined,
-            score_hora:        selectedFuncion?.hora,
-            score_pelicula:    selectedFuncion?.score_pelicula_id ?? undefined,
-            score_secuencia:   scoreSecuencia ?? undefined,
-            score_ubicaciones: scoreUbicaciones,
-            score_descripcion: movie.titulo,
-          }),
-        });
-
-        if (res.ok) {
-          stopTimer();
-          setScoreSecuencia(null);
-          try {
-            const dayInfo = days.find(d => d.fecha === selectedFecha);
-            sessionStorage.setItem("cw-last-ticket", JSON.stringify({
-              pelicula: movie.titulo,
-              fecha:    dayInfo ? `${dayInfo.label} · ${fechaDisplay(dayInfo.fecha)}` : selectedFecha ?? "",
-              hora:     selectedFuncion ? horaDisplay(selectedFuncion.hora) : "",
-              formato:  selectedFuncion?.formato ?? "",
-              asientos: [...selectedSeats].sort().map(getSeatLabel).join(", "),
-              total:    `$${total.toLocaleString("es-CO")}`,
-            }));
-          } catch { /* sessionStorage no disponible */ }
-          setPaymentDone(true);
-        } else {
-          alert("Pago recibido pero error al guardar reserva. Guarda el ID: " + paymentId);
-        }
-      } catch {
-        alert("Pago recibido pero error al guardar reserva. Guarda el ID: " + paymentId);
-      }
-    },
-    [selectedFuncion, selectedFecha, selectedSeats, paymentInfo, asientosList, total,
-     stopTimer, days, movie.titulo, scoreSecuencia, scorePlanRegular, scorePlanVip, isVipRow],
-  );
+  // ── Resultado del widget → la página de resultado consulta el estado real ─────
+  const handleWompiResult = useCallback((transactionId: string) => {
+    holdRef.current = null; // el pago ya se intentó: no liberar las sillas
+    setScoreSecuencia(null);
+    router.push(`/pago/resultado?id=${encodeURIComponent(transactionId)}`);
+  }, [router]);
 
   // ── UI helpers ────────────────────────────────────────────────────────────────
   const isCritical = timerSeconds !== null && timerSeconds <= 60;
@@ -519,40 +497,6 @@ export default function BookingSection({ movie, funciones }: Props) {
     );
   }
 
-  // ── Compra exitosa ────────────────────────────────────────────────────────────
-  if (paymentDone) {
-    return (
-      <div className="flex flex-col items-center gap-6 py-16 text-center">
-        <div className="w-20 h-20 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center text-4xl">🎟️</div>
-        <div>
-          <h3 className="font-heading text-3xl font-bold text-white tracking-wider mb-2">¡RESERVA EXITOSA!</h3>
-          <p className="text-gray-400 font-body">Recibirás la confirmación en tu correo electrónico.</p>
-        </div>
-        <div className="bg-[#111] border border-white/10 rounded-xl p-6 max-w-sm w-full text-left flex flex-col gap-2">
-          <p className="text-gray-500 text-xs font-heading tracking-widest mb-1">RESUMEN</p>
-          {[
-            { label: "Película", value: movie.titulo },
-            { label: "Fecha",    value: dayData ? `${dayData.label} · ${fechaDisplay(dayData.fecha)}` : "" },
-            { label: "Función",  value: selectedFuncion ? `${horaDisplay(selectedFuncion.hora)} — ${selectedFuncion.formato}` : "" },
-            { label: "Asientos", value: [...selectedSeats].sort().map(getSeatLabel).join(", ") },
-          ].map(row => (
-            <div key={row.label} className="flex justify-between text-sm font-body">
-              <span className="text-gray-400">{row.label}</span>
-              <span className="text-white font-medium text-right max-w-[60%]">{row.value}</span>
-            </div>
-          ))}
-          <div className="border-t border-white/10 pt-2 flex justify-between">
-            <span className="text-gray-400 font-body text-sm">Total</span>
-            <span className="text-[#CC1244] font-heading text-xl font-bold">{fmt(total)}</span>
-          </div>
-        </div>
-        <button onClick={reset} className="border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest px-8 py-3 rounded-sm transition-all">
-          COMPRAR OTRO BOLETO
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-0">
 
@@ -584,7 +528,7 @@ export default function BookingSection({ movie, funciones }: Props) {
             SELECCIONA LA FECHA
           </h3>
           {step > 1 && (
-            <button onClick={() => { stopTimer(); liberarHold(scoreSecuencia); setScoreSecuencia(null); setStep(1); setSelectedFormato(null); setSelectedFuncion(null); setSelectedSeats(new Set()); }}
+            <button onClick={() => { stopTimer(); liberarHold(); setScoreSecuencia(null); setStep(1); setSelectedFormato(null); setSelectedFuncion(null); setSelectedSeats(new Set()); }}
               className="text-[#CC1244] font-heading text-xs tracking-widest hover:underline">CAMBIAR</button>
           )}
         </div>
@@ -909,22 +853,22 @@ export default function BookingSection({ movie, funciones }: Props) {
                     { type: "email", placeholder: "Correo electrónico *", key: "email", value: paymentInfo.email },
                     { type: "tel",   placeholder: "Teléfono (opcional)", key: "telefono", value: paymentInfo.telefono },
                   ].map(f => (
-                    <input key={f.key} type={f.type} placeholder={f.placeholder} value={f.value}
+                    <input key={f.key} type={f.type} placeholder={f.placeholder} value={f.value} disabled={!!wompiData}
                       onChange={e => setPaymentInfo(p => ({ ...p, [f.key]: e.target.value }))}
-                      className="bg-white/5 border border-white/15 text-white font-body text-sm px-4 py-3 rounded-sm focus:outline-none focus:border-[#CC1244] placeholder-gray-600" />
+                      className="bg-white/5 border border-white/15 text-white font-body text-sm px-4 py-3 rounded-sm focus:outline-none focus:border-[#CC1244] placeholder-gray-600 disabled:opacity-50" />
                   ))}
                 </div>
 
-                {!preferenceId ? (
+                {!wompiData ? (
                   <div className="flex gap-3 mt-2">
                     <button onClick={goBackToSeats}
                       className="flex-1 border border-white/20 hover:border-white/40 text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all">
                       VOLVER
                     </button>
-                    <button disabled={!paymentInfo.nombre || !paymentInfo.email || creatingPreference}
-                      onClick={() => movie.edad_minima > 0 ? setShowAgeModal(true) : handleCrearPreferencia()}
+                    <button disabled={!paymentInfo.nombre || !paymentInfo.email || iniciandoPago}
+                      onClick={() => movie.edad_minima > 0 ? setShowAgeModal(true) : handleIniciarPago()}
                       className="flex-[2] bg-[#CC1244] hover:bg-[#a00e35] disabled:opacity-40 disabled:cursor-not-allowed text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all flex items-center justify-center gap-2">
-                      {creatingPreference ? (
+                      {iniciandoPago ? (
                         <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />CARGANDO...</>
                       ) : (`IR AL PAGO — ${fmt(total)}`)}
                     </button>
@@ -932,10 +876,15 @@ export default function BookingSection({ movie, funciones }: Props) {
                 ) : (
                   <div className="flex flex-col gap-4">
                     <p className="font-heading text-xs text-gray-500 tracking-widest">MÉTODO DE PAGO</p>
-                    <MercadoPagoBrick preferenceId={preferenceId} total={total}
-                      onSuccess={handlePaymentSuccess}
-                      onError={() => alert("Error en el pago. Intenta de nuevo.")} />
-                    <button onClick={() => setPreferenceId(null)}
+                    <p className="text-gray-500 font-body text-xs leading-relaxed">
+                      Paga con tarjeta, PSE, Nequi, Botón Bancolombia o Daviplata. Tienes 10 minutos para completar el pago.
+                    </p>
+                    <WompiCheckout data={wompiData}
+                      customer={paymentInfo}
+                      label={`PAGAR ${fmt(total)}`}
+                      onResult={handleWompiResult}
+                      onError={() => alert("No se pudo cargar el sistema de pago. Intenta de nuevo.")} />
+                    <button onClick={() => { setWompiData(null); startTimer(); }}
                       className="text-gray-600 hover:text-white font-heading text-xs tracking-widest transition-colors text-center">
                       ← VOLVER A MIS DATOS
                     </button>
@@ -967,7 +916,7 @@ export default function BookingSection({ movie, funciones }: Props) {
             </div>
             <div className="flex flex-col gap-2">
               <button
-                onClick={() => { setShowAgeModal(false); handleCrearPreferencia(); }}
+                onClick={() => { setShowAgeModal(false); handleIniciarPago(); }}
                 className="w-full bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all"
               >
                 ENTIENDO — CONTINUAR AL PAGO

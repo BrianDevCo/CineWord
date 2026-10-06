@@ -7,12 +7,20 @@ function supabaseReady() {
   return url.length > 0 && !url.includes("TU_PROYECTO");
 }
 
+export function adminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+    .split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+}
+
+export function esAdmin(email: string | null | undefined): boolean {
+  return Boolean(email) && adminEmails().includes(email!.toLowerCase());
+}
+
 export async function requireAdmin(): Promise<
   { email: string; error: null } | { email: null; error: NextResponse }
 > {
-  const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
-    .split(",").map(e => e.trim()).filter(Boolean);
-  if (adminEmails.length === 0) {
+  const admins = adminEmails();
+  if (admins.length === 0) {
     return { email: null, error: NextResponse.json({ error: "ADMIN_EMAILS no configurado" }, { status: 503 }) };
   }
   if (!supabaseReady()) {
@@ -33,7 +41,7 @@ export async function requireAdmin(): Promise<
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !user.email || !adminEmails.includes(user.email)) {
+  if (!user?.email || !esAdmin(user.email)) {
     return { email: null, error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) };
   }
 
