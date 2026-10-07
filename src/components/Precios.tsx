@@ -1,37 +1,12 @@
-export default function Precios() {
-  const grupos = [
-    {
-      dias: ["Lunes", "Jueves"],
-      subtitulo: "Entre semana",
-      general: 12000,
-      premium: 18000,
-      tag: null,
-      highlight: false,
-      dotColor: "bg-sky-400",
-      textColor: "text-white",
-    },
-    {
-      dias: ["Martes", "Miércoles"],
-      subtitulo: "Promo especial",
-      general: 7000,
-      premium: 10000,
-      tag: "MITAD DE PRECIO",
-      highlight: true,
-      dotColor: "bg-[#CC1244]",
-      textColor: "text-[#CC1244]",
-      horario: "Solo funciones antes de las 3:00 PM",
-    },
-    {
-      dias: ["Viernes", "Sábado", "Domingo"],
-      subtitulo: "Fin de semana",
-      general: 14000,
-      premium: 20000,
-      tag: null,
-      highlight: false,
-      dotColor: "bg-amber-400",
-      textColor: "text-white",
-    },
-  ];
+import type { Tarifa } from "@/lib/contenido";
+
+export default function Precios({ tarifas }: { tarifas: Tarifa[] }) {
+  const grupos = tarifas.map((t) => ({
+    ...t,
+    tag: t.tag || null,
+    highlight: t.destacada,
+    textColor: t.destacada ? "text-[#CC1244]" : "text-white",
+  }));
 
   function fmt(n: number) {
     return new Intl.NumberFormat("es-CO", {
@@ -65,7 +40,7 @@ export default function Precios() {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className={`grid grid-cols-1 gap-5 ${grupos.length === 2 ? "sm:grid-cols-2" : grupos.length >= 4 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
           {grupos.map((g) => (
             <div
               key={g.dias.join()}
@@ -104,7 +79,7 @@ export default function Precios() {
               </div>
 
               {/* Horario restricción */}
-              {"horario" in g && g.horario && (
+              {g.horario && (
                 <div className="mx-6 mb-4 flex items-center gap-2 bg-[#CC1244]/15 border border-[#CC1244]/40 rounded-lg px-3 py-2.5">
                   <svg className="w-4 h-4 text-[#CC1244] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

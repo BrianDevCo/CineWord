@@ -11,13 +11,36 @@ function supabaseReady() {
   return url.length > 0 && !url.includes("TU_PROYECTO");
 }
 
+// Los datos de ejemplo (fallback.ts) solo se usan en desarrollo: en producción
+// nunca se deben mostrar películas u horarios inventados a clientes reales.
+const DEMO = process.env.NODE_ENV !== "production";
+
+function demo<T>(datos: T, vacio: T): T {
+  return DEMO ? datos : vacio;
+}
+
+/** Fecha y hora actuales en Colombia: { fecha: "YYYY-MM-DD", hora: "HH:MM:SS" } */
+export function ahoraBogota() {
+  const d = new Date();
+  return {
+    fecha: d.toLocaleDateString("en-CA", { timeZone: "America/Bogota" }),
+    hora: d.toLocaleTimeString("en-GB", { timeZone: "America/Bogota", hour12: false }),
+  };
+}
+
+/** Quita estrenos cuya fecha ya pasó (deberían estar en cartelera o retirados) */
+function soloFuturos(peliculas: Pelicula[]): Pelicula[] {
+  const hoy = ahoraBogota().fecha;
+  return peliculas.filter((p) => p.estado !== "proximo" || !p.fecha_estreno || p.fecha_estreno >= hoy);
+}
+
 export async function getHeroPeliculas(): Promise<Pelicula[]> {
   const fallback = [
     ...FALLBACK_PELICULAS.filter((p) => p.en_hero),
     ...FALLBACK_PROXIMAS.filter((p) => p.en_hero),
   ];
 
-  if (!supabaseReady()) return fallback;
+  if (!supabaseReady()) return demo(fallback, []);
 
   const { data, error } = await supabase
     .from("peliculas")
@@ -27,12 +50,12 @@ export async function getHeroPeliculas(): Promise<Pelicula[]> {
     .order("estado") // en_cartelera antes que proximo
     .order("orden");
 
-  if (error || !data?.length) return fallback;
-  return data;
+  if (error || !data?.length) return demo(fallback, []);
+  return soloFuturos(data);
 }
 
 export async function getPeliculasEnCartelera(): Promise<Pelicula[]> {
-  if (!supabaseReady()) return FALLBACK_PELICULAS;
+  if (!supabaseReady()) return demo(FALLBACK_PELICULAS, []);
 
   const { data, error } = await supabase
     .from("peliculas")
@@ -41,12 +64,15 @@ export async function getPeliculasEnCartelera(): Promise<Pelicula[]> {
     .eq("activa", true)
     .order("orden");
 
-  if (error) return FALLBACK_PELICULAS;
-  return data ?? FALLBACK_PELICULAS;
+  if (error) {
+    console.error("Error cargando cartelera:", error);
+    return demo(FALLBACK_PELICULAS, []);
+  }
+  return data ?? [];
 }
 
 export async function getPeliculasProximas(): Promise<Pelicula[]> {
-  if (!supabaseReady()) return FALLBACK_PROXIMAS;
+  if (!supabaseReady()) return demo(soloFuturos(FALLBACK_PROXIMAS), []);
 
   const { data, error } = await supabase
     .from("peliculas")
@@ -55,16 +81,20 @@ export async function getPeliculasProximas(): Promise<Pelicula[]> {
     .eq("activa", true)
     .order("fecha_estreno");
 
-  if (error) return FALLBACK_PROXIMAS;
-  return data ?? FALLBACK_PROXIMAS;
+  if (error) {
+    console.error("Error cargando próximos estrenos:", error);
+    return demo(FALLBACK_PROXIMAS, []);
+  }
+  return soloFuturos(data ?? []);
 }
 
 export async function getPelicula(id: number): Promise<Pelicula | null> {
   if (!supabaseReady()) {
-    return (
+    return demo(
       FALLBACK_PELICULAS.find((m) => m.id === id) ??
       FALLBACK_PROXIMAS.find((m) => m.id === id) ??
-      null
+      null,
+      null,
     );
   }
 
@@ -83,9 +113,9 @@ export async function getFuncionesByPelicula(
   peliculaId: number,
   dias = 7
 ): Promise<Funcion[]> {
-  if (!supabaseReady()) return getFallbackFunciones(peliculaId);
+  if (!supabaseReady()) return demo(getFallbackFunciones(peliculaId), []);
 
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+  const today = ahoraBogota().fecha;
   const untilDate = new Date();
   untilDate.setDate(untilDate.getDate() + dias);
   const until = untilDate.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
@@ -100,8 +130,42 @@ export async function getFuncionesByPelicula(
     .order("fecha")
     .order("hora");
 
-  if (error || !data?.length) return getFallbackFunciones(peliculaId);
+  if (error) console.error("Error cargando funciones:", error);
+  if (error || !data?.length) return demo(getFallbackFunciones(peliculaId), []);
   return data as Funcion[];
+}
+
+/** Horarios que quedan hoy por película: { [pelicula_id]: ["16:30:00", "19:00:00"] } */
+export async function getHorariosHoy(): Promise<Record<number, string[]>> {
+  const { fecha, hora } = ahoraBogota();
+  const agrupar = (funciones: Pick<Funcion, "pelicula_id" | "hora">[]) => {
+    const out: Record<number, string[]> = {};
+    for (const f of funciones) {
+      if (f.hora <= hora) continue;
+      const horas = (out[f.pelicula_id] ??= []);
+      if (!horas.includes(f.hora)) horas.push(f.hora);
+    }
+    for (const k in out) out[k].sort();
+    return out;
+  };
+
+  if (!supabaseReady()) {
+    if (!DEMO) return {};
+    return agrupar(FALLBACK_PELICULAS.flatMap((p) => getFallbackFunciones(p.id).filter((f) => f.fecha === fecha)));
+  }
+
+  const { data, error } = await supabase
+    .from("funciones")
+    .select("pelicula_id, hora")
+    .eq("activa", true)
+    .eq("fecha", fecha)
+    .order("hora");
+
+  if (error) {
+    console.error("Error cargando horarios de hoy:", error);
+    return {};
+  }
+  return agrupar(data ?? []);
 }
 
 export async function getFuncionById(id: number) {

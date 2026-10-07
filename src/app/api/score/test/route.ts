@@ -81,7 +81,6 @@ function extraerFuncion(carteraJson: string, teatroId: string): FuncionRef | nul
               if (!militar) continue;
               // Busca tarifa válida para terceros
               let tarifaGeneral = "", tarifaPremium = "";
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               for (const zona of arr(hora?.TipoZona)) {
                 const nomZona = String(zona?.["@nombreZona"] ?? "").toUpperCase();
                 const tarifa = zona?.TipoSilla?.Tarifa;

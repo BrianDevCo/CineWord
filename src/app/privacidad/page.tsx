@@ -1,3 +1,4 @@
+import { CINE, DIRECCION_COMPLETA } from "@/lib/cine";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -6,10 +7,12 @@ export const metadata: Metadata = {
   description: "Política de tratamiento de datos personales de CINEWORLD, conforme a la Ley 1581 de 2012.",
 };
 
+const RESPONSABLE = [CINE.razonSocial || "CINEWORLD", CINE.nit && `(NIT ${CINE.nit})`].filter(Boolean).join(" ");
+
 const SECTIONS = [
   {
     title: "1. Responsable del Tratamiento",
-    content: `CINEWORLD, establecimiento comercial ubicado en el Centro Comercial MR Outlet, Cali, Valle del Cauca, Colombia, es el responsable del tratamiento de los datos personales recolectados a través de este sitio web.`,
+    content: `${RESPONSABLE}, establecimiento comercial ubicado en ${DIRECCION_COMPLETA}, Colombia, es el responsable del tratamiento de los datos personales recolectados a través de este sitio web.${CINE.email ? ` Puedes ejercer tus derechos de habeas data escribiendo a ${CINE.email} o mediante el formulario de PQR.` : " Puedes ejercer tus derechos de habeas data mediante el formulario de PQR."}`,
   },
   {
     title: "2. Datos que Recolectamos",

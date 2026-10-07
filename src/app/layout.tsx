@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Oswald, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -72,6 +73,7 @@ export default function RootLayout({
       </head>
       <body className="bg-[#0a0a0a] text-white antialiased">
         <ThemeProvider>{children}</ThemeProvider>
+        <WhatsAppButton />
       </body>
     </html>
   );

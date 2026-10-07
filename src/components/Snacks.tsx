@@ -1,28 +1,12 @@
 import Image from "next/image";
-
-const COMBO_IMG: Record<number, string> = {
-  1: "/combos/mi-combo.jpg",
-  2: "/combos/combo-world.jpg",
-  3: "/combos/mundo-para-dos.jpg",
-  4: "/combos/mega-familiar.jpg",
-  5: "/combos/cajita-kid.jpg",
-  6: "/combos/combo-express.jpg",
-  7: "/combos/combo-nachos.jpg",
-};
-
-const combos = [
-  { id: 1, name: "Mi Combo",       tag: null,      desc: "Crispeta mediana, 1 perro, 1 gaseosa y 1 dulce",       precios: { salado: 33000, mixto: 36500, dulce: 39000 } },
-  { id: 2, name: "Combo World",    tag: "POPULAR", desc: "Crispeta grande y 2 gaseosas",                         precios: { salado: 35000, mixto: 38500, dulce: 41000 } },
-  { id: 3, name: "Mundo para Dos", tag: "DÚO",     desc: "Crispeta grande, 2 perros, 2 gaseosas y 1 dulce",      precios: { salado: 60000, mixto: 63500, dulce: 66000 } },
-  { id: 4, name: "Mega Familiar",  tag: "FAMILIA", desc: "2 crispetas medianas, 3 perros, 3 gaseosas y papas",   precios: { salado: 90000, mixto: 93500, dulce: 96000 } },
-  { id: 5, name: "Combo Kids",     tag: null,      desc: "Cajita feliz, chocolatina y 1 bebida",                 precios: { salado: 18000, mixto: 21500, dulce: 24000 } },
-  { id: 6, name: "Combo Express",  tag: null,      desc: "Crispeta mediana y 2 gaseosas",                        precios: { salado: 28000, mixto: 31500, dulce: 34000 } },
-  { id: 7, name: "Combo Nachos",   tag: null,      desc: "Nachos con queso, perro y bebida",                     precios: { salado: 30000 } },
-];
+import type { Combo } from "@/lib/contenido";
 
 function fmt(n: number) { return `$${n.toLocaleString("es-CO")}`; }
 
-export default function Snacks() {
+export default function Snacks({ combos: todos }: { combos: Combo[] }) {
+  const combos = todos.filter((c) => c.activo);
+  if (!combos.length) return null;
+
   return (
     <section id="snacks" className="py-20 lg:py-28 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -39,7 +23,7 @@ export default function Snacks() {
         {/* Combos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {combos.map((combo) => {
-            const hasSabores = combo.precios.mixto !== undefined;
+            const hasSabores = combo.precios.mixto !== undefined && combo.precios.dulce !== undefined;
             return (
               <div
                 key={combo.id}
@@ -53,8 +37,8 @@ export default function Snacks() {
 
                 <div className="relative h-44 overflow-hidden rounded-t-xl">
                   <Image
-                    src={COMBO_IMG[combo.id]}
-                    alt={combo.name}
+                    src={combo.imagen}
+                    alt={combo.nombre}
                     fill
                     className="object-cover"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -63,7 +47,7 @@ export default function Snacks() {
 
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div>
-                    <h3 className="font-heading text-sm font-bold text-white">{combo.name}</h3>
+                    <h3 className="font-heading text-sm font-bold text-white">{combo.nombre}</h3>
                     <p className="text-gray-500 text-xs font-body leading-snug mt-1">{combo.desc}</p>
                   </div>
 

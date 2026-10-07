@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,6 +14,10 @@ import type { WompiCheckoutData } from "@/components/WompiCheckout";
 
 // Cambiar a false para deshabilitar la venta en línea
 import { VENTA_ONLINE } from "@/lib/config";
+import { CINE } from "@/lib/cine";
+import SeatMap from "./booking/SeatMap";
+import StepIndicator from "./booking/StepIndicator";
+import AgeModal from "./booking/AgeModal";
 
 // ── Constantes de fallback (cuando Score no está configurado) ──────────────────
 const FALLBACK_ROWS = ["A","B","C","D","E","F","G","H"];
@@ -48,6 +52,13 @@ function getTodayStr() {
   return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
 }
 
+const suscribirNada = () => () => {};
+
+function supabaseConfigurado() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  return url.length > 0 && !url.includes("TU_PROYECTO");
+}
+
 function buildDays(funciones: Funcion[], hoyStr: string): CalendarDay[] {
   const mananaDate = new Date(hoyStr + "T12:00:00");
   mananaDate.setDate(mananaDate.getDate() + 1);
@@ -65,12 +76,12 @@ interface Props { movie: Pelicula; funciones: Funcion[]; }
 export default function BookingSection({ movie, funciones }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const [hoyStr, setHoyStr] = useState("");
-  useEffect(() => { setHoyStr(getTodayStr()); }, []);
+  // "" en el servidor y la fecha local en el navegador (evita diferencias de hidratación)
+  const hoyStr = useSyncExternalStore(suscribirNada, getTodayStr, () => "");
   const days = useMemo(() => buildDays(funciones, hoyStr), [funciones, hoyStr]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────────
-  const [user, setUser] = useState<User | null | "loading">("loading");
+  const [user, setUser] = useState<User | null | "loading">(() => (supabaseConfigurado() ? "loading" : null));
   const [showLoginGate, setShowLoginGate] = useState(false);
 
   // ── Pasos ─────────────────────────────────────────────────────────────────────
@@ -171,10 +182,7 @@ export default function BookingSection({ movie, funciones }: Props) {
   const precioRegular = scorePlanRegular?.valor ?? funcionRef?.precio_regular ?? 15000;
   const precioVip     = scorePlanVip?.valor     ?? funcionRef?.precio_vip     ?? 25000;
 
-  const total = useMemo(
-    () => [...selectedSeats].reduce((acc, id) => acc + (isVipRow(id[0]) ? precioVip : precioRegular), 0),
-    [selectedSeats, isVipRow, precioRegular, precioVip],
-  );
+  const total = [...selectedSeats].reduce((acc, id) => acc + (isVipRow(id[0]) ? precioVip : precioRegular), 0);
 
   const asientosList = useMemo(
     () => [...selectedSeats].map(id => ({
@@ -186,14 +194,20 @@ export default function BookingSection({ movie, funciones }: Props) {
   );
 
   // ── Timer ─────────────────────────────────────────────────────────────────────
+  const onTimeoutRef = useRef<() => void>(() => {});
   const startTimer = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const deadline = Date.now() + TIMER_TOTAL * 1000;
     setTimerSeconds(TIMER_TOTAL);
     intervalRef.current = setInterval(() => {
-      setTimerSeconds(prev => {
-        if (prev === null || prev <= 1) { clearInterval(intervalRef.current!); intervalRef.current = null; return 0; }
-        return prev - 1;
-      });
+      const restante = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      if (restante === 0) {
+        clearInterval(intervalRef.current!);
+        intervalRef.current = null;
+        onTimeoutRef.current();
+      } else {
+        setTimerSeconds(restante);
+      }
     }, 1000);
   }, []);
 
@@ -218,15 +232,15 @@ export default function BookingSection({ movie, funciones }: Props) {
 
   // Timer expira → liberar hold
   useEffect(() => {
-    if (timerSeconds === 0) {
+    onTimeoutRef.current = () => {
       setTimedOut(true);
       setSelectedSeats(new Set());
       setStep(4);
       setTimerSeconds(null);
       liberarHold();
       setScoreSecuencia(null);
-    }
-  }, [timerSeconds, liberarHold]);
+    };
+  }, [liberarHold]);
 
   // Si el cliente sale de la página sin pagar, liberar las sillas
   useEffect(() => liberarHold, [liberarHold]);
@@ -235,8 +249,7 @@ export default function BookingSection({ movie, funciones }: Props) {
 
   // ── Auth ──────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    if (!url || url.includes("TU_PROYECTO")) { setUser(null); return; }
+    if (!supabaseConfigurado()) return;
     const supabase = createSupabaseBrowserClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setUser(s?.user ?? null));
@@ -468,24 +481,14 @@ export default function BookingSection({ movie, funciones }: Props) {
   const barPct     = timerSeconds !== null ? (timerSeconds / TIMER_TOTAL) * 100 : 100;
   const dayData    = days.find(d => d.fecha === selectedFecha);
 
-  const seatClass = (id: string) => {
-    if (ocupadosSet.has(id))   return "bg-white/10 border-white/10 cursor-not-allowed opacity-40";
-    if (selectedSeats.has(id)) return "bg-blue-500 border-blue-500 cursor-pointer scale-110 shadow-[0_0_8px_rgba(59,130,246,0.6)]";
-    if (isVipRow(id[0]))       return "bg-yellow-500/10 border-yellow-500/40 hover:bg-yellow-500/30 cursor-pointer";
-    return "bg-[#CC1244]/20 border-[#CC1244]/60 hover:bg-[#CC1244]/40 cursor-pointer";
-  };
-
-  const seatFill = (id: string): { back: string; cushion: string; arm: string; glow: boolean } => {
-    if (ocupadosSet.has(id))   return { back: "#ffffff", cushion: "#ffffff", arm: "#ffffff", glow: false };
-    if (selectedSeats.has(id)) return { back: "#3B82F6", cushion: "#60A5FA", arm: "#2563EB", glow: true };
-    if (isVipRow(id[0]))       return { back: "#EAB308", cushion: "#FDE047", arm: "#CA8A04", glow: false };
-    return { back: "#CC1244", cushion: "#E8154F", arm: "#A50F36", glow: false };
-  };
-
   const toggleSeat = (id: string) => {
     if (ocupadosSet.has(id)) return;
     setTimedOut(false);
-    setSelectedSeats(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelectedSeats(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
   };
 
   // ── Sin funciones ─────────────────────────────────────────────────────────────
@@ -500,25 +503,7 @@ export default function BookingSection({ movie, funciones }: Props) {
   return (
     <div className="flex flex-col gap-0">
 
-      {/* ── STEP INDICATOR ── */}
-      <div className="flex items-center gap-0 mb-8 sm:mb-10">
-        {["Fecha","Formato","Horario","Asientos","Pago"].map((label, i) => {
-          const n = (i + 1) as 1|2|3|4|5;
-          const locked = !VENTA_ONLINE && n > 3;
-          const active = step === n && !locked; const done = step > n && !locked;
-          return (
-            <div key={label} className="flex items-center flex-1 sm:flex-none">
-              <div className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-4 py-2 rounded-sm transition-all w-full sm:w-auto ${active ? "bg-[#CC1244] text-white" : done ? "text-[#CC1244]" : locked ? "text-gray-700 opacity-50" : "text-gray-600"}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-heading border shrink-0 ${active ? "border-white text-white" : done ? "border-[#CC1244] bg-[#CC1244] text-white" : locked ? "border-gray-700" : "border-gray-600"}`}>
-                  {done ? "✓" : locked ? "🔒" : n}
-                </span>
-                <span className="font-heading text-[9px] sm:text-xs tracking-widest hidden xs:inline sm:inline">{label.toUpperCase()}</span>
-              </div>
-              {i < 4 && <div className={`w-3 sm:w-8 h-px shrink-0 ${done ? "bg-[#CC1244]" : "bg-white/10"}`} />}
-            </div>
-          );
-        })}
-      </div>
+      <StepIndicator step={step} ventaOnline={VENTA_ONLINE} />
 
       {/* ── PASO 1: FECHA ── */}
       <div className={`flex flex-col gap-4 ${step > 1 ? "mb-6 pb-6 border-b border-white/10" : "mb-10"}`}>
@@ -543,6 +528,7 @@ export default function BookingSection({ movie, funciones }: Props) {
                   <span className={`font-heading text-[10px] tracking-widest uppercase ${isWknd ? "text-yellow-500/70" : "text-gray-600"}`}>{fechaDisplay(day.fecha)}</span>
                   <span className="font-heading text-2xl font-bold text-white group-hover:text-[#CC1244] transition-colors">{day.label}</span>
                   {isWknd && <span className="text-[9px] font-heading tracking-widest text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-sm">MÁS FUNCIONES</span>}
+                  {isTueWed && <span className="text-[9px] font-heading tracking-widest text-[#CC1244] bg-[#CC1244]/10 px-2 py-0.5 rounded-sm">½ PRECIO</span>}
                 </button>
               );
             })}
@@ -657,8 +643,8 @@ export default function BookingSection({ movie, funciones }: Props) {
                 </p>
               </div>
               <div className="flex flex-col items-center gap-1 text-gray-600 text-xs font-body">
-                <span>📍 Finca Veracruz, Auto. Cali - Candelaria #Lt 5</span>
-                <span>Manuela Beltrán, Candelaria, Valle del Cauca</span>
+                <span>📍 {CINE.lugar} — {CINE.direccion}</span>
+                <span>{CINE.ciudad}</span>
                 <span className="mt-1">Taquilla abre 30 min antes de la primera función</span>
               </div>
               <button
@@ -677,79 +663,18 @@ export default function BookingSection({ movie, funciones }: Props) {
               </div>
             ) : (
               <>
-                <div className="flex flex-col gap-2 overflow-x-auto">
-                  {[...filas].reverse().map(row => (
-                    <div key={row} className={`flex items-center gap-2 justify-center ${mirrorCols ? "flex-row-reverse" : ""}`}>
-                      <span className="w-5 text-center text-gray-600 text-xs font-heading shrink-0">{row}</span>
-                      <div className="flex gap-1.5 items-center">
-                        {(allCols ?? colsEnFila(row)).map(col => {
-                          const id = `${row}${col}`;
-                          if (allCols && !seatExists(row, col)) {
-                            if (col === 3) {
-                              return (
-                                <div key="aisle" className="w-6 h-8 flex items-center justify-center shrink-0">
-                                  <span className="text-[7px] text-gray-700 font-heading" style={{ writingMode: "vertical-rl" }}>ESC</span>
-                                </div>
-                              );
-                            }
-                            return <div key={`gap-${col}`} className="w-8 h-8 shrink-0" />;
-                          }
-                          const occupied = ocupadosSet.has(id);
-                          const selected = selectedSeats.has(id);
-                          const f = seatFill(id);
-                          return (
-                            <button
-                              key={id}
-                              onClick={() => toggleSeat(id)}
-                              title={occupied ? "Ocupado" : getSeatLabel(id)}
-                              disabled={occupied}
-                              className={`shrink-0 transition-all duration-150 ${selected ? "scale-110" : !occupied ? "hover:scale-105" : ""} ${occupied ? "cursor-not-allowed" : "cursor-pointer"}`}
-                              style={{ background: "none", border: "none", padding: 0, filter: f.glow ? "drop-shadow(0 0 4px rgba(59,130,246,0.7))" : "none" }}
-                            >
-                              <svg viewBox="0 0 30 30" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
-                                {/* Respaldo */}
-                                <rect x="4" y="1" width="22" height="17" rx="5" fill={f.back} opacity={occupied ? 0.18 : 0.85} />
-                                {/* Apoyabrazos izquierdo */}
-                                <rect x="0" y="13" width="5.5" height="15" rx="2.5" fill={f.arm} opacity={occupied ? 0.14 : 0.75} />
-                                {/* Apoyabrazos derecho */}
-                                <rect x="24.5" y="13" width="5.5" height="15" rx="2.5" fill={f.arm} opacity={occupied ? 0.14 : 0.75} />
-                                {/* Cojín del asiento */}
-                                <rect x="4" y="15" width="22" height="13" rx="4" fill={f.cushion} opacity={occupied ? 0.14 : 0.95} />
-                                {/* Línea de costura del cojín */}
-                                {!occupied && <rect x="7" y="18" width="16" height="7" rx="2.5" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />}
-                              </svg>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <span className="w-5 text-center text-gray-600 text-xs font-heading shrink-0">{row}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="w-4/5 h-4 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-sm" style={{ boxShadow: "0 0 18px 4px rgba(255,255,255,0.15)" }} />
-                  <span className="text-white/60 text-sm font-heading tracking-[0.3em] uppercase">— Pantalla —</span>
-                </div>
-
-                <div className="flex flex-wrap justify-center gap-5 text-xs font-body text-gray-500">
-                  {[
-                    { back: "#CC1244", cushion: "#E8154F", arm: "#A50F36", occ: false,  label: "Disponible" },
-                    { back: "#3B82F6", cushion: "#60A5FA", arm: "#2563EB", occ: false,  label: "Seleccionado" },
-                    { back: "#ffffff", cushion: "#ffffff", arm: "#ffffff", occ: true,   label: "Ocupado" },
-                    { back: "#EAB308", cushion: "#FDE047", arm: "#CA8A04", occ: false,  label: `VIP — ${fmt(precioVip)}` },
-                  ].map(l => (
-                    <span key={l.label} className="flex items-center gap-1.5">
-                      <svg viewBox="0 0 30 30" width="18" height="18">
-                        <rect x="4" y="1" width="22" height="17" rx="5" fill={l.back} opacity={l.occ ? 0.18 : 0.85} />
-                        <rect x="0" y="13" width="5.5" height="15" rx="2.5" fill={l.arm} opacity={l.occ ? 0.14 : 0.75} />
-                        <rect x="24.5" y="13" width="5.5" height="15" rx="2.5" fill={l.arm} opacity={l.occ ? 0.14 : 0.75} />
-                        <rect x="4" y="15" width="22" height="13" rx="4" fill={l.cushion} opacity={l.occ ? 0.14 : 0.95} />
-                      </svg>
-                      {l.label}
-                    </span>
-                  ))}
-                </div>
+                <SeatMap
+                  filas={filas}
+                  allCols={allCols}
+                  colsEnFila={colsEnFila}
+                  seatExists={seatExists}
+                  mirrorCols={mirrorCols}
+                  ocupados={ocupadosSet}
+                  seleccionados={selectedSeats}
+                  isVipRow={isVipRow}
+                  precioVip={fmt(precioVip)}
+                  onToggle={toggleSeat}
+                />
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#111] border border-white/10 rounded-xl p-5">
                   <div className="font-body text-sm text-gray-400">
@@ -896,40 +821,12 @@ export default function BookingSection({ movie, funciones }: Props) {
         </div>
       )}
 
-      {/* Modal restricción de edad */}
       {showAgeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 max-w-sm w-full flex flex-col gap-5 shadow-2xl">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#CC1244]/15 border border-[#CC1244]/30 flex items-center justify-center">
-                <span className="font-heading text-[#CC1244] text-2xl font-bold">+{movie.edad_minima}</span>
-              </div>
-              <h3 className="font-heading text-white text-lg font-bold tracking-wide">
-                Restricción de edad
-              </h3>
-              <p className="font-body text-gray-400 text-sm leading-relaxed">
-                Esta película tiene restricción para menores de{" "}
-                <span className="text-white font-semibold">{movie.edad_minima} años</span>.
-                Al continuar, confirmas que eres consciente de que{" "}
-                <span className="text-[#CC1244] font-semibold">cualquier persona menor de {movie.edad_minima} años no podrá ingresar a la sala</span>, independientemente de si tiene boleta.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => { setShowAgeModal(false); handleIniciarPago(); }}
-                className="w-full bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all"
-              >
-                ENTIENDO — CONTINUAR AL PAGO
-              </button>
-              <button
-                onClick={() => setShowAgeModal(false)}
-                className="w-full border border-white/15 hover:border-white/30 text-gray-400 hover:text-white font-heading text-sm tracking-widest py-3 rounded-sm transition-all"
-              >
-                CANCELAR
-              </button>
-            </div>
-          </div>
-        </div>
+        <AgeModal
+          edad={movie.edad_minima}
+          onConfirm={() => { setShowAgeModal(false); handleIniciarPago(); }}
+          onCancel={() => setShowAgeModal(false)}
+        />
       )}
     </div>
   );

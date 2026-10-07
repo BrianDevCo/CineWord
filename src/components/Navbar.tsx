@@ -147,7 +147,7 @@ export default function Navbar() {
                 >
                   INGRESAR
                 </Link>
-                <a
+                <Link
                   href="/#cartelera"
                   className="flex items-center gap-2 bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-sm tracking-widest px-5 py-2.5 rounded-sm transition-all duration-200"
                 >
@@ -155,7 +155,7 @@ export default function Navbar() {
                     <path d="M2 6a2 2 0 012-2h16a2 2 0 012 2v2a1 1 0 010 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2v-6a1 1 0 010-2V6z" />
                   </svg>
                   COMPRAR
-                </a>
+                </Link>
               </div>
             )}
           </div>
@@ -227,13 +227,13 @@ export default function Navbar() {
                 INGRESAR / REGISTRARSE
               </Link>
             )}
-            <a
+            <Link
               href="/#cartelera"
               onClick={() => setMenuOpen(false)}
               className="text-center bg-[#CC1244] text-white font-heading text-sm tracking-widest px-5 py-3 rounded-sm"
             >
               COMPRAR BOLETOS
-            </a>
+            </Link>
           </div>
         </div>
       )}

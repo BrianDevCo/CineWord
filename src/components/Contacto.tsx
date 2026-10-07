@@ -1,4 +1,6 @@
+import { CINE, whatsappUrl } from "@/lib/cine";
 export default function Contacto() {
+  const wa = whatsappUrl();
   return (
     <section id="contacto" className="py-20 lg:py-28 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,11 +27,11 @@ export default function Contacto() {
                   DIRECCIÓN
                 </h3>
                 <p className="text-gray-400 font-body">
-                  Finca Veracruz
+                  {CINE.lugar}
                   <br />
-                  Auto. Cali - Candelaria #Lt 5
+                  {CINE.direccion}
                   <br />
-                  Candelaria, Valle del Cauca
+                  {CINE.ciudad}
                 </p>
               </div>
             </div>
@@ -45,8 +47,7 @@ export default function Contacto() {
                 </h3>
                 <div className="flex flex-col gap-1 font-body text-sm">
                   <div className="flex justify-between gap-4 text-gray-400">
-                    <span>Todos los días</span>
-                    <span className="text-white/70">1:00 PM — 10:00 PM</span>
+                    <span className="text-white/70">{CINE.horario}</span>
                   </div>
                 </div>
               </div>
@@ -62,14 +63,31 @@ export default function Contacto() {
                   SÍGUENOS
                 </h3>
                 <a
-                  href="https://www.instagram.com/cineworldmr/"
+                  href={CINE.instagram.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 font-body text-gray-400 hover:text-white transition-colors"
                 >
                   <span className="text-pink-400">Instagram:</span>
-                  <span>@cineworldmr</span>
+                  <span>{CINE.instagram.usuario}</span>
                 </a>
+                {wa && (
+                  <a
+                    href={wa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 font-body text-gray-400 hover:text-white transition-colors mt-1"
+                  >
+                    <span className="text-green-400">WhatsApp:</span>
+                    <span>Escríbenos</span>
+                  </a>
+                )}
+                {CINE.telefono && (
+                  <a href={`tel:${CINE.telefono.replace(/\s/g, "")}`} className="flex items-center gap-2 font-body text-gray-400 hover:text-white transition-colors mt-1">
+                    <span className="text-sky-400">Teléfono:</span>
+                    <span>{CINE.telefono}</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -77,7 +95,7 @@ export default function Contacto() {
           {/* Mapa real */}
           <div className="rounded-xl overflow-hidden border border-white/10 h-80 lg:h-[420px] relative">
             <iframe
-              src="https://maps.google.com/maps?q=3.4161865,-76.4573024&z=17&output=embed"
+              src={`https://maps.google.com/maps?q=${CINE.mapsQuery}&z=17&output=embed`}
               width="100%"
               height="100%"
               style={{ border: 0, filter: "grayscale(30%) contrast(1.1)" }}

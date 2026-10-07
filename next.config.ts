@@ -19,7 +19,7 @@ const cspReportOnly = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.wompi.co",
-  "frame-src https://*.wompi.co https://maps.google.com https://www.google.com",
+  "frame-src https://*.wompi.co https://maps.google.com https://www.google.com https://www.youtube-nocookie.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

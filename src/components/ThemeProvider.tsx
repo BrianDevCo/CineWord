@@ -1,26 +1,36 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 
 type Theme = "dark" | "light";
 interface ThemeCtx { theme: Theme; toggle: () => void; }
 
 const Ctx = createContext<ThemeCtx>({ theme: "dark", toggle: () => {} });
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+// El tema vive en localStorage; el script inline del layout lo aplica antes de pintar
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    const stored = (localStorage.getItem("cw-theme") as Theme) ?? "dark";
-    setTheme(stored);
-    document.documentElement.setAttribute("data-theme", stored);
-  }, []);
+function leerTema(): Theme {
+  try {
+    return localStorage.getItem("cw-theme") === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function suscribir(cb: () => void) {
+  listeners.add(cb);
+  return () => { listeners.delete(cb); };
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const theme = useSyncExternalStore(suscribir, leerTema, () => "dark" as Theme);
 
   const toggle = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("cw-theme", next);
+    try { localStorage.setItem("cw-theme", next); } catch { /* modo privado */ }
     document.documentElement.setAttribute("data-theme", next);
+    listeners.forEach((cb) => cb());
   };
 
   return <Ctx.Provider value={{ theme, toggle }}>{children}</Ctx.Provider>;

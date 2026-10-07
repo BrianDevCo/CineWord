@@ -1,3 +1,4 @@
+import { CINE, DIRECCION_COMPLETA } from "@/lib/cine";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -6,6 +7,10 @@ export const metadata: Metadata = {
   description: "Términos y condiciones de uso del sitio web y servicio de venta de boletos de CINEWORLD.",
 };
 
+const VENDEDOR = CINE.razonSocial || CINE.nit
+  ? ` El vendedor es ${[CINE.razonSocial, CINE.nit && `NIT ${CINE.nit}`].filter(Boolean).join(", ")}${CINE.telefono ? `, teléfono ${CINE.telefono}` : ""}${CINE.email ? `, correo ${CINE.email}` : ""}.`
+  : "";
+
 const SECTIONS = [
   {
     title: "1. Aceptación de los Términos",
@@ -13,7 +18,7 @@ const SECTIONS = [
   },
   {
     title: "2. Descripción del Servicio",
-    content: `CINEWORLD ofrece un sistema de venta en línea de boletos para las funciones de cine programadas en sus instalaciones ubicadas en el Centro Comercial MR Outlet, Cali, Colombia. El servicio incluye la selección de funciones, asientos y el pago a través de la plataforma Wompi.`,
+    content: `CINEWORLD ofrece un sistema de venta en línea de boletos para las funciones de cine programadas en sus instalaciones ubicadas en ${DIRECCION_COMPLETA}, Colombia.${VENDEDOR} El servicio incluye la selección de funciones, asientos y el pago a través de la plataforma Wompi.`,
   },
   {
     title: "3. Proceso de Compra",

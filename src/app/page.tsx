@@ -7,15 +7,18 @@ import Precios from "@/components/Precios";
 import Snacks from "@/components/Snacks";
 import Contacto from "@/components/Contacto";
 import Footer from "@/components/Footer";
-import { getPeliculasEnCartelera, getPeliculasProximas, getHeroPeliculas } from "@/lib/db";
+import { getPeliculasEnCartelera, getPeliculasProximas, getHeroPeliculas, getHorariosHoy } from "@/lib/db";
+import { getContenido } from "@/lib/contenido";
 
 export const revalidate = 300; // refresca cada 5 minutos
 
 export default async function Home() {
-  const [enCartelera, proximas, heroPeliculas] = await Promise.all([
+  const [enCartelera, proximas, heroPeliculas, horariosHoy, contenido] = await Promise.all([
     getPeliculasEnCartelera(),
     getPeliculasProximas(),
     getHeroPeliculas(),
+    getHorariosHoy(),
+    getContenido(),
   ]);
 
   return (
@@ -23,11 +26,11 @@ export default async function Home() {
       <Navbar />
       <main>
         <Hero peliculas={heroPeliculas} />
-        <Cartelera peliculas={enCartelera} />
+        <Cartelera peliculas={enCartelera} horariosHoy={horariosHoy} />
         <ProximosEstrenos peliculas={proximas} />
         <Horarios />
-        <Precios />
-        <Snacks />
+        <Precios tarifas={contenido.tarifas} />
+        <Snacks combos={contenido.combos} />
         <Contacto />
       </main>
       <Footer />

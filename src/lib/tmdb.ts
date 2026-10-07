@@ -71,15 +71,6 @@ interface TmdbRelease {
   release_dates: { certification: string; type: number }[];
 }
 
-// Mapa de IDs de género TMDB → nombre en español
-const GENRES: Record<number, string> = {
-  28: "Acción", 12: "Aventura", 16: "Animación", 35: "Comedia",
-  80: "Crimen", 99: "Documental", 18: "Drama", 10751: "Familiar",
-  14: "Fantasía", 36: "Historia", 27: "Terror", 10402: "Música",
-  9648: "Misterio", 10749: "Romance", 878: "Ciencia Ficción",
-  10770: "Televisión", 53: "Suspenso", 10752: "Guerra", 37: "Western",
-};
-
 async function fetchTmdb<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${BASE}${path}`);
   url.searchParams.set("api_key", apiKey());

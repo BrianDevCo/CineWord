@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPelicula, getPeliculasEnCartelera, getFuncionesByPelicula } from "@/lib/db";
 import BookingSection from "./BookingSection";
+import TrailerPlayer from "@/components/TrailerPlayer";
 
 export const revalidate = 300;
 
@@ -124,6 +125,23 @@ export default async function PeliculaPage({
         </div>
       </section>
 
+      {/* ── COMPRAR BOLETO ── */}
+      <section id="comprar" className="scroll-mt-20 bg-[#0d0d0d] border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="mb-10">
+            <p className="text-[#CC1244] font-heading tracking-widest text-xs uppercase mb-1 flex items-center gap-2">
+              <span className="inline-block w-4 h-px bg-[#CC1244]" />
+              Reserva tu lugar
+            </p>
+            <h2 className="font-heading text-4xl font-bold text-white tracking-wider">COMPRAR BOLETO</h2>
+            <p className="text-gray-500 font-body text-sm mt-1">
+              Funciones disponibles para los próximos 7 días.
+            </p>
+          </div>
+          <BookingSection movie={movie} funciones={funciones} />
+        </div>
+      </section>
+
       {/* ── SINOPSIS + TRAILER ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
@@ -161,58 +179,19 @@ export default async function PeliculaPage({
                 <span className="inline-block w-4 h-px bg-[#CC1244]" />
                 Material audiovisual
               </p>
-              <h2 className="font-heading text-3xl font-bold text-white tracking-wider">TRAILER</h2>
+              <h2 className="font-heading text-3xl font-bold text-white tracking-wider">TRÁILER</h2>
             </div>
 
-            {movie.trailer_search && (
-              <a
-                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(movie.trailer_search)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative aspect-video rounded-xl overflow-hidden border border-white/10 hover:border-[#CC1244]/50 transition-all block"
-              >
-                {(movie.backdrop_url ?? movie.poster_url) && (
-                  <Image
-                    src={(movie.backdrop_url ?? movie.poster_url)!}
-                    alt="Trailer"
-                    fill
-                    className={`object-cover ${!movie.backdrop_url ? "object-top" : ""}`}
-                    sizes="(max-width: 1024px) 100vw, 60vw"
-                  />
-                )}
-                <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-all" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-[#CC1244]/90 group-hover:bg-[#CC1244] group-hover:scale-110 transition-all flex items-center justify-center shadow-2xl shadow-[#CC1244]/30">
-                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4 text-center">
-                  <span className="font-heading text-white text-sm tracking-widest bg-black/60 px-4 py-1.5 rounded-sm">
-                    VER TRAILER OFICIAL
-                  </span>
-                </div>
-              </a>
+            {movie.trailer_search ? (
+              <TrailerPlayer
+                trailer={movie.trailer_search}
+                titulo={movie.titulo}
+                imagen={movie.backdrop_url ?? movie.poster_url}
+              />
+            ) : (
+              <p className="text-gray-600 font-body text-sm">Tráiler no disponible.</p>
             )}
           </div>
-        </div>
-      </section>
-
-      {/* ── COMPRAR BOLETO ── */}
-      <section id="comprar" className="border-t border-white/10 bg-[#0d0d0d]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="mb-10">
-            <p className="text-[#CC1244] font-heading tracking-widest text-xs uppercase mb-1 flex items-center gap-2">
-              <span className="inline-block w-4 h-px bg-[#CC1244]" />
-              Reserva tu lugar
-            </p>
-            <h2 className="font-heading text-4xl font-bold text-white tracking-wider">COMPRAR BOLETO</h2>
-            <p className="text-gray-500 font-body text-sm mt-1">
-              Funciones disponibles para los próximos 7 días.
-            </p>
-          </div>
-          <BookingSection movie={movie} funciones={funciones} />
         </div>
       </section>
 

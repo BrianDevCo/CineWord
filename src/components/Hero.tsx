@@ -16,6 +16,7 @@ export default function Hero({ peliculas }: Props) {
   const [email, setEmail] = useState("");
   const [notifStatus, setNotifStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const pausedRef = useRef(false);
+  const touchX = useRef<number | null>(null);
 
   const goTo = useCallback((index: number) => {
     if (transitioning) return;
@@ -23,6 +24,10 @@ export default function Hero({ peliculas }: Props) {
     setTimeout(() => {
       setCurrent(index);
       setTransitioning(false);
+      // Cierra el modal "avisarme" al cambiar de película
+      setShowModal(false);
+      setNotifStatus("idle");
+      setEmail("");
     }, 500);
   }, [transitioning]);
 
@@ -36,16 +41,20 @@ export default function Hero({ peliculas }: Props) {
     return () => clearInterval(interval);
   }, [next]);
 
-  // Cierra modal al cambiar de película
-  useEffect(() => {
-    setShowModal(false);
-    setNotifStatus("idle");
-    setEmail("");
-  }, [current]);
-
   if (!peliculas.length) return null;
 
   const p = peliculas[current];
+  const prev = () => goTo((current - 1 + peliculas.length) % peliculas.length);
+  const sig  = () => goTo((current + 1) % peliculas.length);
+
+  // Deslizar con el dedo en celular
+  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current === null || peliculas.length <= 1) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (Math.abs(dx) > 50) (dx > 0 ? prev : sig)();
+  };
 
   const handleAvisar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +77,8 @@ export default function Hero({ peliculas }: Props) {
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
       onMouseEnter={() => { pausedRef.current = true; }}
       onMouseLeave={() => { pausedRef.current = false; }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       {/* Backdrops con crossfade */}
       {peliculas.map((peli, i) => (
@@ -164,7 +175,7 @@ export default function Hero({ peliculas }: Props) {
                 📅 {p.estado === "en_cartelera"
                   ? "En cartelera"
                   : p.fecha_estreno
-                  ? `Estreno: ${new Date(p.fecha_estreno).toLocaleDateString("es-CO", { day: "numeric", month: "long" })}`
+                  ? `Estreno: ${new Date(p.fecha_estreno + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "long" })}`
                   : "Próximamente"}
               </span>
               {p.clasificacion && <span>🎭 {p.clasificacion}</span>}
@@ -224,7 +235,8 @@ export default function Hero({ peliculas }: Props) {
                 key={i}
                 onClick={() => goTo(i)}
                 aria-label={`Ir a slide ${i + 1}`}
-                className={`transition-all duration-300 rounded-full ${
+                aria-current={i === current}
+                className={`transition-all duration-300 rounded-full outline-offset-4 ${
                   i === current
                     ? "w-6 h-2 bg-[#CC1244]"
                     : "w-2 h-2 bg-white/30 hover:bg-white/60"
@@ -245,8 +257,8 @@ export default function Hero({ peliculas }: Props) {
       {peliculas.length > 1 && (
         <>
           <button
-            onClick={() => goTo((current - 1 + peliculas.length) % peliculas.length)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 flex items-center justify-center text-white transition-all"
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 hidden sm:flex items-center justify-center text-white transition-all"
             aria-label="Anterior"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,8 +266,8 @@ export default function Hero({ peliculas }: Props) {
             </svg>
           </button>
           <button
-            onClick={() => goTo((current + 1) % peliculas.length)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 flex items-center justify-center text-white transition-all"
+            onClick={sig}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 border border-white/20 hidden sm:flex items-center justify-center text-white transition-all"
             aria-label="Siguiente"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,6 +288,7 @@ export default function Hero({ peliculas }: Props) {
           <div className="relative bg-[#111] border border-white/10 rounded-2xl p-8 w-full max-w-md flex flex-col gap-5">
             <button
               onClick={() => { setShowModal(false); pausedRef.current = false; }}
+              aria-label="Cerrar"
               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

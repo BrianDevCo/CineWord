@@ -1,17 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { CINE, DIRECCION_COMPLETA, whatsappUrl } from "@/lib/cine";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [estado, setEstado] = useState<"idle" | "loading" | "error">("idle");
+  const wa = whatsappUrl("Hola CINEWORLD, quiero información sobre eventos y cumpleaños");
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes("@")) return;
-    setSubscribed(true);
+    setEstado("loading");
+    try {
+      const res = await fetch("/api/suscripcion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setSubscribed(true);
+      setEstado("idle");
+    } catch {
+      setEstado("error");
+    }
   };
+
+  const legales = [
+    CINE.razonSocial,
+    CINE.nit && `NIT ${CINE.nit}`,
+    CINE.telefono && `Tel. ${CINE.telefono}`,
+    CINE.email,
+  ].filter(Boolean);
 
   return (
     <footer className="bg-black border-t border-white/10">
@@ -29,11 +51,14 @@ export default function Footer() {
             </p>
             <div className="flex gap-3">
               {[
-                { icon: "📸", href: "https://www.instagram.com/cineworldmr/", label: "Instagram" },
+                { icon: "📸", href: CINE.instagram.url, label: "Instagram" },
+                ...(wa ? [{ icon: "💬", href: wa, label: "WhatsApp" }] : []),
               ].map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={s.label}
                   className="w-9 h-9 bg-white/5 hover:bg-[#CC1244] border border-white/10 hover:border-[#CC1244] rounded-md flex items-center justify-center text-sm transition-all duration-200"
                 >
@@ -48,17 +73,17 @@ export default function Footer() {
             <h4 className="font-heading text-sm text-white tracking-widest uppercase">Navegación</h4>
             <ul className="flex flex-col gap-2">
               {[
-                { label: "Cartelera", href: "#cartelera" },
-                { label: "Próximos Estrenos", href: "#proximos" },
-                { label: "Combos", href: "#snacks" },
-                { label: "Horarios", href: "#horarios" },
-                { label: "Precios", href: "#precios" },
-                { label: "Contacto", href: "#contacto" },
+                { label: "Cartelera", href: "/#cartelera" },
+                { label: "Próximos Estrenos", href: "/#proximos" },
+                { label: "Combos", href: "/#snacks" },
+                { label: "Horarios", href: "/#horarios" },
+                { label: "Precios", href: "/#precios" },
+                { label: "Contacto", href: "/#contacto" },
               ].map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-gray-500 hover:text-white font-body text-sm transition-colors">
+                  <Link href={l.href} className="text-gray-500 hover:text-white font-body text-sm transition-colors">
                     {l.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -68,11 +93,21 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="font-heading text-sm text-white tracking-widest uppercase">Servicios</h4>
             <ul className="flex flex-col gap-2">
-              {["Compra en Línea", "Club de Puntos", "Eventos Especiales", "Cumpleaños en el Cine"].map((l) => (
-                <li key={l}>
-                  <a href="#" className="text-gray-500 hover:text-white font-body text-sm transition-colors">
-                    {l}
-                  </a>
+              {[
+                { label: "Mi cuenta y boletos", href: "/cuenta", externo: false },
+                { label: "Eventos y cumpleaños", href: wa ?? "/#contacto", externo: Boolean(wa) },
+                { label: "Peticiones, quejas y reclamos", href: "/pqr", externo: false },
+              ].map((l) => (
+                <li key={l.label}>
+                  {l.externo ? (
+                    <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white font-body text-sm transition-colors">
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link href={l.href} className="text-gray-500 hover:text-white font-body text-sm transition-colors">
+                      {l.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -104,33 +139,47 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@correo.com"
+                  aria-label="Correo electrónico"
                   required
                   className="bg-white/5 border border-white/10 text-white placeholder:text-gray-600 font-body text-sm px-4 py-2.5 rounded-sm outline-none focus:border-[#CC1244] transition-colors"
                 />
+                {estado === "error" && (
+                  <p className="text-red-400 font-body text-xs">No pudimos registrarte. Intenta de nuevo.</p>
+                )}
                 <button
                   type="submit"
-                  className="bg-[#CC1244] hover:bg-[#a00e35] text-white font-heading text-xs tracking-widest py-2.5 rounded-sm transition-colors"
+                  disabled={estado === "loading"}
+                  className="bg-[#CC1244] hover:bg-[#a00e35] disabled:opacity-50 text-white font-heading text-xs tracking-widest py-2.5 rounded-sm transition-colors"
                 >
-                  SUSCRIBIRME
+                  {estado === "loading" ? "ENVIANDO..." : "SUSCRIBIRME"}
                 </button>
+                <p className="text-gray-600 font-body text-[11px] leading-snug">
+                  Al suscribirte aceptas nuestra <Link href="/privacidad" className="underline hover:text-gray-400">Política de Privacidad</Link>.
+                </p>
               </form>
             )}
           </div>
         </div>
 
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gray-600 font-body text-xs">
-            © {currentYear} CINEWORLD. Todos los derechos reservados.
-          </p>
+          <div className="flex flex-col gap-1 text-center sm:text-left">
+            <p className="text-gray-600 font-body text-xs">
+              © {currentYear} CINEWORLD. Todos los derechos reservados.
+            </p>
+            <p className="text-gray-700 font-body text-[11px]">{DIRECCION_COMPLETA}</p>
+            {legales.length > 0 && (
+              <p className="text-gray-700 font-body text-[11px]">{legales.join(" · ")}</p>
+            )}
+          </div>
           <div className="flex gap-6">
             {[
               { label: "Términos y Condiciones", href: "/terminos" },
               { label: "Privacidad", href: "/privacidad" },
               { label: "PQR", href: "/pqr" },
             ].map((l) => (
-              <a key={l.label} href={l.href} className="text-gray-600 hover:text-gray-400 font-body text-xs transition-colors">
+              <Link key={l.label} href={l.href} className="text-gray-600 hover:text-gray-400 font-body text-xs transition-colors">
                 {l.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

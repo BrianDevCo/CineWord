@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 
 interface ReservaAdmin {
   id: number;
@@ -48,7 +48,7 @@ const ESTADO_COLOR: Record<string, string> = {
 export default function ReservasAdminPage() {
   const [reservas, setReservas] = useState<ReservaAdmin[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [cargada, setCargada] = useState<string | null>(null);
   const [estado, setEstado] = useState("");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
@@ -58,24 +58,26 @@ export default function ReservasAdminPage() {
     .filter((r) => r.estado === "pagado")
     .reduce((a, r) => a + r.total, 0);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    const params = new URLSearchParams({ page: String(page) });
-    if (estado) params.set("estado", estado);
-    if (desde) params.set("desde", desde);
-    if (hasta) params.set("hasta", hasta);
+  const params = new URLSearchParams({ page: String(page) });
+  if (estado) params.set("estado", estado);
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+  const consulta = params.toString();
+  const loading = cargada !== consulta;
 
-    fetch(`/api/admin/reservas?${params}`)
+  useEffect(() => {
+    let cancelado = false;
+    fetch(`/api/admin/reservas?${consulta}`)
       .then((r) => r.json())
       .then((d) => {
+        if (cancelado) return;
         setReservas(d.data ?? []);
         setTotal(d.total ?? 0);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, [estado, desde, hasta, page]);
-
-  useEffect(() => { load(); }, [load]);
+      .catch(() => {})
+      .finally(() => { if (!cancelado) setCargada(consulta); });
+    return () => { cancelado = true; };
+  }, [consulta]);
 
   const inputClass = "bg-[#0d0d0d] border border-white/10 text-white font-body text-sm px-3 py-2 rounded-lg focus:outline-none focus:border-[#CC1244] transition-colors";
 

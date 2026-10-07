@@ -11,6 +11,7 @@
 - [ ] SQL Editor → pegar y ejecutar `supabase/schema.sql`
 - [ ] SQL Editor → pegar y ejecutar `supabase/seed.sql`
 - [ ] SQL Editor → ejecutar `supabase/migration_seguridad.sql` (cierra permisos públicos y crea la tabla de PQR)
+- [ ] SQL Editor → ejecutar `supabase/migration_contenido.sql` (precios/combos editables y suscriptores del boletín)
 - [ ] Database → Advisors → Security Advisor: sin alertas
 - [ ] Authentication → Sign In / Providers → Email: **Confirm email** activado
 - [ ] Authentication → activar MFA para las cuentas admin (recomendado)
@@ -76,6 +77,11 @@ SCORE_AES_KEY=
 SCORE_TERCERO=
 SCORE_PUNTO_VENTA=
 SCORE_TEATRO=
+NEXT_PUBLIC_CINE_RAZON_SOCIAL=
+NEXT_PUBLIC_CINE_NIT=
+NEXT_PUBLIC_CINE_TELEFONO=
+NEXT_PUBLIC_CINE_EMAIL=
+NEXT_PUBLIC_CINE_WHATSAPP=
 NEXT_PUBLIC_BASE_URL=
 ADMIN_EMAILS=
 ```

@@ -1,37 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { scoreGetCartelera, scoreHeaders } from "@/lib/score";
+import { scoreHeaders } from "@/lib/score";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { tmdbEnrich, cleanScoreTitle } from "@/lib/tmdb";
-
-// ── XML helpers ────────────────────────────────────────────────────────────────
-
-function getTag(xml: string, tag: string): string {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
-  return xml.match(re)?.[1]?.trim() ?? "";
-}
-
-function getAttr(xml: string, attr: string): string {
-  const re = new RegExp(`${attr}=["']([^"']+)["']`, "i");
-  return xml.match(re)?.[1]?.trim() ?? "";
-}
-
-function getAllBlocks(xml: string, tag: string): string[] {
-  const re = new RegExp(`<${tag}[\\s\\S]*?<\\/${tag}>`, "gi");
-  return xml.match(re) ?? [];
-}
-
-/** Convierte "20260513" → "2026-05-13" */
-function parseScoreFecha(f: string): string {
-  if (f.length === 8) return `${f.slice(0, 4)}-${f.slice(4, 6)}-${f.slice(6, 8)}`;
-  return f;
-}
-
-/** "15" o "1530" → "15:30:00" */
-function parseScoreHora(h: string): string {
-  const s = h.padStart(4, "0");
-  return `${s.slice(0, 2)}:${s.slice(2, 4)}:00`;
-}
 
 function inferFormato(xml: string, nombre: string): "2D" | "3D" | "VIP" {
   const combined = (xml + " " + nombre).toUpperCase();
@@ -61,55 +32,6 @@ interface ParsedPelicula {
   duracion: string;
   sinopsis: string;
   funciones: ParsedFuncion[];
-}
-
-function parseTarifas(block: string): ParsedTarifa[] {
-  const tarifaBlocks = getAllBlocks(block, "tarifa");
-  return tarifaBlocks.map((t) => {
-    const codigo = getTag(t, "codigo") || getTag(t, "cod") || getAttr(t, "cod") || getAttr(t, "codigo");
-    const nombre = getTag(t, "nombre") || getTag(t, "nom") || getAttr(t, "nom") || getAttr(t, "nombre");
-    const valorStr = getTag(t, "valor") || getTag(t, "val") || getAttr(t, "valor") || getAttr(t, "val");
-    return { codigo, nombre, valor: parseInt(valorStr) || 0 };
-  });
-}
-
-function parseFunciones(pelBlock: string): ParsedFuncion[] {
-  const funcBlocks = getAllBlocks(pelBlock, "funcion");
-  return funcBlocks.map((f) => {
-    const sala = getTag(f, "sala") || getTag(f, "codigoSala") || getAttr(f, "sala") || getAttr(f, "codigoSala");
-    const fechaRaw = getTag(f, "fecha") || getAttr(f, "fecha");
-    const horaRaw = getTag(f, "hora") || getAttr(f, "hora");
-    const min = getTag(f, "minuto") || getTag(f, "min") || getAttr(f, "minuto") || "00";
-    const tarifas = parseTarifas(f);
-    const fecha = parseScoreFecha(fechaRaw);
-    const hora = parseScoreHora(horaRaw.padEnd(2, "0") + min.padStart(2, "0"));
-    return {
-      score_sala_id: sala,
-      fecha,
-      hora,
-      formato: inferFormato(f, ""),
-      tarifas,
-    };
-  });
-}
-
-function parseXML(xml: string): ParsedPelicula[] {
-  const pelBlocks = getAllBlocks(xml, "pelicula");
-  return pelBlocks.map((p) => {
-    const codigo = getTag(p, "codigo") || getTag(p, "cod") || getAttr(p, "cod") || getAttr(p, "codigo");
-    const titulo = getTag(p, "nombre") || getTag(p, "nom") || getTag(p, "titulo") || getAttr(p, "nom") || getAttr(p, "nombre");
-    const clasificacion = getTag(p, "clasificacion") || getTag(p, "clasi") || getAttr(p, "clasificacion") || "";
-    const duracion = getTag(p, "duracion") || getTag(p, "dur") || getAttr(p, "duracion") || "";
-    const sinopsis = getTag(p, "sinopsis") || getTag(p, "descripcion") || "";
-    return {
-      score_pelicula_id: codigo,
-      titulo,
-      clasificacion,
-      duracion: duracion ? `${duracion} min` : "",
-      sinopsis,
-      funciones: parseFunciones(p),
-    };
-  });
 }
 
 // ── Sync a Supabase ────────────────────────────────────────────────────────────

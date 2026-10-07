@@ -4,16 +4,41 @@ import type { Pelicula } from "@/lib/types";
 
 interface Props {
   peliculas: Pelicula[];
+  horariosHoy?: Record<number, string[]>;
 }
 
-export default function Cartelera({ peliculas }: Props) {
+function horaCorta(t: string) {
+  const [h, m] = t.split(":");
+  const hour = parseInt(h);
+  const h12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+  return `${h12}:${m}${hour >= 12 ? "pm" : "am"}`;
+}
+
+function HorasHoy({ horas, max = 2, className = "" }: { horas?: string[]; max?: number; className?: string }) {
+  if (!horas?.length) return null;
+  const visibles = horas.slice(0, max);
+  return (
+    <div className={`flex flex-wrap items-center gap-1 ${className}`} aria-label="Funciones de hoy">
+      <span className="text-[9px] font-heading tracking-widest text-gray-400 mr-0.5">HOY</span>
+      {visibles.map((h) => (
+        <span key={h} className="text-[10px] font-body text-white bg-white/10 border border-white/15 rounded-sm px-1.5 py-0.5 tabular-nums">
+          {horaCorta(h)}
+        </span>
+      ))}
+      {horas.length > max && (
+        <span className="text-[10px] font-body text-gray-400">+{horas.length - max}</span>
+      )}
+    </div>
+  );
+}
+
+export default function Cartelera({ peliculas, horariosHoy = {} }: Props) {
   const featured = peliculas[0];
   const rest = peliculas.slice(1);
-  const showFeatured = true;
 
   if (!featured) {
     return (
-      <section id="cartelera" className="py-20 lg:py-28 bg-[#0a0a0a]">
+      <section id="cartelera" className="pt-20 pb-10 lg:pt-28 lg:pb-14 bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-600 font-heading tracking-widest text-sm">
           NO HAY PELÍCULAS EN CARTELERA
         </div>
@@ -22,7 +47,7 @@ export default function Cartelera({ peliculas }: Props) {
   }
 
   return (
-    <section id="cartelera" className="py-20 lg:py-28 bg-[#0a0a0a]">
+    <section id="cartelera" className="pt-20 pb-10 lg:pt-28 lg:pb-14 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
@@ -37,8 +62,7 @@ export default function Cartelera({ peliculas }: Props) {
         </div>
 
         {/* FEATURED */}
-        {showFeatured && (
-          <Link href={`/pelicula/${featured.id}`}>
+        <Link href={`/pelicula/${featured.id}`}>
             <div className="relative rounded-2xl overflow-hidden mb-10 h-[220px] sm:h-[360px] lg:h-[480px] group cursor-pointer">
               {featured.backdrop_url ? (
                 <Image
@@ -72,6 +96,7 @@ export default function Cartelera({ peliculas }: Props) {
                     <p className="text-gray-400 font-body text-sm hidden sm:block">
                       {featured.duracion}
                     </p>
+                    <HorasHoy horas={horariosHoy[featured.id]} max={4} />
                     <div className="flex items-center gap-2 text-white/70 font-heading text-xs tracking-widest group-hover:text-[#CC1244] transition-colors">
                       Ver sinopsis y comprar boleto
                       <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,14 +108,9 @@ export default function Cartelera({ peliculas }: Props) {
               </div>
             </div>
           </Link>
-        )}
 
         {/* GRID */}
-        {rest.length === 0 ? (
-          <div className="text-center py-20 text-gray-600 font-heading tracking-widest text-sm">
-            NO HAY PELÍCULAS EN ESTA CATEGORÍA
-          </div>
-        ) : (
+        {rest.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {rest.map((movie) => (
               <Link key={movie.id} href={`/pelicula/${movie.id}`}>
@@ -124,6 +144,7 @@ export default function Cartelera({ peliculas }: Props) {
                       <h3 className="font-heading text-sm font-bold text-white leading-tight line-clamp-2">
                         {movie.titulo}
                       </h3>
+                      <HorasHoy horas={horariosHoy[movie.id]} className="mt-1.5" />
                     </div>
                   </div>
                 </div>

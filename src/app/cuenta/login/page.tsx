@@ -195,7 +195,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-gray-700 text-xs font-body mt-6">
-          © CINEWORLD · Centro Comercial MR Outlet
+          © CINEWORLD · Centro Comercial MR Outlet · Candelaria, Valle
         </p>
       </div>
     </main>

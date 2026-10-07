@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 
 interface Stats {
@@ -32,14 +32,16 @@ function StatCard({ label, value, sub, href, color = "white" }: {
   return href ? <Link href={href}>{content}</Link> : content;
 }
 
+const suscribirNada = () => () => {};
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fechaHoy, setFechaHoy] = useState("");
-
-  useEffect(() => {
-    setFechaHoy(new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" }));
-  }, []);
+  const fechaHoy = useSyncExternalStore(
+    suscribirNada,
+    () => new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
+    () => "",
+  );
 
   useEffect(() => {
     fetch("/api/admin/stats")

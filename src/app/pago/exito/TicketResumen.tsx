@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 interface TicketData {
   pelicula: string;
@@ -11,20 +11,17 @@ interface TicketData {
   total: string;
 }
 
-export default function TicketResumen() {
-  const [ticket, setTicket] = useState<TicketData | null>(null);
+const suscribirNada = () => () => {};
 
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("cw-last-ticket");
-      if (raw) {
-        setTicket(JSON.parse(raw));
-        sessionStorage.removeItem("cw-last-ticket");
-      }
-    } catch {
-      // sessionStorage no disponible o dato corrupto
-    }
-  }, []);
+function leerTicket(): string | null {
+  try { return sessionStorage.getItem("cw-last-ticket"); } catch { return null; }
+}
+
+export default function TicketResumen() {
+  // Se guarda en BookingSection al iniciar el pago; se lee solo en el navegador
+  const raw = useSyncExternalStore(suscribirNada, leerTicket, () => null);
+  let ticket: TicketData | null = null;
+  try { ticket = raw ? JSON.parse(raw) : null; } catch { /* dato corrupto */ }
 
   if (!ticket) return null;
 
