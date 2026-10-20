@@ -1,3 +1,5 @@
+import { CINE } from "@/lib/cine";
+
 export default function Horarios() {
   const info = [
     { icon: "🎟️", label: "Taquilla", value: "Abre 30 min antes de la primera función" },
@@ -25,16 +27,16 @@ export default function Horarios() {
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="flex flex-col items-center">
               <span className="font-heading text-white font-bold text-6xl sm:text-8xl lg:text-9xl leading-none tracking-tight">
-                1<span className="text-[#CC1244]">:</span>00
+                {CINE.apertura.hora}<span className="text-[#CC1244]">:</span>{CINE.apertura.min}
               </span>
-              <span className="font-heading text-gray-500 text-xs tracking-widest mt-1">PM</span>
+              <span className="font-heading text-gray-500 text-xs tracking-widest mt-1">{CINE.apertura.ampm}</span>
             </div>
             <span className="text-[#CC1244] text-4xl sm:text-6xl font-heading font-light">—</span>
             <div className="flex flex-col items-center">
               <span className="font-heading text-white font-bold text-6xl sm:text-8xl lg:text-9xl leading-none tracking-tight">
-                10<span className="text-[#CC1244]">:</span>00
+                {CINE.cierre.hora}<span className="text-[#CC1244]">:</span>{CINE.cierre.min}
               </span>
-              <span className="font-heading text-gray-500 text-xs tracking-widest mt-1">PM</span>
+              <span className="font-heading text-gray-500 text-xs tracking-widest mt-1">{CINE.cierre.ampm}</span>
             </div>
           </div>
         </div>

@@ -18,12 +18,17 @@ export const CINE = {
   ciudad: "Candelaria, Valle del Cauca",
   mapsQuery: "3.4161865,-76.4573024",
 
-  horario: "Todos los días · 1:00 PM — 10:00 PM",
+  /** Horario de atención: se muestra en la sección Horarios y en Contacto */
+  apertura: { hora: "2", min: "15", ampm: "PM" },
+  cierre:   { hora: "9", min: "30", ampm: "PM" },
   instagram: { usuario: "@cineworldmr", url: "https://www.instagram.com/cineworldmr/" },
 };
 
 export function whatsappUrl(mensaje = "Hola CINEWORLD, tengo una pregunta") {
   return CINE.whatsapp ? `https://wa.me/${CINE.whatsapp}?text=${encodeURIComponent(mensaje)}` : null;
 }
+
+export const HORARIO_ATENCION =
+  `Todos los días · ${CINE.apertura.hora}:${CINE.apertura.min} ${CINE.apertura.ampm} — ${CINE.cierre.hora}:${CINE.cierre.min} ${CINE.cierre.ampm}`;
 
 export const DIRECCION_COMPLETA = `${CINE.lugar} — ${CINE.direccion}, ${CINE.ciudad}`;

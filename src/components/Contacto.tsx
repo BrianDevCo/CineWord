@@ -1,4 +1,4 @@
-import { CINE, whatsappUrl } from "@/lib/cine";
+import { CINE, HORARIO_ATENCION, whatsappUrl } from "@/lib/cine";
 export default function Contacto() {
   const wa = whatsappUrl();
   return (
@@ -47,7 +47,7 @@ export default function Contacto() {
                 </h3>
                 <div className="flex flex-col gap-1 font-body text-sm">
                   <div className="flex justify-between gap-4 text-gray-400">
-                    <span className="text-white/70">{CINE.horario}</span>
+                    <span className="text-white/70">{HORARIO_ATENCION}</span>
                   </div>
                 </div>
               </div>
