@@ -43,7 +43,7 @@ export const IMAGENES_COMBOS = [
 
 export const TARIFAS_DEFAULT: Tarifa[] = [
   { dias: ["Lunes", "Jueves"], subtitulo: "Entre semana", general: 12000, premium: 18000, tag: "", horario: "", destacada: false },
-  { dias: ["Martes", "Miércoles"], subtitulo: "Promo especial", general: 7000, premium: 10000, tag: "MITAD DE PRECIO", horario: "Todo el día", destacada: true },
+  { dias: ["Martes", "Miércoles"], subtitulo: "Promo especial", general: 7000, premium: 10000, tag: "MITAD DE PRECIO", horario: "", destacada: true },
   { dias: ["Viernes", "Sábado", "Domingo"], subtitulo: "Fin de semana", general: 14000, premium: 20000, tag: "", horario: "", destacada: false },
 ];
 
