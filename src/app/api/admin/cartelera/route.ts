@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient, adminReady } from "@/lib/supabase-admin";
-import { parseCartelera } from "@/lib/cartelera-texto";
+import { mismoTitulo, parseCartelera } from "@/lib/cartelera-texto";
 import { tmdbEnrich } from "@/lib/tmdb";
 import { getContenido } from "@/lib/contenido";
 
@@ -59,12 +59,15 @@ export async function POST(req: NextRequest) {
   const ids: { id: number; horas: string[] }[] = [];
   for (const p of peliculas) {
     const tmdb = await tmdbEnrich(p.titulo).catch(() => null);
-    const titulo = tmdb?.titulo || p.titulo;
+    // Se muestra el nombre que usa el cine. TMDB suele traer el título de España
+    // ("Vengadores: Endgame") o el original ("Whalefall"); solo se usa si es el
+    // mismo nombre, para aprovechar sus tildes y mayúsculas.
+    const titulo = tmdb?.titulo && mismoTitulo(tmdb.titulo, p.titulo) ? tmdb.titulo : p.titulo;
     const clasificacion = p.edad > 0 ? `+${p.edad}` : "Todo público";
 
     // Busca por el nombre escrito y por el título oficial de TMDB (sin distinguir mayúsculas)
     let existente: Record<string, unknown> & { id: number; titulo: string; estado: string; badge: string; badge_color: string } | null = null;
-    for (const nombre of new Set([p.titulo, titulo])) {
+    for (const nombre of new Set([p.titulo, titulo, ...(tmdb?.titulo ? [tmdb.titulo] : [])])) {
       const escapado = nombre.replace(/[%_\\]/g, (c) => `\\${c}`);
       const { data } = await db.from("peliculas").select("*").ilike("titulo", escapado).limit(1).maybeSingle();
       if (data) { existente = data; break; }
@@ -93,6 +96,7 @@ export async function POST(req: NextRequest) {
       );
       await db.from("peliculas").update({
         ...relleno,
+        titulo,
         estado: "en_cartelera",
         activa: true,
         edad_minima: p.edad,
@@ -101,7 +105,9 @@ export async function POST(req: NextRequest) {
         badge_color: existente.estado === "en_cartelera" ? existente.badge_color : "bg-emerald-600",
       }).eq("id", existente.id);
       ids.push({ id: existente.id, horas: p.horas });
-      log.push(`✓ ${existente.titulo} — ya existía, actualizada`);
+      log.push(existente.titulo === titulo
+        ? `✓ ${titulo} — ya existía, actualizada`
+        : `✓ ${titulo} — ya existía como "${existente.titulo}", renombrada`);
     } else {
       const { data: nueva, error: insErr } = await db.from("peliculas").insert({
         titulo,

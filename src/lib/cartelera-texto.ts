@@ -36,9 +36,19 @@ function parseEdad(texto: string): number | null {
   return m && !/[ap]m/.test(t) ? parseInt(m[1], 10) : null;
 }
 
-/** "LA CAIDA DE LA BALLENA" → "La Caida De La Ballena" (TMDB luego pone el título oficial) */
-function capitalizar(t: string) {
-  return t.toLowerCase().replace(/(^|\s)\p{L}/gu, (c) => c.toUpperCase()).trim();
+const MINUSCULAS = new Set(["de", "del", "la", "las", "el", "los", "y", "e", "en", "a", "al", "o", "u", "con", "por", "para"]);
+
+/** "LA CAIDA DE LA BALLENA" → "La Caida de la Ballena" */
+export function capitalizar(t: string) {
+  return t.trim().toLowerCase().split(/\s+/).map((w, i) =>
+    i > 0 && MINUSCULAS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1),
+  ).join(" ");
+}
+
+/** Compara títulos ignorando tildes, mayúsculas y signos: "LA LAMPARA" = "La Lámpara" */
+export function mismoTitulo(a: string, b: string) {
+  const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return norm(a) === norm(b);
 }
 
 export function parseCartelera(texto: string): { peliculas: PeliculaSemana[]; errores: string[] } {
