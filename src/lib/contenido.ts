@@ -10,7 +10,7 @@ export interface Tarifa {
   general: number;
   premium: number;
   tag: string;        // "" = sin etiqueta destacada
-  horario: string;    // restricción, ej. "Solo funciones antes de las 3:00 PM"
+  horario: string;    // aclaración opcional, ej. "Todo el día"
   destacada: boolean;
 }
 
@@ -43,7 +43,7 @@ export const IMAGENES_COMBOS = [
 
 export const TARIFAS_DEFAULT: Tarifa[] = [
   { dias: ["Lunes", "Jueves"], subtitulo: "Entre semana", general: 12000, premium: 18000, tag: "", horario: "", destacada: false },
-  { dias: ["Martes", "Miércoles"], subtitulo: "Promo especial", general: 7000, premium: 10000, tag: "MITAD DE PRECIO", horario: "Solo funciones antes de las 3:00 PM", destacada: true },
+  { dias: ["Martes", "Miércoles"], subtitulo: "Promo especial", general: 7000, premium: 10000, tag: "MITAD DE PRECIO", horario: "Todo el día", destacada: true },
   { dias: ["Viernes", "Sábado", "Domingo"], subtitulo: "Fin de semana", general: 14000, premium: 20000, tag: "", horario: "", destacada: false },
 ];
 

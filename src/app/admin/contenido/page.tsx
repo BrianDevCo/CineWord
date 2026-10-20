@@ -127,7 +127,7 @@ export default function ContenidoAdminPage() {
             </label>
             <label className="col-span-2 flex flex-col gap-1">
               <span className={labelClass}>RESTRICCIÓN (opcional)</span>
-              <input value={t.horario} maxLength={80} placeholder="Solo funciones antes de las 3:00 PM" onChange={(e) => setTarifa(i, { horario: e.target.value })} className={inputClass} />
+              <input value={t.horario} maxLength={80} placeholder="Ej: Todo el día" onChange={(e) => setTarifa(i, { horario: e.target.value })} className={inputClass} />
             </label>
             <label className="flex items-center gap-2 text-gray-400 font-body text-xs py-2">
               <input type="checkbox" checked={t.destacada} onChange={(e) => setTarifa(i, { destacada: e.target.checked })} className="accent-[#CC1244]" />
