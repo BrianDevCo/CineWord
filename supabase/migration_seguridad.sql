@@ -6,6 +6,10 @@
 -- 1. Nadie puede crear reservas ni ocupar asientos desde el navegador
 drop policy if exists "reservas_insert" on reservas;
 drop policy if exists "asientos_insert" on asientos_ocupados;
+-- El script del POS (CineWord-POS/supabase/schema_pos_migration.sql) abría las
+-- reservas de la web a cualquiera: lectura de todos los clientes y edición.
+drop policy if exists "reservas_read_by_token" on reservas;
+drop policy if exists "reservas_update_usado" on reservas;
 
 -- 2. La lista de correos para avisos de estreno no es pública
 drop policy if exists "notificaciones_read"   on notificaciones_estreno;
