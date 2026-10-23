@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { tmdbEnrich } from "@/lib/tmdb";
+import { tieneColumnasHero } from "@/lib/columnas-hero";
 
 // POST /api/admin/enrich-tmdb
 // Body: { pelicula_id?: number, force?: boolean }
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   let query = admin
     .from("peliculas")
-    .select("id, titulo, poster_url, sinopsis, fecha_estreno, score_pelicula_id");
+    .select("*");
 
   if (body.pelicula_id) {
     query = query.eq("id", body.pelicula_id) as typeof query;
@@ -59,6 +60,11 @@ export async function POST(req: NextRequest) {
       if (tmdb.clasificacion) updates.clasificacion  = tmdb.clasificacion;
       if (tmdb.fecha_estreno) updates.fecha_estreno  = tmdb.fecha_estreno;
       if (tmdb.accent_color)  updates.accent_color   = tmdb.accent_color;
+      if (await tieneColumnasHero(admin)) {
+        updates.tmdb_id = tmdb.tmdb_id;
+        // Las imágenes del hero elegidas a mano solo se reemplazan con "force"
+        if (!peli.hero_imagenes?.length || body.force) updates.hero_imagenes = tmdb.hero_imagenes;
+      }
 
       const { error: upErr } = await admin.from("peliculas").update(updates as never).eq("id", peli.id);
       if (upErr) {

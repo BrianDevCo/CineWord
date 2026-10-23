@@ -5,6 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Pelicula } from "@/lib/types";
 
+/** Imágenes de fondo del hero: las 2 elegidas en el admin, o el backdrop de siempre */
+function fondos(p: Pelicula): string[] {
+  const elegidas = (p.hero_imagenes ?? []).filter(Boolean).slice(0, 2);
+  if (elegidas.length) return elegidas;
+  return p.backdrop_url ? [p.backdrop_url] : [];
+}
+
 interface Props {
   peliculas: Pelicula[];
 }
@@ -87,9 +94,28 @@ export default function Hero({ peliculas }: Props) {
           className="absolute inset-0 transition-opacity duration-700"
           style={{ opacity: i === current && !transitioning ? 1 : 0 }}
         >
-          {peli.backdrop_url ? (
+          {fondos(peli).length === 2 ? (
+            // Dos imágenes elegidas en el admin: mitad y mitad
+            // (lado a lado en computador, arriba y abajo en celular)
+            <div className="absolute inset-0 flex flex-col sm:flex-row">
+              {fondos(peli).map((src, j) => (
+                <div key={src} className="relative flex-1 overflow-hidden">
+                  <Image
+                    src={src}
+                    alt={j === 0 ? peli.titulo : ""}
+                    fill
+                    priority={i === 0}
+                    className="object-cover object-center scale-105"
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                  />
+                </div>
+              ))}
+              {/* Unión suave entre las dos imágenes */}
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-24 bg-gradient-to-b from-transparent via-black/70 to-transparent sm:inset-x-auto sm:inset-y-0 sm:left-1/2 sm:top-0 sm:translate-y-0 sm:-translate-x-1/2 sm:h-auto sm:w-40 sm:bg-gradient-to-r" />
+            </div>
+          ) : fondos(peli).length === 1 ? (
             <Image
-              src={peli.backdrop_url}
+              src={fondos(peli)[0]}
               alt={peli.titulo}
               fill
               priority={i === 0}

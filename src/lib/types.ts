@@ -33,6 +33,9 @@ export interface Pelicula {
   en_hero: boolean;
   edad_minima: number;
   score_pelicula_id: string | null;
+  tmdb_id?: number | null;
+  /** Hasta 2 fondos elegidos para el hero (URLs de TMDB). Vacío = usa backdrop_url */
+  hero_imagenes?: string[] | null;
   created_at: string;
 }
 

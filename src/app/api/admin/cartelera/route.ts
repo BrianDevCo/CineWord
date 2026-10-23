@@ -5,6 +5,7 @@ import { createAdminClient, adminReady } from "@/lib/supabase-admin";
 import { mismoTitulo, parseCartelera } from "@/lib/cartelera-texto";
 import { tmdbEnrich } from "@/lib/tmdb";
 import { getContenido } from "@/lib/contenido";
+import { tieneColumnasHero } from "@/lib/columnas-hero";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const esFecha = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -55,6 +56,8 @@ export async function POST(req: NextRequest) {
     return { precio_regular: t?.general ?? 0, precio_vip: t?.premium ?? 0 };
   };
 
+  const conHero = await tieneColumnasHero(db);
+
   // ── 1. Películas: buscar o crear, completando datos con TMDB ───────────────
   const ids: { id: number; horas: string[] }[] = [];
   for (const p of peliculas) {
@@ -84,6 +87,7 @@ export async function POST(req: NextRequest) {
       genero:         tmdb.genero || "",
       filter_genres:  tmdb.genero ? [tmdb.genero.split(" / ")[0]] : [],
       accent_color:   tmdb.accent_color,
+      ...(conHero && { tmdb_id: tmdb.tmdb_id, hero_imagenes: tmdb.hero_imagenes }),
     } : {};
 
     if (existente) {

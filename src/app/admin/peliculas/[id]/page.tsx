@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient, adminReady } from "@/lib/supabase-admin";
 import PeliculaForm from "../PeliculaForm";
+import HeroImagenes from "../HeroImagenes";
 import type { Pelicula } from "@/lib/types";
 
 export const metadata = { title: "Editar Película" };
@@ -32,6 +33,7 @@ export default async function EditarPeliculaPage({ params }: { params: Promise<{
         <p className="text-gray-500 font-body text-sm mt-1">{data.titulo}</p>
       </div>
       <PeliculaForm pelicula={data as Pelicula} />
+      <HeroImagenes peliculaId={data.id} />
     </div>
   );
 }

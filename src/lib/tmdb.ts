@@ -29,6 +29,7 @@ export interface TmdbMovie {
   fecha_estreno: string;
   genero: string;
   accent_color: string;
+  hero_imagenes: string[]; // 2 fondos sugeridos para el hero
 }
 
 interface TmdbSearchResult {
@@ -117,6 +118,38 @@ export async function tmdbSearch(title: string, year?: string): Promise<number |
   return sorted[0].id;
 }
 
+export interface TmdbImagen {
+  url: string;        // w1280, para mostrar
+  thumb: string;      // w300, para la galería del admin
+  idioma: string | null;
+  votos: number;
+}
+
+interface TmdbImagesResponse {
+  backdrops: { file_path: string; iso_639_1: string | null; vote_average: number; width: number }[];
+}
+
+/** Fondos de la película: primero los que no tienen texto (mejores para el hero) */
+export async function tmdbBackdrops(tmdbId: number, max = 40): Promise<TmdbImagen[]> {
+  const data = await fetchTmdb<TmdbImagesResponse>(`/movie/${tmdbId}/images`, {
+    include_image_language: "null,es,en",
+  });
+  return [...(data.backdrops ?? [])]
+    .sort((a, b) => (a.iso_639_1 === null ? 0 : 1) - (b.iso_639_1 === null ? 0 : 1) || b.vote_average - a.vote_average)
+    .slice(0, max)
+    .map((b) => ({
+      url: `${IMG}/w1280${b.file_path}`,
+      thumb: `${IMG}/w300${b.file_path}`,
+      idioma: b.iso_639_1,
+      votos: b.vote_average,
+    }));
+}
+
+/** Acepta solo imágenes de TMDB (lo que se guarda en hero_imagenes) */
+export function esImagenTmdb(url: unknown): url is string {
+  return typeof url === "string" && /^https:\/\/image\.tmdb\.org\/t\/p\/w\d+\/[\w-]+\.(jpg|png|webp)$/.test(url);
+}
+
 export async function tmdbEnrich(titleOrId: string | number, year?: string): Promise<TmdbMovie | null> {
   try {
     let tmdbId: number;
@@ -129,11 +162,12 @@ export async function tmdbEnrich(titleOrId: string | number, year?: string): Pro
     }
 
     // Detalles + videos + créditos + clasificación en paralelo
-    const [details, videos, credits, releases] = await Promise.all([
+    const [details, videos, credits, releases, fondos] = await Promise.all([
       fetchTmdb<TmdbDetails>(`/movie/${tmdbId}`),
       fetchTmdb<{ results: TmdbVideo[] }>(`/movie/${tmdbId}/videos`),
       fetchTmdb<TmdbCredits>(`/movie/${tmdbId}/credits`),
       fetchTmdb<{ results: TmdbRelease[] }>(`/movie/${tmdbId}/release_dates`),
+      tmdbBackdrops(tmdbId, 2).catch(() => [] as TmdbImagen[]),
     ]);
 
     // Trailer — busca tráiler oficial de YouTube en español primero, luego cualquiera
@@ -179,6 +213,7 @@ export async function tmdbEnrich(titleOrId: string | number, year?: string): Pro
       fecha_estreno: details.release_date ?? "",
       genero,
       accent_color,
+      hero_imagenes: fondos.map((f) => f.url),
     };
   } catch (e) {
     console.error("TMDB enrich error:", e);
